@@ -1,0 +1,28 @@
+---
+sourceHash: 85fd2845865de397044fe5ac39214d1aa969e4509582cf4319f9d1d3ee03ac38
+title: "Read message history"
+description: " Read message history through the Subiz API."
+section: "Conversations"
+order: 22
+status: "verified"
+endpointId: "conversations-history"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Read conversation events
+
+This endpoint returns the events from `ListEvents`, not a fabricated messages envelope. Event types can differ; inspect `type` before reading `data.message`.
+
+The request schema supports `limit` and `start_id` query parameters. Confirm the next boundary from your returned events; do not assume an offset or a `next_cursor` field. The caller must have access to the conversation.
+
+## Result
+
+The gateway extracts the service's events array and returns it directly. Keep event identifiers when synchronizing history to avoid duplicates.
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

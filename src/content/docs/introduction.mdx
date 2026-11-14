@@ -1,0 +1,38 @@
+---
+sourceHash: c40db0feb81686b9bb6a68bad9ad291ed4d5fa15faac027ae8952dccf4d46ad4
+title: "Subiz API"
+description: "Authenticate your integration and send a message to an existing conversation."
+section: "Get Started"
+order: 0
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+## Start here
+
+Connect customer records, conversations, and messages with your own systems. Users are customers; agents are the staff who support them. The documented contracts were checked against Subiz source code.
+
+1. Read [Authentication](/docs/get-started/authentication) to prepare your access token.
+2. Follow [Send Message](/docs/api-reference/messages/send) to construct a request.
+
+## Before you begin
+
+You need a valid access token and the ID of an existing conversation your integration is allowed to access. Keep the token on your server. The samples use placeholder values; replace them before running a request.
+
+## Integration workflow
+
+1. [Create a customer](/docs/api-reference/users/create) or retrieve an existing record.
+2. [Read the conversation](/docs/api-reference/conversations/retrieve).
+3. [Invite an agent](/docs/api-reference/conversations/invite-agent) and [assign ownership](/docs/api-reference/conversations/assign-agent).
+4. [Send a message](/docs/api-reference/messages/send).
+5. [Receive webhook events](/docs/webhooks/receiving) to keep your system updated.
+
+## Scope
+
+The API gateway source confirms request handling and the response type. Sending permissions, channel restrictions, and delivery rules are enforced by downstream services and are not fully specified here. No live message was sent while preparing these docs.
+
+## Use with your tools
+
+Copy any page as Markdown, browse the [documentation index](/llms.txt), or download [all documentation](/llms-full.txt).
+
+Learn how the entities fit together in [Core concepts](/docs/get-started/concepts), including rich messages with blocks.

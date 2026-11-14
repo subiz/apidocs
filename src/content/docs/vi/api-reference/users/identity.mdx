@@ -1,0 +1,27 @@
+---
+sourceHash: d0d8715f07c25c9b717ab2d0e60debb971558cf26e58e57a29389dbbf42d63e7
+title: "Tìm hoặc tạo theo định danh kênh"
+description: "Ánh xạ hồ sơ bên ngoài sang khách hàng Subiz."
+section: "Users"
+order: 13
+status: "verified"
+endpointId: "users-identity"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Tra cứu định danh bên ngoài
+
+Dùng kênh, nguồn và ID hồ sơ bên ngoài của tích hợp. Đây là các giá trị định danh kênh, không phải ID user Subiz. Tài khoản phải phù hợp với thông tin xác thực.
+
+POST gọi `ReadOrCreateUserByContactProfile`. Để chỉ tìm hồ sơ có sẵn mà không tạo mới, dùng GET trên cùng đường dẫn.
+
+## Kết quả
+
+Dịch vụ trả một user. Lưu riêng ID user Subiz và ID hồ sơ bên ngoài. Việc gộp và chuẩn hóa định danh do dịch vụ xử lý; không kết luận đây là khách hàng mới chỉ vì một lần tra cứu tạm thời thất bại.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

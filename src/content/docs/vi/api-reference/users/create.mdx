@@ -1,0 +1,34 @@
+---
+sourceHash: 088282baebd4a9dbd2a8e58bed1595f0d1d56de9c15c70730c2bdb4145d28ec1
+title: "Tạo khách hàng"
+description: "Tạo hồ sơ khách hàng qua API Subiz."
+section: "Users"
+order: 10
+status: "verified"
+endpointId: "users-create"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Hồ sơ khách hàng
+
+User đại diện cho khách hàng, không phải nhân viên. Gateway nhận các thuộc tính khách hàng và các trường định danh kênh tùy chọn.
+
+| Trường | Kiểu | Mục đích |
+| --- | --- | --- |
+| `attributes` | array | Các thuộc tính, ví dụ `{"key":"fullname","text":"Alex Example"}`. |
+| `channel` | string | Ngữ cảnh kênh, không bắt buộc. |
+| `channel_source` | string | Nguồn trong kênh, không bắt buộc. |
+| `profile_id` | string | ID hồ sơ bên ngoài, không bắt buộc. |
+
+Dùng tên thuộc tính đã cấu hình và đúng kiểu giá trị. Gateway xác định tài khoản qua xác thực và chỉ chuyển các trường này đến dịch vụ khách hàng.
+
+## Kết quả
+
+Gateway trả khách hàng được tạo bởi `CreateUser2`. Lưu `id` để dùng trong các yêu cầu sau. Để sửa khách hàng đã có, dùng [Cập nhật khách hàng](/docs/vi/api-reference/users/update), không tạo hồ sơ lặp lại.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

@@ -1,0 +1,14 @@
+.gcloudignore
+.git
+node_modules
+dist
+.astro
+screenshots
+.env*
+*credentials*.json
+*client_secret*.json
+subiz-version-4-*.json
+*.log
+
+# Private workstation instructions
+AGENTS.local.md

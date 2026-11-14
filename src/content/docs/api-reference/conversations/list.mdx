@@ -1,0 +1,34 @@
+---
+sourceHash: d0dee96c5d6efac885040d7224f2ccf9150d45740392014806a2d399e8f6f214
+title: "List conversations"
+description: " List conversations through the Subiz API."
+section: "Conversations"
+order: 20
+status: "verified"
+endpointId: "conversations-list"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Find a customer's conversations
+
+Use `user_id` to select a customer. The example requests up to 20 conversations. The service defaults a zero or omitted limit to 20 and caps positive limits at 200.
+
+| Query parameter | Type | Purpose |
+| --- | --- | --- |
+| `user_id` | string | Customer whose conversations you need. |
+| `agent_id` | string | Agent filter for the service's agent-listing branch. |
+| `limit` | integer | Requested number of results. |
+
+User credentials are restricted to their own user identity. Unknown and connector credentials are rejected by this service method. Filter combinations follow service-specific branches; do not assume all filters compose freely.
+
+## Result
+
+The response contains a `conversations` array. Read an individual conversation with [Retrieve a conversation](/docs/api-reference/conversations/retrieve). This route does not establish an offset-based pagination contract or a `next_cursor` response field.
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

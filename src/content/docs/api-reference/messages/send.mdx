@@ -1,0 +1,57 @@
+---
+sourceHash: 8e0f7634fe0edfbdd5aedb79c4f0cd833536575da857510596bca44dd9c943c5
+title: "Send Message"
+description: "Send a text message to an existing conversation."
+section: "Messages"
+order: 30
+status: "verified"
+endpointId: "messages-send"
+---
+
+## Before you send
+
+Prepare a valid [Bearer access token](/docs/get-started/authentication) and a conversation ID your integration can access. Running the request sends a real message; use an appropriate test conversation.
+
+## Request body
+
+The API accepts an event envelope, with the message inside `data.message`.
+
+| Field | Type | Behavior |
+| --- | --- | --- |
+| `cid` (path) | string | Identifies the target conversation. |
+| `type` | string | Optional. Defaults to `message_sent` when omitted. |
+| `data.message` | object | Message content for this text-message request. |
+| `data.message.text` | string | Text to send. |
+| `data.message.format` | string | Use `plaintext` for the example below. |
+
+```json
+{
+  "type": "message_sent",
+  "data": {
+    "message": {
+      "text": "Hello! How can we help?",
+      "format": "plaintext"
+    }
+  }
+}
+```
+
+## Server-assigned fields
+
+The gateway sets the event's `created` timestamp and `account_id`. It copies the path's conversation ID into `data.message.conversation_id` and `data.conversation.id`. You do not need to provide those fields for this route.
+
+## Response
+
+On success, the gateway returns HTTP `200` with the event returned by the conversation service, serialized directly as JSON. There is no additional `data` wrapper added by the gateway. The event schema includes fields such as `id`, `type`, `created`, and `data.message`; fields can be omitted when empty.
+
+A successful API response is not a guarantee of delivery to an external channel. The gateway repository does not define all channel-specific delivery rules or downstream validation requirements.
+
+## Handle failures
+
+Check the HTTP status before processing the response. The gateway can reject malformed JSON, invalid authentication, or banned senders; downstream services can also reject the operation. Avoid blindly retrying a timed-out send because the message may already have been accepted. This route does not establish an idempotency guarantee in the inspected handler.
+
+## HTTP request
+
+Replace `YOUR_CID` with the conversation ID and `YOUR_ACCESS_TOKEN` with your access token. Send the headers and JSON body shown below.
+
+Learn how the entities fit together in [Core concepts](/docs/get-started/concepts), including rich messages with blocks.

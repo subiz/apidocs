@@ -1,0 +1,117 @@
+# Source verification
+
+Source references use logical repository names, not workstation paths.
+Maintainers can resolve them through their untracked `AGENTS.local.md`; these
+implementation repositories are not required to build this public documentation.
+
+Reviewed the API gateway (`api`) on 2026-11-14. No production requests were sent.
+
+- `auth.go`, `getAccessToken`: exact Bearer prefix; `buildCtxCore`: session validation and account matching.
+- `router.go:390`: POST `/4.1/conversations/{cid}/messages` → `handleSendEvent`.
+- `handler.go:4197`, `handleSendEvent`: event defaults, server timestamp/account, path conversation ID, downstream SendMessage call.
+- `hparam.go:83`, `Decode2`: JSON decoding.
+- `router.go`, `HttpWraps`: authentication-context errors use 400; successful JSON output uses 200.
+- `README.md`, domain section: `api.subiz.com.vn`.
+- `vendor/github.com/subiz/header/header.pb.go`: Event, Data, Message fields and JSON tags.
+- `vendor/github.com/subiz/header/service_grpc.pb.go`: SendMessage returns Event.
+
+Verified means confirmed in this gateway source, not a live integration test. Downstream permission rules, delivery guarantees, and complete error catalogs remain outside this initial gateway review. The personal-token creation workflow was subsequently verified against the frontend source; see below.
+
+The initial unrelated placeholder pages were removed. The proposed expansion and source evidence are in API-STRUCTURE.md.
+
+## Expanded integration reference
+
+- `api/router.go`: registered user, contact-profile, conversation, member, and messaging paths; retain the actual 4.0/4.1 versions and POST verbs.
+- `api/handler.go`: handleCreateUserDirectly, handleReadUser, handleUpdateUser, contact-profile handlers, handleStartConversation, handleListConversations2, handleListConversationEvents, handleJoinConversation, handleUpdateConvoInfo, handleSendOmniChannelEvent.
+- `user/mgr.go`, `user/userdb_test.go`: customer attributes and fullname text fixtures.
+- `conversation/conversation.go`: StartConversation/startConvo, ListConversations2, JoinConversation, UpdateConversationInfo, shouldUpdateConversationAssignee, updateConversationAssignee, SendOmniChannelMessage.
+- `conversation/convodb.go`: UpdateAssignee persists ownership without adding a member.
+- `sendback/webhook.go`: Payload, NewDelivery, signature; POST delivery, events array, delivery/signature headers, raw-body HMAC, multiple secret digests, 30-second timeout.
+- `sendback/webhook_test.go`: TestSignature verifies digest formatting.
+
+Webhook payload examples are synthetic subsets of the source-defined Event/Message/Conversation schema. No captured customer data is published. Receiver code demonstrates verification and processing guidance, not webhook management. No live API calls were made.
+
+## Core concepts and rich blocks
+
+`api/vendor/github.com/subiz/header/header.pb.go`: Message.format, Message.block, Block.type/content/text and bold/italic/underline fields. `header/block.js` contains formatted text examples. `conversation/conversation.go` handles format=block and structured content; `conversation/message_normalize_test.go` verifies text derivation while retaining the block. Channel rendering support is not inferred from the shared schema.
+
+## Webhook guide revision — English only, 2026-11-14
+
+Primary editorial source: [Webhook tích hợp CRM](https://docs.google.com/document/d/1VkTsSfxgC6PHI5p00FB9RFS83PAI5RZ8dExeYScEvao/edit), read through Google Docs including its tables. The English receiving/payload pages are rewritten from that guide and cross-checked with local source. No Google Doc or backend was edited, and no live webhook/API requests were sent. Vietnamese copies deliberately retain their previous source hashes for later translation.
+
+Implementation evidence and resolved discrepancies:
+
+- `sendback/webhook.go`, `Payload`, `NewDelivery`, `signature`: POST; JSON `events`; delivery ID; User-Agent; raw bytes; HMAC-SHA256 as lowercase **hex**, not Base64. Some language examples in the source document use Base64 and are not reproduced. The current sender always builds the signature header; the guide describes signing as optional. Receiver guidance requires a configured secret and valid signature, without inventing a signing-toggle API.
+- `sendback/webhook.go`, `signature`: a **single** `sha256=` prefix followed by comma-separated hex digests. The Google Doc shows repeated header lines instead. The current format is primary; receiver compatibility guidance also covers repeated/combined header values.
+- `sendback/main.go`, `UpdateWebhookSecret`: previous secret expires after `24*3600*1000` milliseconds. `NewDelivery` includes it only before expiry. No secret-management API is documented.
+- `sendback/webhook.go`, `Delivery.post`: 30-second timeout; redirects are not followed. `Shot` dequeues statuses **200 through 300 inclusive**, while reporting treats `>=300` as failure; the source document promises only `2xx` acknowledgement. Documentation recommends `200`/`2xx` and does not claim all non-2xx responses are retried. The status-300 inconsistency is a backend follow-up, not changed here.
+- `Shot`: marks a sender dead after over seven days from first failure; `pubsub.go` after-run callback unsubscribes dead senders and calls `Buffer.Clean(0)`. The docs retain the source guide's general extended-outage warning rather than promising a seven-day retention SLA.
+- `SchedAt` is based on `FirstFail + Duration`; `decreaseFrequency` adds 30 seconds capped at 300. This is not enough evidence to promise fixed inter-attempt delays. No fixed retry schedule is published.
+- `sendback/vendor/github.com/subiz/header/header.pb.go`, `Event`: JSON fields use `omitempty`, including `by`. The source document says common fields are always populated but its own update example omits `by`. The docs explain optional context instead of requiring every field.
+- `user/userdb.go` customer creation and `user/mgr.go` customer-update publication confirm `user_created` / `user_info_updated` and `data.user`. The incomplete update JSON in the Google Doc is replaced with valid synthetic JSON. Existing conversation-assignment evidence above is retained.
+
+No unverified order-event catalog or product events are inferred from the Google Doc's introductory list of business areas. Customer identifiers, device data, and messages in published examples are synthetic.
+
+## Personal access-token instructions — 2026-11-14
+
+The supplied screenshot establishes the live `/apikey` page and its Create token entry point. `subiz/app/PersonalAccessTokens.web.js`, `CreateTokenDialog`, confirms the Account selector, required Note, Expiration selector, create confirmation, Copy token action, and one-time display notice. English/Vietnamese labels are taken from `subiz/lang/en-US.json` and `vi-VN.json`. `subiz/src/router.js` registers `/apikey`; `subiz/store/api.js` scopes token creation to the selected account. `api/auth.go`, `getAccessToken`, confirms Bearer-header support despite older UI translation strings mentioning a query parameter.
+
+The Authentication article now starts with the token-creation steps and removes the outdated claim that no self-service token workflow is established. No real token, account ID, customer data, or token-list screenshot is included in the documentation. The success dialog behavior was verified from source; creating a live credential is unnecessary for these instructions.
+
+Live Chrome verification on the user-authorized test account: opened the personal-token page and creation dialog without submitting. Confirmed Account, Note, Expiration, default 30-day duration, and the Vietnamese confirmation button “Tạo mã”. Closed the form without generating or reading a credential.
+
+Authentication token check: `GET /4.1/me` is registered in `api/router.go` and handled by `api/auth.go:handleMe`. For agent credentials it reads the account-scoped agent or agent profile; user credentials have a separate ReadUser branch. The personal-token guide describes the agent case, sends only the Authorization header, and does not invent a JSON response schema or imply authorization for every operation. No live token request was sent.
+
+Authentication review follow-up (English only): `account/account.go:CreateApiKey` binds the token to the selected account and issuing agent; `GetAgent` checks `acclient.AccessFeature` and returns `account.Agent`. `account/vendor/github.com/subiz/acclient/v2/main.go:AccessFeature` and `CheckPerm` consult the active agent's permissions. This supports the statement that a personal token acts as the agent and does not grant extra access; no exhaustive per-endpoint permission matrix is claimed. The `Agent` protobuf JSON tags confirm `id`, `account_id`, and `fullname`; the new response example is explicitly a selected-field subset with placeholders, not a captured response. `subiz/app/PersonalAccessTokens.web.js` exposes Delete token through the row menu and confirmation; `subiz/lang/en-US.json` confirms permanent deletion. Replacement/revocation instructions use that UI, without promising immediate cache invalidation. Vietnamese content and its reviewed hash remain unchanged.
+
+## Webhook receiver and payload review — 2026-11-14
+
+Re-read `sendback/webhook.go` (`NewDelivery`, `signature`, `post`, `Shot`, `RecentDelivery.NewIndex`), `main.go` (`UpdateWebhookSecret`, queue cleanup job), `pubsub.go` (`OnEvent`, `addSched`, `addFunc`), and `queue.go:Clean`. Confirmed raw-body HMAC-SHA256, lowercase hex, comma-separated digests with one prefix, 24-hour previous-secret expiry, 30-second timeout per HTTP attempt, no redirects, and per-webhook delivery IDs that can change on a subsequent delivery of the same event. The sender signs even with an empty secret, so the receiver guide explicitly requires a nonempty trusted secret. The existing status-300 inconsistency remains; the public guide recommends 200 and makes no blanket claim that every non-2xx response is retried. The cleanup job also drops segments older than its day-based cutoff; no guaranteed seven-day retention window is published.
+
+Live Chrome: opened `/settings/webhooks` and the unsaved `/settings/webhooks/new` form in the user-authorized test account. Inspected labels only, selected Custom event to reveal options, and returned to the list without saving. Confirmed URL, Secret, event presets/custom selection, enabled control, and Create webhook. No existing secret, token, or customer payload was read. English labels checked against `subiz/lang/en-US.json`; field layout/default events and submit behavior checked in `subiz/src/settings/webhook/{list_webhooks,detail_webhook}.js`. Recent deliveries and request/response tabs are verified in the detail component, without opening existing webhook secrets. The three setup event names are present in both the live form and source.
+
+Payload evidence:
+
+- `sendback/vendor/github.com/subiz/header/header.pb.go`: Event, By, Message, Block, Attribute JSON fields, omitempty behavior, and created versus event_time semantics. Removed `message.integration_id` from the previous example: this field is absent from the reviewed Message schema.
+- `conversation/message_normalize_test.go:TestCompileMessageKeepsNonemptyBlock` and the shared Block schema: block content is retained alongside derived text. Rich example uses synthetic content and documented paragraph/text/bold fields.
+- `conversation/broadcaster.go:Broadcast` publishes non-internal-call events to the webhook topic, including message and assignment events; internal messages are not globally filtered from webhook publication. Consumers must check actor type and is_internal. A message event alone is not a channel delivery receipt.
+- `user/userdb.go` constructs user_created with data.user; the UI explicitly supports its subscription. `user/mgr.go:publishMyUserUpsert` clones customer data and emits user_info_updated without requiring event-level by. The map keyed by customer topic, flushed in publishWebhookLoop, can coalesce rapid updates. The guide avoids claiming an audit event for every edit.
+- `conversation/conversation.go:updateConversationAssignee` emits assigned/unassigned events with data.conversation.id and assignee. These backend events are absent from the current creation form; the public page explicitly limits these examples to already-configured subscriptions instead of inventing a UI option or management API.
+
+A public synthetic signature vector uses `docs-example-secret` and the exact UTF-8 bytes of `{"events":[]}` with no newline. Its digest is checked by the documentation test. This is not a captured delivery or a real credential. Vietnamese articles and reviewed hashes remain unchanged.
+
+Creation-secret correction: `sendback/main.go:CreateWebhook` unconditionally sets `inwebhook.Secret = genSecret()` before storing the webhook. The creation form accepts a typed value, but that is not the saved signing key. The setup walkthrough therefore tells readers to reopen the saved webhook and copy its actual Secret. No live subscription was created to establish this behavior; it is verified from the service implementation and the detail form that reads saved webhook data.
+
+## Core concepts review — English only, 2026-11-14
+
+Rechecked `api/vendor/github.com/subiz/header/header.pb.go`: User.id/account_id/attributes/channel/channel_source/profile_id, Touchpoint.channel/source/id, Conversation.members/assignee/touchpoint, ConversationMember.type/id, Event.by/type/data, Message.format/text/block/attachments, and Block.type/content/text/formatting flags. Touchpoint.id is channel-dependent (the schema includes profile and comment destinations); the guide avoids describing every touchpoint ID as a customer profile ID. User and resource examples use synthetic IDs; they do not imply ID prefixes or exact account/cardinality constraints.
+
+`api/handler.go:handleSendEvent` takes conversation context from the URL, reads an Event body, and returns SendMessage's event. `handleSendOmniChannelEvent` and `conversation/conversation.go:SendOmniChannelMessage` establish the separate customer/channel send flow. `conversation/conversation.go:JoinConversation` emits a conversation_invited event carrying members, while `convodb.go:updateAssignee` changes assignee without adding members. The article distinguishes membership, ownership, and event actor identity.
+
+`conversation/message_normalize_test.go:TestCompileMessageKeepsNonemptyBlock` confirms derived text alongside a preserved block; attachment tests confirm that an empty text field does not establish an empty message. The shared Block schema confirms paragraph/text nodes and bold/italic/underline plus image/link/list/table capabilities. No cross-channel rendering guarantee is claimed. `sendback/webhook.go:Payload` supplies the events-array distinction from a single conversation-send request. Existing deep links, including rich-messages-with-blocks, are retained. Vietnamese prose and reviewed hash remain unchanged.
+
+## Canonical object examples — Core concepts, 2026-11-14
+
+Reviewed the canonical schema repository (`header`) directly, including its AGENTS.md, rather than relying only on service-vendored copies:
+
+- `account.proto:Account`, `Agent`: account `id`, name, owner_id, activated state; agent `id`, account_id, fullname, email, active state. An account's own key is id, while other objects use account_id. No account or staff management endpoints are introduced.
+- `header.proto:User`, `Attribute`, `Touchpoint`: customer attributes as repeated objects; channel/channel_source/profile_id versus channel/source/id. The Facebook page/profile mapping follows the schema comments. The sample uses placeholder IDs and does not assert a real destination.
+- `Conversation`, `ConversationMember`: repeated members, string membership, touchpoint, and assignee. `conversation.go` assigns the active membership string; earlier source checks establish the independent invitation/assignment behavior.
+- `Event`, `Data`, `By`, `Message`: standalone event, payload, actor, and message examples. Event.created uses Unix milliseconds; message content is nested under data.message. No deprecated fields, internal ctx, credentials, or full-response guarantees are included.
+- `Block`, `Attachment`: nested paragraph/text/bold nodes; file metadata with mimetype, url, name, and size in bytes. `header.go:BlockToText` is used to verify the example's rendered text.
+
+The page now includes 15 JSON examples: Account, Agent, User, Attribute, Touchpoint, Conversation, ConversationMember, Message, Data, By, Event, Block, rich Message, Attachment, and webhook delivery. Related examples use the same account, customer, agent, conversation, and event IDs. The webhook envelope remains the `sendback/webhook.go:Payload` events array, not the Webhook configuration schema.
+
+Validation uses the generated Go types in the canonical header checkout with `encoding/json.Decoder.DisallowUnknownFields`, then marshals each example back and compares JSON values. This checks field names, types, nested shapes, and omission behavior against the serializer used by `api/router.go`; it does not claim that an illustrative object is accepted as a create request or has been delivered by a live account. BlockToText is also checked against “Hello Alex”. No schema or backend files are changed. English source hashes are refreshed; Vietnamese content remains unchanged.
+
+## Message formats and attachments — English only, 2026-11-14
+
+Canonical `header/header.proto`: Message.format/text/block/attachments; Block.type/content/text/href/bold/italic/underline/strike_through; Attachment media metadata (size bytes, duration seconds, image dimensions), AttachmentType, MessageButton, QuickReply, and GenericElementTemplate. JSON examples use schema fields only. Regular text omits bold; there is no light flag. Shared schema support is not a promise of support on every destination channel.
+
+Rendering evidence: `header/header.go:blockToEle` renders bold/italic/underline/strike-through text and link hrefs; `renderBlockToText`/`blockTextWithHref` handle paragraph/div/hard_break and labeled links. `subiz/utils/common.js:_blockToProseMirror` maps text marks and link.text/link.href; its tests use the same shape. Link labels are direct text rather than child nodes.
+
+`subiz/app/com/{ImageAttachments,VideoAttachments,AudioAttachments,FileAttachments}.js` distinguishes file media by mimetype; all documented media use type=file. LinkAttachments handles link/fallback; ButtonAttachments handles button/buttons and url_button; GenericTemplateAttachments handles generic/elements; the quick-reply model and client handlers establish title/payload fields. Only supported examples are shown; wider channel-specific attachments are not treated as generic files.
+
+`conversation/cdn_attachment.go:prepareMessageFiles,importAttachment` imports file URLs and replaces url/file metadata with stored values; file source is required from url or file.url. `conversation.go:doFile` uses this preparation. This supports explaining that returned metadata may differ from the source. No upload API, universal byte/count limits, external-channel guarantees, or working assets at example.com are invented.
+
+Examples are decoded with DisallowUnknownFields into the generated Go types from the canonical header checkout and marshaled back to compare JSON field names/types. Block rendering is checked using the actual header helpers. No live messages are sent. These are two intentionally English-only additions; existing Vietnamese prose and review hashes are preserved, with the new translation backlog explicitly recorded.

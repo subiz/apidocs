@@ -1,0 +1,27 @@
+---
+sourceHash: 85fd2845865de397044fe5ac39214d1aa969e4509582cf4319f9d1d3ee03ac38
+title: "Đọc lịch sử tin nhắn"
+description: "Lấy các sự kiện trong hội thoại."
+section: "Conversations"
+order: 22
+status: "verified"
+endpointId: "conversations-history"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Đọc sự kiện hội thoại
+
+Endpoint trả các sự kiện từ `ListEvents`, không thêm lớp bọc messages giả định. Sự kiện có nhiều loại; kiểm tra `type` trước khi đọc `data.message`.
+
+Schema yêu cầu hỗ trợ tham số truy vấn `limit` và `start_id`. Xác định mốc tiếp theo từ các sự kiện đã nhận; không giả định offset hoặc trường `next_cursor`. Người gọi phải có quyền truy cập hội thoại.
+
+## Kết quả
+
+Gateway lấy mảng sự kiện từ phản hồi dịch vụ và trả trực tiếp. Lưu ID sự kiện khi đồng bộ lịch sử để tránh trùng lặp.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

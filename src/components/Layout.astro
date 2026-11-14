@@ -1,0 +1,59 @@
+---
+import logo from '../assets/subiz-logo.svg';
+import '../themes/subiz/subiz.css';
+import {navigationPages,currentNavigation} from '../lib/navigation';
+import DocsSidebar from './DocsSidebar.astro';
+import {localeOf,localizedId,text,sectionLabel} from '../lib/i18n';
+import {docs,url,markdownUrl} from '../lib/docs';
+import {endpoints} from '../lib/endpoints';
+import {apiVersionLabel} from '../lib/api-versions';
+import Controls from './Controls';
+import {codeToHtml} from 'shiki';
+import '../styles/docs.css';
+const {page,headings}=Astro.props; const config=currentNavigation;const link=url; const locale=localeOf(page.id); const t=(en:string,vi:string)=>text(locale,en,vi); const allPages=await docs(); const pages=navigationPages(allPages,locale,config);const index=pages.findIndex(p=>p.id===page.id);const endpoint=page.data.endpointId?endpoints[page.data.endpointId]:null;
+const requestHtml=endpoint ? await codeToHtml(endpoint.request,{lang:'http',themes:{light:'github-light',dark:'github-dark'},defaultColor:false}) : '';
+const menuGroups=config.sections.map(section=>({title:sectionLabel(section,locale),planned:config.items[section].some(item=>item.planned),items:config.items[section].filter(item=>item.planned||pages.some(p=>p.id===localizedId(item.id,locale))).map(item=>({title:item[locale],href:item.planned?undefined:link(localizedId(item.id,locale))}))}));
+const md=markdownUrl(page.id); const alternateId=localizedId(page.id,locale==='en'?'vi':'en'); const alternate=allPages.some(p=>p.id===alternateId)?link(alternateId):null;
+const languages=(['en','vi'] as const).filter(language=>allPages.some(p=>p.id===localizedId(page.id,language))); 
+---
+<!doctype html><html lang={locale} data-astryx-theme="subiz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/><title>{page.data.title} · Subiz Developer Docs</title><meta name="description" content={page.data.description}/><link rel="canonical" href={new URL(url(page.id),Astro.site)}/>{languages.map(language=><link rel="alternate" hreflang={language} href={url(localizedId(page.id,language))}/>)}<script is:inline>try{const m=localStorage.getItem('docs-theme');if(m==='light'||m==='dark')document.documentElement.dataset.theme=m}catch{}</script></head><body>
+<a class="skip" href="#main">{t('Skip to content','Đến nội dung')}</a><header><a class="brand" href={link(localizedId('introduction',locale))}><img src={logo.src} width="113" height="31" alt="Subiz"/><span>{t('Developer Docs','Tài liệu API')}</span></a><Controls client:load locale={locale} alternate={alternate} groups={menuGroups}/></header>
+<div class="shell"><aside id="sidebar"><DocsSidebar pages={pages} activeId={page.id} config={config}/></aside>
+<main id="main" data-pagefind-body><div class="eyebrow">{sectionLabel(pages.find(p=>p.id===page.id)?.data.section||page.data.section,locale)}</div><p class="api-version">{apiVersionLabel(page.data,locale)}</p><h1 data-pagefind-meta="title">{page.data.title}</h1><p class="description">{page.data.description}</p>
+{endpoint&&<div class="endpoint"><strong>{endpoint.method}</strong><code>{"https://api.subiz.com.vn"+endpoint.path.split('?')[0]}</code></div>}
+<article><slot/>{endpoint&&<div class="request-code"><div set:html={requestHtml}/></div>}</article>
+<nav class="pagination" aria-label={t('Previous and next','Trang trước và trang sau')}>{index>0&&<a href={link(pages[index-1].id)}>← {t('Previous','Trang trước')}<br/><strong>{pages[index-1].data.title}</strong></a>}{index>=0&&index<pages.length-1&&<a href={link(pages[index+1].id)}>{t('Next','Trang sau')} →<br/><strong>{pages[index+1].data.title}</strong></a>}</nav><footer>{t('Subiz Developer Docs · Built for clear integrations','Tài liệu API Subiz · Tích hợp rõ ràng, dễ hiểu')}</footer></main>
+<aside class="toc"><strong>{t('On this page','Trong trang này')}</strong>{headings.filter((h:any)=>h.depth===2||h.depth===3).map((h:any)=><a class:list={{nested:h.depth===3}} href={'#'+h.slug}>{h.text}</a>)}<a href={md}>{t('View Markdown','Xem Markdown')} ↗</a></aside></div>
+<dialog id="search"><form method="dialog"><button aria-label={t('Close search','Đóng tìm kiếm')}>{t('Close','Đóng')} ×</button></form><label for="query">{t('Search documentation','Tìm kiếm tài liệu')}</label><input id="query" type="search" placeholder={t('Search guides, resources, and examples…','Tìm hướng dẫn, tài nguyên và ví dụ…')}/><div id="results" aria-live="polite">{t('Type to search.','Nhập từ khóa để tìm kiếm.')}</div><footer class="search-footer"><span id="search-provider"></span><a href="https://www.algolia.com/" target="_blank" rel="noreferrer">Search by Algolia</a></footer></dialog>
+<script>
+import {searchDocs} from '../lib/search';
+const vi=document.documentElement.lang==='vi';
+const tr=(en:string,translated:string)=>vi?translated:en;
+const dialog=document.querySelector<HTMLDialogElement>('#search')!;
+const input=document.querySelector<HTMLInputElement>('#query')!;
+const target=document.querySelector('#results')!;
+let generation=0;let timer:ReturnType<typeof setTimeout>;let controller:AbortController|undefined;
+document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();dialog.showModal();input.focus()}});
+input.addEventListener('input',()=>{
+  const g=++generation;clearTimeout(timer);controller?.abort();
+  const query=input.value.trim();
+  if(!query){target.textContent=tr('Type to search.','Nhập từ khóa để tìm kiếm.');return;}
+  target.textContent=tr('Searching…','Đang tìm…');
+  timer=setTimeout(async()=>{
+    controller=new AbortController();
+    try{
+      const {results,provider}=await searchDocs(query,controller.signal);
+      if(g!==generation)return;
+      target.replaceChildren();
+      if(!results.length)target.textContent=tr('No results found.','Không tìm thấy kết quả.');
+      for(const row of results){const a=document.createElement('a');a.href=row.url;a.textContent=row.title+(row.excerpt?' — '+row.excerpt:'');target.append(a)}
+      document.querySelector('#search-provider')!.textContent=provider==='algolia'?tr('Results from Algolia','Kết quả từ Algolia'):tr('Local results · Algolia unavailable or no matching indexed pages','Kết quả cục bộ · Algolia chưa có kết quả phù hợp hoặc không khả dụng');
+    }catch{if(g===generation)target.textContent=tr('Search unavailable. Please try again.','Không thể tìm kiếm. Vui lòng thử lại.')}
+  },250);
+});
+dialog.addEventListener('close',()=>{generation++;clearTimeout(timer);controller?.abort()});
+dialog.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();dialog.close();return;}if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const links=[...dialog.querySelectorAll<HTMLAnchorElement>('#results a')];const index=links.indexOf(document.activeElement as HTMLAnchorElement);links[(index+(e.key==='ArrowDown'?1:-1)+links.length)%links.length]?.focus()}});
+
+
+const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){document.querySelectorAll('.toc a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+entry.target.id))}},{rootMargin:'-80px 0px -65% 0px'});document.querySelectorAll('article h2,article h3').forEach(h=>observer.observe(h));
+</script></body></html>

@@ -1,0 +1,33 @@
+---
+sourceHash: b4dcceff8b5697adc3aabb00423781006e4e9f487330fcbcbca66efe3a71b213
+title: "Mời nhân viên"
+description: "Mời nhân viên hiện có vào hội thoại."
+section: "Conversations"
+order: 23
+status: "verified"
+endpointId: "conversations-invite-agent"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Thêm nhân viên vào hội thoại
+
+Thao tác này mời nhân viên đã có vào hội thoại. Nó không tạo tài khoản nhân viên hay gửi lời mời tham gia tài khoản.
+
+| Trường | Kiểu | Mục đích |
+| --- | --- | --- |
+| `cid` trong đường dẫn | string | Hội thoại đích. |
+| `type` | string | Đặt là `agent`. |
+| `id` | string | ID nhân viên Subiz đã có. |
+
+Gateway đặt ngữ cảnh tài khoản và hội thoại. `JoinConversation` gửi sự kiện `conversation_invited` với thành viên được yêu cầu.
+
+## Kết quả
+
+Dịch vụ trả đối tượng rỗng khi thành công. Đọc lại hội thoại để kiểm tra thành viên. Mời tham gia và đặt trường `assignee` là hai thao tác riêng; xem [Phân công nhân viên](/docs/vi/api-reference/conversations/assign-agent).
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

@@ -1,0 +1,1 @@
+import {docs,markdown} from '../lib/docs'; export async function GET(){const pages=await docs(); return new Response(pages.map(markdown).join('\n\n---\n\n'),{headers:{'Content-Type':'text/plain; charset=utf-8'}});}

@@ -1,0 +1,42 @@
+---
+sourceHash: c40db0feb81686b9bb6a68bad9ad291ed4d5fa15faac027ae8952dccf4d46ad4
+title: "API Subiz"
+description: "Kết nối khách hàng, hội thoại và tin nhắn với hệ thống của bạn."
+section: "Get Started"
+order: 0
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Bắt đầu
+
+Kết nối hồ sơ khách hàng, hội thoại và tin nhắn với hệ thống của bạn. `User` là khách hàng; `agent` là nhân viên hỗ trợ. Các mô tả API đã được đối chiếu với mã nguồn Subiz.
+
+1. Đọc [Xác thực](/docs/vi/get-started/authentication) để chuẩn bị access token.
+2. Làm theo [Gửi tin nhắn](/docs/vi/api-reference/messages/send) để tạo yêu cầu.
+
+## Trước khi bắt đầu
+
+Bạn cần access token hợp lệ và ID của hội thoại mà tích hợp được phép truy cập. Giữ token trên máy chủ. Thay các giá trị mẫu trước khi gửi yêu cầu.
+
+## Quy trình tích hợp
+
+1. [Tạo khách hàng](/docs/vi/api-reference/users/create) hoặc lấy hồ sơ đã có.
+2. [Lấy hội thoại](/docs/vi/api-reference/conversations/retrieve).
+3. [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) và [phân công phụ trách](/docs/vi/api-reference/conversations/assign-agent).
+4. [Gửi tin nhắn](/docs/vi/api-reference/messages/send).
+5. [Nhận sự kiện webhook](/docs/vi/webhooks/receiving) để cập nhật hệ thống.
+
+## Phạm vi
+
+Mã nguồn API gateway xác nhận cách xử lý yêu cầu và kiểu phản hồi. Quyền gửi, giới hạn của kênh và quy tắc chuyển phát do các dịch vụ phía sau thực thi; tài liệu này chưa mô tả đầy đủ mọi quy tắc. Không có tin nhắn thực tế nào được gửi khi biên soạn tài liệu.
+
+## Dùng với công cụ của bạn
+
+Sao chép trang dưới dạng Markdown, xem [mục lục tài liệu](/llms.txt) hoặc tải [toàn bộ tài liệu](/llms-full.txt).
+
+Tìm hiểu mối quan hệ giữa các đối tượng trong [Các khái niệm chính](/docs/vi/get-started/concepts), bao gồm tin nhắn phong phú dạng block.

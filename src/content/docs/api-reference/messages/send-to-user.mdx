@@ -1,0 +1,38 @@
+---
+sourceHash: a7b1969cda9a8b61a8c71236b880801c0267280e4b856271a351644d174a2988
+title: "Send a message to a user"
+description: " Send a message to a user through the Subiz API."
+section: "Messages"
+order: 31
+status: "verified"
+endpointId: "messages-send-to-user"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Choose the channel destination
+
+Use this operation when sending through a customer's channel identity. Unlike [Send Message](/docs/api-reference/messages/send), the body is a `messages` array of events, each with its own touchpoint and message data. The path user ID alone is not a substitute for the event's destination.
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `messages` | array | Candidate message events. |
+| `messages[].touchpoint` | object | Channel, source, and external profile ID. |
+| `messages[].data.message` | object | Message content. |
+
+Replace all channel placeholders with values from your connected integration. Channel-specific permissions and delivery restrictions still apply.
+
+## Candidate behavior
+
+The inspected service tries candidates in order and returns on the first successful send. This is not a bulk-send endpoint. It can stop on an unsubscribed-user error. Use a single candidate when you intend one destination.
+
+## Result
+
+The service returns an event, not an array of results for all candidates. A successful API call does not prove external delivery. Avoid retrying blindly after timeouts.
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

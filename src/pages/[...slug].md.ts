@@ -1,0 +1,1 @@
+import {docs,markdown,markdownSlug} from '../lib/docs'; export async function getStaticPaths(){return (await docs()).map(p=>({params:{slug:markdownSlug(p.id)},props:{page:p}}));} export function GET({props}:any){return new Response(markdown(props.page),{headers:{'Content-Type':'text/markdown; charset=utf-8'}});}

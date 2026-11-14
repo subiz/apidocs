@@ -1,0 +1,57 @@
+---
+sourceHash: 8e0f7634fe0edfbdd5aedb79c4f0cd833536575da857510596bca44dd9c943c5
+title: "Gửi tin nhắn"
+description: "Gửi tin nhắn văn bản vào hội thoại đã có."
+section: "Messages"
+order: 30
+status: "verified"
+endpointId: "messages-send"
+---
+
+## Trước khi gửi
+
+Chuẩn bị [Bearer access token](/docs/vi/get-started/authentication) hợp lệ và ID hội thoại mà tích hợp được phép truy cập. Chạy yêu cầu sẽ gửi tin nhắn thật; hãy dùng hội thoại thử nghiệm phù hợp.
+
+## Nội dung yêu cầu
+
+API nhận một đối tượng sự kiện, với tin nhắn bên trong `data.message`.
+
+| Trường | Kiểu | Hành vi |
+| --- | --- | --- |
+| `cid` trong đường dẫn | string | Hội thoại đích. |
+| `type` | string | Không bắt buộc; mặc định `message_sent` nếu bỏ qua. |
+| `data.message` | object | Nội dung tin nhắn văn bản. |
+| `data.message.text` | string | Văn bản cần gửi. |
+| `data.message.format` | string | Dùng `plaintext` trong ví dụ. |
+
+```json
+{
+  "type": "message_sent",
+  "data": {
+    "message": {
+      "text": "Hello! How can we help?",
+      "format": "plaintext"
+    }
+  }
+}
+```
+
+## Trường do máy chủ đặt
+
+Gateway đặt thời gian `created` và `account_id` của sự kiện. ID hội thoại trong đường dẫn được chép vào `data.message.conversation_id` và `data.conversation.id`. Bạn không cần gửi các trường này cho route này.
+
+## Phản hồi
+
+Khi thành công, gateway trả HTTP `200` với sự kiện từ dịch vụ hội thoại, chuyển trực tiếp sang JSON. Gateway không thêm lớp bọc `data` bên ngoài. Schema sự kiện có `id`, `type`, `created` và `data.message`; trường rỗng có thể bị lược bỏ.
+
+API thành công không đảm bảo chuyển phát đến kênh bên ngoài. Kho mã nguồn gateway không quy định đầy đủ mọi quy tắc theo kênh và kiểm tra của dịch vụ phía sau.
+
+## Xử lý lỗi
+
+Kiểm tra mã HTTP trước khi xử lý phản hồi. Gateway có thể từ chối JSON sai, xác thực không hợp lệ hoặc người gửi bị chặn; dịch vụ phía sau cũng có thể từ chối thao tác. Tránh gửi lại mù quáng sau timeout vì tin có thể đã được chấp nhận. Handler đã kiểm tra không xác lập bảo đảm idempotency cho route này.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_CID` bằng ID hội thoại và `YOUR_ACCESS_TOKEN` bằng access token của bạn. Gửi các header và body JSON bên dưới.
+
+Tìm hiểu mối quan hệ giữa các đối tượng trong [Các khái niệm chính](/docs/vi/get-started/concepts), bao gồm tin nhắn phong phú dạng block.

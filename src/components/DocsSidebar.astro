@@ -1,0 +1,26 @@
+---
+import {localeOf,sectionLabel,text} from '../lib/i18n';
+import {currentNavigation,type NavigationConfig} from '../lib/navigation';
+import {url, type docs} from '../lib/docs';
+interface Props {pages:Awaited<ReturnType<typeof docs>>; activeId:string;config?:NavigationConfig}
+const {pages,activeId,config=currentNavigation}=Astro.props;
+---
+<nav aria-label="Documentation" data-docs-sidebar>
+  {config.sections.map(section => <details open>
+    <summary>{sectionLabel(section,localeOf(activeId))}</summary>
+    {config.items[section].some(item=>item.planned)&&<small class="nav-review-note">{text(localeOf(activeId),'Outline for review','Đề mục chờ nội dung')}</small>}
+    {pages.filter(page=>page.data.section===section).map(page=>
+      <a href={url(page.id)} aria-current={page.id===activeId?'page':undefined}>{page.data.title}</a>
+    )}
+    {config.items[section].filter(item=>item.planned).map(item=><span class="nav-planned">{item[localeOf(activeId)]}</span>)}
+  </details>)}
+</nav>
+<script>
+  function expandSidebar() {
+    document.querySelectorAll<HTMLDetailsElement>('[data-docs-sidebar] details').forEach(group=>{group.open=true});
+  }
+  expandSidebar();
+  // Browsers can restore closed details from their back/forward page cache.
+  window.addEventListener('pageshow',expandSidebar);
+  document.addEventListener('astro:page-load',expandSidebar);
+</script>

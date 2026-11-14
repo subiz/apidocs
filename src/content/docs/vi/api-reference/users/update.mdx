@@ -1,0 +1,32 @@
+---
+sourceHash: ccce05833bcb984aad6466f40b93e42b9a6599c494e90694460c539375975c73
+title: "Cập nhật khách hàng"
+description: "Cập nhật thuộc tính của khách hàng qua API."
+section: "Users"
+order: 12
+status: "verified"
+endpointId: "users-update"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Cập nhật thuộc tính
+
+Gửi mảng `attributes` gồm tên thuộc tính và giá trị đúng kiểu. Ví dụ cập nhật thuộc tính văn bản `fullname`. Không gửi toàn bộ bản sao hồ sơ đã lưu: gateway chọn các trường được hỗ trợ trước khi chuyển tiếp.
+
+| Trường | Kiểu | Mục đích |
+| --- | --- | --- |
+| `uid` trong đường dẫn | string | Khách hàng cần cập nhật. |
+| `attributes` | array | Tên thuộc tính và giá trị. |
+
+Handler cũng hỗ trợ các trường định danh và phụ trách; ví dụ này chỉ cập nhật một thuộc tính khách hàng. Thông tin xác thực loại user bị giới hạn trong danh tính của chính user đó.
+
+## Kiểm tra thay đổi
+
+[Lấy thông tin khách hàng](/docs/vi/api-reference/users/retrieve) và so sánh thuộc tính đã cập nhật. Không giả định mọi trường trong schema User đều có thể ghi.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

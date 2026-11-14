@@ -1,0 +1,37 @@
+---
+sourceHash: 8e874db86f795883cba4b6e0fb34ff02ebee25dcbb01db15e93874abc9ab633a
+title: "Phân công nhân viên"
+description: "Đặt nhân viên phụ trách một hội thoại."
+section: "Conversations"
+order: 24
+status: "verified"
+endpointId: "conversations-assign-agent"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Đặt người phụ trách
+
+Dùng endpoint cập nhật hội thoại để đặt `assignee` thành ID của một nhân viên đã có.
+
+| Trường | Kiểu | Mục đích |
+| --- | --- | --- |
+| `accid` trong đường dẫn | string | Tài khoản tương ứng với token. |
+| `cid` trong đường dẫn | string | Hội thoại cần phân công. |
+| `assignee` | string | ID nhân viên phụ trách. |
+
+`UpdateConversationInfo` cập nhật người phụ trách và phát `conversation_assigned` khi giá trị thay đổi. Phản hồi là hội thoại. Phân công không tự đảm bảo mời nhân viên vào hội thoại; dùng [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) khi cần thêm người tham gia.
+
+## Bỏ phân công
+
+Dùng cùng route với `?x-fields=assignee` và body `{"assignee":""}`. Chỉ định trường là cần thiết để phân biệt xóa giá trị với bỏ qua trường. Khi người phụ trách chuyển thành rỗng, dịch vụ phát `conversation_unassigned`.
+
+## Phân phối tự động là thao tác khác
+
+Route `/4.1/conversations/{cid}/assign` chạy lại logic phân phối và không đọc ID nhân viên đích. Không dùng route đó để chọn một nhân viên cụ thể.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

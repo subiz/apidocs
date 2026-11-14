@@ -1,0 +1,66 @@
+import {localizedId, type Locale} from './i18n.ts';
+
+export const sections = ['Get Started', 'Messages', 'Users', 'Conversations', 'Webhooks', 'Updates'] as const;
+export const navigationSections = ['Get Started', 'Conversations & Messages', 'Users', 'Orders', 'Products', 'Webhooks', 'Updates'] as const;
+type Section = typeof navigationSections[number];
+export type NavigationItem = {id:string; en:string; vi:string; planned?:boolean};
+
+// Editorial navigation is independent of article frontmatter and published URLs.
+export const navigation: Record<Section, readonly NavigationItem[]> = {
+ 'Get Started': [
+  {id:'introduction',en:'Overview',vi:'Tổng quan'},
+  {id:'get-started/concepts',en:'Users, conversations & messages',vi:'Khách hàng, hội thoại và tin nhắn'},
+  {id:'get-started/authentication',en:'Authentication',vi:'Xác thực'},
+ ],
+ 'Conversations & Messages': [
+  {id:'messages/formats',en:'Message formats',vi:'Định dạng tin nhắn'},
+  {id:'messages/attachments',en:'Attachments',vi:'Tệp và nội dung đính kèm'},
+  {id:'api-reference/messages/send',en:'Send to a conversation',vi:'Gửi tin nhắn vào hội thoại'},
+  {id:'api-reference/messages/send-to-user',en:'Send to a customer',vi:'Gửi tin nhắn cho khách hàng'},
+  {id:'api-reference/conversations/retrieve',en:'Get conversation details',vi:'Lấy thông tin hội thoại'},
+  {id:'api-reference/conversations/history',en:'Read message history',vi:'Đọc lịch sử tin nhắn'},
+  {id:'api-reference/conversations/invite-agent',en:'Invite an agent',vi:'Mời nhân viên tham gia'},
+  {id:'api-reference/conversations/assign-agent',en:'Assign an agent',vi:'Giao nhân viên phụ trách'},
+ ],
+ 'Users': [
+  {id:'api-reference/users/create',en:'Create a customer',vi:'Tạo khách hàng'},
+  {id:'api-reference/users/retrieve',en:'Get customer details',vi:'Lấy thông tin khách hàng'},
+  {id:'api-reference/users/update',en:'Update customer details',vi:'Cập nhật thông tin khách hàng'},
+  {id:'api-reference/users/identity',en:'Find or create by channel identity',vi:'Tìm hoặc tạo theo định danh kênh'},
+ ],
+ 'Orders': [
+  {id:'api-reference/orders/create',en:'Create an order',vi:'Tạo đơn hàng',planned:true},
+  {id:'api-reference/orders/list',en:'List orders',vi:'Lấy danh sách đơn hàng',planned:true},
+  {id:'api-reference/orders/retrieve',en:'Get order details',vi:'Lấy thông tin đơn hàng',planned:true},
+  {id:'api-reference/orders/update',en:'Update an order',vi:'Cập nhật đơn hàng',planned:true},
+ ],
+ 'Products': [
+  {id:'api-reference/products/create',en:'Create a product',vi:'Tạo sản phẩm',planned:true},
+  {id:'api-reference/products/list',en:'List products',vi:'Lấy danh sách sản phẩm',planned:true},
+  {id:'api-reference/products/retrieve',en:'Get product details',vi:'Lấy thông tin sản phẩm',planned:true},
+  {id:'api-reference/products/update',en:'Update a product',vi:'Cập nhật sản phẩm',planned:true},
+ ],
+ 'Updates': [{id:'changelog',en:'Changelog',vi:'Nhật ký thay đổi'}],
+ 'Webhooks': [
+  {id:'webhooks/receiving',en:'Receive & verify events',vi:'Nhận và xác minh sự kiện'},
+  {id:'webhooks/payloads',en:'Event payloads',vi:'Cấu trúc dữ liệu sự kiện'},
+ ],
+};
+
+export type NavigationConfig = {sections:readonly string[];items:Record<string,readonly NavigationItem[]>};
+export const currentNavigation:NavigationConfig={sections:navigationSections,items:navigation};
+
+export function navigationPages<T extends {id:string;data:{title:string;section:string;translationPending?:boolean}}>(pages:T[],locale:Locale,config:NavigationConfig=currentNavigation):T[] {
+ const seen=new Set<string>();
+ return config.sections.flatMap(section=>config.items[section].filter(item=>!item.planned).flatMap(item=>{
+  const id=localizedId(item.id,locale);
+  if(seen.has(id))throw new Error('Duplicate navigation entry: '+id);
+  seen.add(id);
+  const page=pages.find(page=>page.id===id);
+  if(!page){
+   if(locale==='vi'&&pages.find(p=>p.id===item.id)?.data.translationPending)return [];
+   throw new Error('Navigation links to missing published page: '+id);
+  }
+  return [{...page,data:{...page.data,title:item[locale],section}}];
+ }));
+}

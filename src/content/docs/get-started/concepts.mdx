@@ -1,0 +1,335 @@
+---
+sourceHash: a5370b94ee20d6aa247e55e9e92db0948b216df4123021050ce0029ee562e2de
+title: "Core concepts"
+description: "Understand Subiz objects and their relationships through JSON examples."
+section: "Get Started"
+order: 2
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+When Alex contacts your business, Alex is a **user**. Sam, the staff member replying, is an **agent**. Their exchange takes place in a **conversation**. Each message is carried by an **event**.
+
+## How the entities fit together
+
+| Object | Represents |
+| --- | --- |
+| Account | The business account your integration connects to. |
+| User | A customer record, including attributes and a channel identity. |
+| Agent | A staff member serving customers. |
+| Conversation | An interaction with participants, an assignee, and event history. |
+| Event | Something that happened, such as a message or an assignment. |
+| Message | Text, rich blocks, or attachments inside an event. |
+
+The examples show selected fields from Subiz's shared object schemas. They use synthetic values and consistent IDs; they are not complete API responses or create-request bodies. Each endpoint defines which fields it accepts or returns. Empty or optional fields may be omitted.
+
+**Keep IDs separate.** A customer ID, conversation ID, and external profile ID identify different things. Store the account ID with resource IDs when integrating multiple businesses.
+
+## Account
+
+An `Account` represents a business in Subiz. Its own identifier is `id`; other objects refer to it as `account_id`. `owner_id` identifies the owning agent.
+
+```json
+{
+  "id": "account_example",
+  "name": "Example Store",
+  "owner_id": "agent_example",
+  "state": "activated"
+}
+```
+
+Use an access token for the intended account. See [Authentication](/docs/get-started/authentication).
+
+## Agent
+
+An `Agent` is a staff member in an account. Use its `id` when inviting an agent or setting a conversation's `assignee`.
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "fullname": "Sam Example",
+  "email": "sam@example.com",
+  "state": "active"
+}
+```
+
+`fullname` is a direct field on an agent. Customer names use an attribute instead.
+
+## Users and channel identities
+
+A `User` is a customer. This customer has a Facebook identity: `channel_source` identifies the page, while `profile_id` identifies the profile on that page.
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    }
+  ]
+}
+```
+
+Keep the Subiz `id` separate from `profile_id`. Use [Find or create by channel identity](/docs/api-reference/users/identity) to resolve the channel, source, and profile to a Subiz user.
+
+### Attribute
+
+Each item in `user.attributes` is an `Attribute`. Locate it by `key`, not array position. This attribute stores the customer's name:
+
+```json
+{
+  "key": "fullname",
+  "text": "Alex Example"
+}
+```
+
+Read the value field appropriate to the attribute: `text`, `number`, `boolean`, or `datetime`. A `datetime` value is a date-time string. Do not assume every attribute uses `text`.
+
+### Touchpoint
+
+A `Touchpoint` describes a conversation's channel context or a message destination. For this Facebook example, `source` is the page and `id` is the customer's profile on that page:
+
+```json
+{
+  "channel": "facebook",
+  "source": "page_example",
+  "id": "profile_example"
+}
+```
+
+These correspond to the user's `channel`, `channel_source`, and `profile_id` above. The meaning of a touchpoint's `id` depends on the channel; it can also identify a comment or another destination. Use the connected integration's values, not a Subiz user ID in place of the destination.
+
+## Conversations, members, and ownership
+
+A `Conversation` has its own ID, members, channel context, and event history. A customer can participate in more than one conversation. Here, Sam is both a member and the responsible agent:
+
+```json
+{
+  "id": "conversation_example",
+  "account_id": "account_example",
+  "state": "active",
+  "assignee": "agent_example",
+  "members": [
+    {
+      "id": "user_example",
+      "type": "user",
+      "membership": "active"
+    },
+    {
+      "id": "agent_example",
+      "type": "agent",
+      "conversation_id": "conversation_example",
+      "membership": "active"
+    }
+  ],
+  "touchpoint": {
+    "channel": "facebook",
+    "source": "page_example",
+    "id": "profile_example"
+  }
+}
+```
+
+`assignee` identifies the responsible agent. It can be empty or omitted when the conversation is unassigned. `members` describes participation; it is not the same as ownership.
+
+### Conversation member
+
+A `ConversationMember` identifies a participant by `type` and `id`. `membership` records their participation state.
+
+```json
+{
+  "id": "agent_example",
+  "type": "agent",
+  "conversation_id": "conversation_example",
+  "membership": "active"
+}
+```
+
+[Invite an agent](/docs/api-reference/conversations/invite-agent) adds an existing agent as a participant. [Assign an agent](/docs/api-reference/conversations/assign-agent) changes responsibility. Explicit assignment does not add the agent to `members`.
+
+## Messages and events
+
+### Message
+
+A `Message` holds content. This plain-text message belongs to the conversation above:
+
+```json
+{
+  "conversation_id": "conversation_example",
+  "format": "plaintext",
+  "text": "Hello Alex"
+}
+```
+
+This is the message object, not the full send-request body. [Send to a conversation](/docs/api-reference/messages/send) wraps it in `data.message` and takes the conversation ID from the URL. [Send to a customer](/docs/api-reference/messages/send-to-user) uses a different request shape and requires channel destination context.
+
+### Event data
+
+`Data` holds the object relevant to an event. For `message_sent`, it contains `message`:
+
+```json
+{
+  "message": {
+    "conversation_id": "conversation_example",
+    "format": "plaintext",
+    "text": "Hello Alex"
+  }
+}
+```
+
+Other event types can carry `user` or `conversation` instead. Check the event's `type` before accessing nested fields.
+
+### Actor
+
+The optional `By` object identifies who caused an event. It appears as `event.by`:
+
+```json
+{
+  "id": "agent_example",
+  "type": "agent"
+}
+```
+
+`type` can identify a user, agent, or bot. The actor is not necessarily the conversation's assignee. Some events omit `by` or provide device context without an actor ID.
+
+### Event
+
+An `Event` combines its identity, type, time, actor, and data. Here is the complete example envelope around the message above:
+
+```json
+{
+  "id": "event_example_1",
+  "account_id": "account_example",
+  "created": 1794614400000,
+  "type": "message_sent",
+  "by": {
+    "id": "agent_example",
+    "type": "agent"
+  },
+  "data": {
+    "message": {
+      "conversation_id": "conversation_example",
+      "format": "plaintext",
+      "text": "Hello Alex"
+    }
+  }
+}
+```
+
+`created` is the time recorded in Subiz, in Unix milliseconds. `event_time`, when provided, records the original occurrence time. Event `id` identifies the event; do not substitute a nested message or conversation ID.
+
+[Conversation history](/docs/api-reference/conversations/history) contains events, not only messages. A `message_sent` event or a successful send response does not by itself confirm delivery to an external channel.
+
+## Rich messages with blocks
+
+For the full guide to plaintext, links, and text styling, see [Message formats](/docs/messages/formats).
+
+### Block
+
+A `Block` is a node in a rich-content tree. `type` selects the node, `content` holds children, and a text node uses `text`. Text nodes can include `bold`, `italic`, or `underline`.
+
+```json
+{
+  "type": "paragraph",
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello "
+    },
+    {
+      "type": "text",
+      "text": "Alex",
+      "bold": true
+    }
+  ]
+}
+```
+
+This content reads “Hello **Alex**”. A block is a JSON object, not an HTML string.
+
+### Rich message
+
+Place the block in `message.block` and set `format` to `block`:
+
+```json
+{
+  "conversation_id": "conversation_example",
+  "format": "block",
+  "block": {
+    "type": "paragraph",
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello "
+      },
+      {
+        "type": "text",
+        "text": "Alex",
+        "bold": true
+      }
+    ]
+  }
+}
+```
+
+Subiz can derive plain text while retaining the block tree. Store the tree if you need formatting. The model also supports images, links, lists, and tables; rendering depends on the destination channel.
+
+### Attachment
+
+See [Attachments](/docs/messages/attachments) for image, video, audio, file, and interactive examples.
+
+Each item in `message.attachments` is an `Attachment`. This file example uses a placeholder URL; `size` is measured in bytes:
+
+```json
+{
+  "type": "file",
+  "mimetype": "application/pdf",
+  "url": "https://example.com/guide.pdf",
+  "name": "guide.pdf",
+  "size": 2048
+}
+```
+
+Put attachment objects in the `attachments` array, not in `block.content`. A message can contain attachments even when its `text` is empty.
+
+## Webhooks connect your system
+
+API calls request actions; webhooks notify your integration of events. A webhook delivery wraps events in an `events` array. The same event example would appear as:
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_1",
+      "account_id": "account_example",
+      "created": 1794614400000,
+      "type": "message_sent",
+      "by": {
+        "id": "agent_example",
+        "type": "agent"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "plaintext",
+          "text": "Hello Alex"
+        }
+      }
+    }
+  ]
+}
+```
+
+A delivery can contain several events. Verify its signature, then process every event by `type` and deduplicate by `(account_id, id)`.
+
+See [Receive webhook events](/docs/webhooks/receiving) for setup and [Event payload examples](/docs/webhooks/payloads) for other event types. The delivery envelope is not the Webhook configuration object.
+
+## Next step
+
+[Get an access token and test it](/docs/get-started/authentication), then choose the customer or messaging operation your integration needs.

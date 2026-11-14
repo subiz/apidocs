@@ -1,0 +1,243 @@
+---
+sourceHash: 17e3007181e34aef5cdd2c42c7f2278ffe95926d1650c67eab62b53192a62c77
+title: "Event payload examples"
+description: "Read message, customer, and conversation events in a webhook delivery."
+section: "Webhooks"
+order: 41
+status: "verified"
+apiScope: "webhook"
+---
+
+[Verify the request signature](/docs/webhooks/receiving#verify-the-signature) before reading these fields. Each request wraps one or more events in an `events` array.
+
+The examples below are shortened payloads with synthetic values. They show supported fields, not an exhaustive event catalog or a guarantee that optional fields are always present.
+
+## Choose the event type
+
+| Event | Data object | Use it to |
+| --- | --- | --- |
+| `message_sent` | `data.message` | Receive messages and associate them with a conversation. |
+| `user_created` | `data.user` | Create or link a customer record in your CRM. |
+| `user_info_updated` | `data.user` | Synchronize customer information. |
+| `conversation_assigned` | `data.conversation` | Update the responsible agent. |
+| `conversation_unassigned` | `data.conversation` | Clear the responsible agent. |
+
+Select the first three types under **Custom event** when [creating a webhook](/docs/webhooks/receiving#create-a-webhook-in-subiz). Assignment events are supported by the backend but are not listed in the current creation form; the assignment examples apply only to subscriptions already configured for those types.
+
+## Read the event envelope
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Event ID. Combine with `account_id` to deduplicate processing. |
+| `account_id` | Subiz account that the event belongs to. |
+| `type` | Event name. Use it to choose how to read `data`. |
+| `created` | Time the event was recorded in Subiz, as Unix milliseconds. |
+| `event_time` | Original occurrence time, when provided, in Unix milliseconds. Fall back to `created` if absent. |
+| `by` | Actor context, when available. `by.type` identifies the actor type; `by.id` identifies the actor. |
+| `data` | Data for this event type. |
+
+These paths are relative to each item in `events`, for example `events[0].id`. Do not confuse the event ID with a user ID, conversation ID, or the `X-Subiz-Delivery` header.
+
+Fields with empty values can be omitted. `by` may be absent or contain only context such as device information. Validate what your handler needs and tolerate additional fields.
+
+## Message sent
+
+A `message_sent` event can represent a customer message, an agent reply, or automated content. It does not by itself confirm delivery to an external channel.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_1",
+      "account_id": "account_example",
+      "created": 1794614400000,
+      "type": "message_sent",
+      "by": {
+        "id": "user_example",
+        "type": "user"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "plaintext",
+          "text": "Can you help with my order?"
+        }
+      }
+    }
+  ]
+}
+```
+
+Use `data.message.conversation_id` to associate the message with a conversation. Check `by.type` to distinguish a customer (`user`) from an agent (`agent`), and check `data.message.is_internal` before treating a message as customer-facing. Do not automatically reply to every `message_sent` event: your own replies can trigger the same event type.
+
+### Rich message blocks
+
+When `format` is `block`, read `data.message.block` as a tree. `content` contains child nodes; text nodes can include formatting such as `bold`.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_2",
+      "account_id": "account_example",
+      "created": 1794614401000,
+      "type": "message_sent",
+      "by": {
+        "id": "agent_example",
+        "type": "agent"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "block",
+          "text": "Hello Alex",
+          "block": {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Hello "
+              },
+              {
+                "type": "text",
+                "text": "Alex",
+                "bold": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+```
+
+This renders “Hello **Alex**”. Keep the block tree when storing rich content; `text` alone loses formatting. Messages can also contain `attachments`, and a message without text is not necessarily empty. See [Rich messages with blocks](/docs/get-started/concepts#rich-messages-with-blocks).
+
+## Customer created
+
+`user_created` contains the customer in `data.user`. Use `(account_id, data.user.id)` as your CRM's Subiz reference. Customers are users, not staff agents.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_3",
+      "account_id": "account_example",
+      "created": 1794614399000,
+      "type": "user_created",
+      "data": {
+        "user": {
+          "id": "user_example",
+          "account_id": "account_example",
+          "attributes": [
+            {
+              "key": "fullname",
+              "text": "Alex Example"
+            },
+            {
+              "key": "created",
+              "datetime": "2026-11-13T23:59:59Z"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+`attributes` is an array, not an object keyed by name. Find the attribute whose `key` is `fullname`, then read `text`. Date attributes use `datetime`; other attributes can use `number` or `boolean`. Do not use array position to identify a field.
+
+## Customer information updated
+
+`user_info_updated` carries customer information under `data.user`. Treat it as a synchronization update, not a list containing only changed fields.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_4",
+      "account_id": "account_example",
+      "created": 1794614402000,
+      "type": "user_info_updated",
+      "data": {
+        "user": {
+          "id": "user_example",
+          "account_id": "account_example",
+          "attributes": [
+            {
+              "key": "fullname",
+              "text": "Alex Example",
+              "modified": 1794614402000,
+              "by_type": "agent",
+              "by": "agent_example"
+            },
+            {
+              "key": "created",
+              "datetime": "2026-11-13T23:59:59Z"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+Here, `modified` records an attribute's update time in Unix milliseconds. Its `by` and `by_type` describe who updated that attribute; they are separate from the optional event-level `by` object.
+
+Upsert only the fields your CRM uses. An omitted attribute is not an instruction to delete its CRM value. Rapid updates to the same customer can be combined before webhook delivery, so this event is not a complete audit trail of every edit. Fetch [Get customer details](/docs/api-reference/users/retrieve) when you need the latest record.
+
+## Conversation assigned
+
+`conversation_assigned` carries the conversation ID and responsible agent in `data.conversation`. This is ownership, not membership or an invitation to join.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_5",
+      "account_id": "account_example",
+      "created": 1794614403000,
+      "type": "conversation_assigned",
+      "data": {
+        "conversation": {
+          "id": "conversation_example",
+          "assignee": "agent_example"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Ownership cleared
+
+`conversation_unassigned` indicates that ownership was cleared. The empty `assignee` is omitted in this example. Use the event type to recognize the change; do not treat every missing `assignee` on other event types as an instruction to clear ownership.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_6",
+      "account_id": "account_example",
+      "created": 1794614404000,
+      "type": "conversation_unassigned",
+      "data": {
+        "conversation": {
+          "id": "conversation_example"
+        }
+      }
+    }
+  ]
+}
+```
+
+See [Assign an agent](/docs/api-reference/conversations/assign-agent) for the corresponding conversation operation.
+
+## Process a batch safely
+
+For each event, deduplicate by `(account_id, id)`, route by `type`, and validate the matching `data` object. A batch can contain several customers or conversations. Ignore unsupported event types safely and do not assume delivery order matches creation order.
+
+Store all accepted work before acknowledging the batch. See [Acknowledge and process](/docs/webhooks/receiving#acknowledge-and-process) for the receiver flow.

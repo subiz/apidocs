@@ -1,0 +1,33 @@
+---
+sourceHash: ccce05833bcb984aad6466f40b93e42b9a6599c494e90694460c539375975c73
+title: "Update a user"
+description: " Update a user through the Subiz API."
+section: "Users"
+order: 12
+status: "verified"
+endpointId: "users-update"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Update attributes
+
+Send an `attributes` array with the keys and typed values to update. The example updates the text attribute `fullname`. Do not send an entire cached customer object: the gateway selects supported fields before forwarding the request.
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `uid` (path) | string | Customer to update. |
+| `attributes` | array | Attribute keys and values. |
+
+The handler also supports identity and ownership fields, but this example intentionally updates only a customer attribute. Credentials of type user are restricted to their own identity.
+
+## Verify the change
+
+Read the customer again with [Retrieve a user](/docs/api-reference/users/retrieve) and compare the updated attributes. Do not assume every field in the shared User schema is writable.
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

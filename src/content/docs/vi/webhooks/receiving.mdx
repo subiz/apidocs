@@ -1,0 +1,48 @@
+---
+sourceHash: 5fee832c3bafaebeba4f0a8021a6733a44eb244d35cb535177091e632cbe5ca7
+title: "Nhận sự kiện webhook"
+description: "Nhận, xác minh và xử lý sự kiện Subiz trong ứng dụng."
+section: "Webhooks"
+order: 40
+status: "verified"
+apiScope: "webhook"
+---
+
+## Chuẩn bị
+
+Dùng đăng ký webhook đã được cấu hình cho tích hợp và khóa bí mật dùng chung. Hướng dẫn này chỉ mô tả nhận sự kiện, không cung cấp API cấu hình hay quản lý webhook.
+
+## Định dạng chuyển phát
+
+Subiz gửi HTTP POST với `Content-Type: application/json`. Body chứa mảng `events`. Xử lý mọi sự kiện trong lô; không giả định mỗi yêu cầu chỉ có một sự kiện.
+
+| Header | Ý nghĩa |
+| --- | --- |
+| `X-Hub-Signature-256` | Chữ ký HMAC-SHA256 của đúng các byte body gốc. |
+| `X-Subiz-Delivery` | ID lần chuyển phát, dùng để chẩn đoán. |
+| `User-Agent` | Bắt đầu bằng `Subiz-Hook/`; không dùng header này để xác thực. |
+
+Xem [Ví dụ payload sự kiện](/docs/vi/webhooks/payloads) để hiểu cấu trúc qua dữ liệu minh họa.
+
+## Xác minh chữ ký
+
+Giữ nguyên các byte body trước khi phân tích JSON. Tính HMAC-SHA256 với khóa bí mật dùng chung. Header có dạng `sha256=<hex>`; trong giai đoạn chuyển đổi khóa, có thể có nhiều chuỗi hex phân cách bằng dấu phẩy sau một tiền tố duy nhất. So sánh với khóa tin cậy bằng phép so sánh thời gian hằng.
+
+1. Từ chối yêu cầu nếu thiếu khóa bí mật hoặc header không bắt đầu bằng `sha256=`.
+2. Tính HMAC-SHA256 trên đúng các byte body gốc bằng khóa bí mật tin cậy.
+3. Bỏ tiền tố `sha256=`, rồi tách các chữ ký theo dấu phẩy. Mỗi chữ ký phải gồm 64 ký tự hex viết thường.
+4. Giải mã từng chữ ký thành byte và so sánh với kết quả đã tính bằng phép so sánh thời gian hằng. Chỉ chấp nhận khi có ít nhất một chữ ký khớp.
+
+Mã hóa lại JSON đã phân tích có thể đổi khoảng trắng và làm chữ ký sai. Không tin sự kiện trước khi xác minh. Chữ ký xác thực nội dung body, không phải cơ chế chống phát lại dựa trên dấu thời gian.
+
+## Xác nhận và xử lý
+
+Sau khi xác minh, phân tích JSON và kiểm tra `events` là mảng. Lưu công việc bền vững vào hàng đợi, rồi nhanh chóng trả HTTP `200`. Bên gửi đặt timeout 30 giây; không chạy nghiệp vụ chậm ngay trong handler nhận webhook.
+
+Nếu lưu bền vững thất bại, không xác nhận công việc đã bị mất. Thiết kế xử lý idempotent: lưu `account_id` và `id` của sự kiện cùng kết quả, bỏ qua sự kiện đã xử lý. Không chỉ dùng ID lần chuyển phát làm định danh sự kiện vì một yêu cầu có thể chứa nhiều sự kiện.
+
+## Xử lý chuyển phát
+
+Chuẩn bị cho sự kiện lặp lại và không phụ thuộc thứ tự đến. Dùng ID và thời gian sự kiện khi đối soát, lấy lại trạng thái tài nguyên hiện tại nếu cần. Hướng dẫn này không hứa hẹn exactly-once hay lịch thử lại cố định. Ghi ID lần chuyển phát và nguyên nhân lỗi mà không ghi khóa bí mật hoặc dữ liệu khách hàng không cần thiết.
+
+Bỏ qua an toàn loại sự kiện chưa hỗ trợ, đồng thời xác nhận lô đã lưu thành công. Bộ lọc đăng ký quyết định sự kiện mà tích hợp nhận được.

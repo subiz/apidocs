@@ -1,0 +1,60 @@
+---
+sourceHash: 792881122d9890373168f9ece95be459f0c5f4c3b6621c70602c0cb71e219375
+title: "Ví dụ payload sự kiện"
+description: "Hiểu sự kiện tin nhắn và phân công trong lô webhook."
+section: "Webhooks"
+order: 41
+status: "verified"
+apiScope: "webhook"
+---
+
+## Giá trị minh họa
+
+Các payload dưới đây là ví dụ rút gọn với dữ liệu giả lập, dựa trên cấu trúc trong mã nguồn. ID, thời gian và nội dung chỉ để minh họa; không phải dữ liệu khách hàng thực hoặc danh mục đầy đủ các sự kiện. Trường rỗng có thể bị lược bỏ; chỉ đọc trường phù hợp với loại sự kiện.
+
+## Tin nhắn đã gửi
+
+`message_sent` chứa nội dung tại `data.message`. Body webhook bọc sự kiện trong một mảng, khác với phản hồi API gửi tin nhắn.
+
+```json
+{
+  "events": [{
+    "id": "event_example_1",
+    "account_id": "account_example",
+    "type": "message_sent",
+    "created": 1794614400000,
+    "data": {
+      "message": {
+        "conversation_id": "conversation_example",
+        "text": "Hello! How can we help?",
+        "format": "plaintext"
+      }
+    }
+  }]
+}
+```
+
+## Hội thoại được phân công
+
+Thay đổi người phụ trách phát `conversation_assigned`, chứa ID hội thoại và người phụ trách. Khi bỏ người phụ trách, dịch vụ phát `conversation_unassigned`; `assignee` rỗng có thể không xuất hiện trong JSON.
+
+```json
+{
+  "events": [{
+    "id": "event_example_2",
+    "account_id": "account_example",
+    "type": "conversation_assigned",
+    "created": 1794614401000,
+    "data": {
+      "conversation": {
+        "id": "conversation_example",
+        "assignee": "agent_example"
+      }
+    }
+  }]
+}
+```
+
+## Xử lý cả lô
+
+Xác minh body gốc trước khi phân tích, sau đó duyệt toàn bộ `events`. Kiểm tra `type` trước khi truy cập trường lồng nhau; chấp nhận trường thiếu hoặc bổ sung mà không giả định mọi sự kiện là tin nhắn. Xem [Nhận sự kiện webhook](/docs/vi/webhooks/receiving) để biết cách xác minh và phản hồi.

@@ -1,0 +1,28 @@
+---
+sourceHash: d0d8715f07c25c9b717ab2d0e60debb971558cf26e58e57a29389dbbf42d63e7
+title: "Find or create by channel identity"
+description: " Find or create by channel identity through the Subiz API."
+section: "Users"
+order: 13
+status: "verified"
+endpointId: "users-identity"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Resolve an external identity
+
+Use the channel, source, and external profile identifier belonging to your integration. These are channel identity values, not a Subiz user ID. The account must match your credentials.
+
+The POST route calls `ReadOrCreateUserByContactProfile`. To look up an existing record without creating one, use GET on the same path.
+
+## Result
+
+The service returns a user. Keep the Subiz user ID separately from the external profile ID. Identity merging and normalization are service-controlled; do not infer a new customer from a temporary lookup failure.
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

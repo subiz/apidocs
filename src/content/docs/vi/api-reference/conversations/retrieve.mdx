@@ -1,0 +1,25 @@
+---
+sourceHash: 9162e224b7052d30e4105b32c458cdc3691f93428c53cd1a836caa0f79cf5ab5
+title: "Lấy hội thoại"
+description: "Đọc ngữ cảnh của một hội thoại."
+section: "Conversations"
+order: 21
+status: "verified"
+endpointId: "conversations-retrieve"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Ngữ cảnh hội thoại
+
+Thay `cid` bằng ID hội thoại đã có. Gateway chuyển tài khoản đã xác thực và ID hội thoại đến `GetConversation`.
+
+## Kết quả
+
+Kiểm tra hội thoại được dịch vụ trả về trước khi chọn thao tác tiếp theo. [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) thêm người tham gia; [Phân công nhân viên](/docs/vi/api-reference/conversations/assign-agent) đặt người phụ trách.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

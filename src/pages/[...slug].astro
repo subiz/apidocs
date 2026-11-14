@@ -1,0 +1,4 @@
+---
+import {render} from 'astro:content'; import {docs,routeSlug} from '../lib/docs'; import Layout from '../components/Layout.astro'; export async function getStaticPaths(){return (await docs()).map(p=>({params:{slug:routeSlug(p.id).replace(/\/$/,'')||undefined},props:{page:p}}));} const {page}=Astro.props; const {Content,headings}=await render(page);
+---
+<Layout page={page} headings={headings}><Content/></Layout>

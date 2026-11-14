@@ -1,0 +1,26 @@
+---
+sourceHash: 0757b52936679b7308f61d0be758a98e959ac2ba6007d39d782d729f0b2e4814
+title: "Retrieve a user"
+description: " Retrieve a user through the Subiz API."
+section: "Users"
+order: 11
+status: "verified"
+endpointId: "users-retrieve"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Identify the customer
+
+Replace `uid` with the customer ID. Use this request to read the customer's current profile before synchronizing changes.
+
+## Result
+
+The gateway calls the user service and returns its result as JSON. Handle missing records and permission failures before reading attributes. Related: [Update a user](/docs/api-reference/users/update).
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

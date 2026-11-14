@@ -1,0 +1,216 @@
+---
+sourceHash: 9ac002270bfb3054565057c12d7d732459c218c46aa7f12fe4d3f026f1198e9c
+title: "Message formats"
+description: "Write plain text and rich messages with blocks, links, and text formatting."
+section: "Messages"
+order: 29
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+translationPending: true
+---
+
+Message content lives in `data.message` inside an event. Use `format: "plaintext"` for plain text or `format: "block"` for structured content. Add files through the separate [attachments array](/docs/messages/attachments).
+
+The JSON examples below are message objects or blocks, as labeled. The final example shows a complete HTTP request. All names, IDs, and URLs are illustrative.
+
+## Plain text
+
+Set `format` to `plaintext` and put the content in `text`:
+
+```json
+{
+  "format": "plaintext",
+  "text": "Hello Alex!\nHow can we help?"
+}
+```
+
+`\n` adds a line break. HTML tags or Markdown markers in this field do not define Subiz block formatting. For bold text or a labeled link, use a block message.
+
+## Block messages
+
+Set `format` to `block` and put a **JSON object** in `block`:
+
+```json
+{
+  "format": "block",
+  "block": {
+    "type": "paragraph",
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello "
+      },
+      {
+        "type": "text",
+        "text": "Alex",
+        "bold": true
+      }
+    ]
+  }
+}
+```
+
+The content reads “Hello **Alex**”. A block is a tree: `type` selects the node, `content` contains child nodes, and text nodes store their content in `text`.
+
+Do not stringify the block into `text`. Subiz can derive plain text from the tree, but keep `block` when you need its formatting.
+
+## Bold and regular text
+
+Apply formatting to individual text nodes. For regular text, omit `bold` or set it to `false`; there is no separate `light` flag.
+
+| Field | Effect when `true` |
+| --- | --- |
+| `bold` | Bold text. |
+| `italic` | Italic text. |
+| `underline` | Underlined text. |
+| `strike_through` | Struck-through text. |
+
+This is a block object to place in `message.block`:
+
+```json
+{
+  "type": "paragraph",
+  "content": [
+    {
+      "type": "text",
+      "text": "Regular. "
+    },
+    {
+      "type": "text",
+      "text": "Bold. ",
+      "bold": true
+    },
+    {
+      "type": "text",
+      "text": "Italic. ",
+      "italic": true
+    },
+    {
+      "type": "text",
+      "text": "Underlined. ",
+      "underline": true
+    },
+    {
+      "type": "text",
+      "text": "Struck through.",
+      "strike_through": true
+    }
+  ]
+}
+```
+
+Each node controls its own text. A regular node after a bold node returns to regular text. You can combine flags, such as `bold: true` and `italic: true`, on one text node. Regular weight does not mean a lighter text color.
+
+## Links inside a block
+
+Use a `link` node with `text` for the visible label and `href` for the destination. Put the link alongside other nodes in the paragraph's `content` array:
+
+```json
+{
+  "type": "paragraph",
+  "content": [
+    {
+      "type": "text",
+      "text": "Read our "
+    },
+    {
+      "type": "link",
+      "text": "delivery guide",
+      "href": "https://example.com/delivery"
+    },
+    {
+      "type": "text",
+      "text": " before ordering."
+    }
+  ]
+}
+```
+
+The result is “Read our [delivery guide](https://example.com/delivery) before ordering.” The link label goes directly in `text`, not in child nodes. Use an absolute HTTPS URL for a web destination.
+
+An inline link is different from a [link-preview attachment](/docs/messages/attachments#link-previews), which carries a separate title and description.
+
+## Paragraphs and line breaks
+
+Use `hard_break` for a line break inside a paragraph. To group several paragraphs, place them in a `div` block:
+
+```json
+{
+  "type": "div",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Hello Alex,"
+        },
+        {
+          "type": "hard_break"
+        },
+        {
+          "type": "text",
+          "text": "Your order is ready."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Thank you!"
+        }
+      ]
+    }
+  ]
+}
+```
+
+This displays a greeting, the order update on the next line, and a separate thank-you paragraph. Exact spacing depends on the renderer and destination channel.
+
+## Send a block message
+
+Use the [Send to a conversation](/docs/api-reference/messages/send) endpoint. Replace the conversation ID and access token before sending:
+
+```http
+POST https://api.subiz.com.vn/4.1/conversations/YOUR_CONVERSATION_ID/messages
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "type": "message_sent",
+  "data": {
+    "message": {
+      "format": "block",
+      "block": {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hello "
+          },
+          {
+            "type": "text",
+            "text": "Alex",
+            "bold": true
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+For [Send to a customer](/docs/api-reference/messages/send-to-user), use the same message content inside that endpoint's event structure and supply the channel destination. Its outer request body is different.
+
+## Read messages without losing content
+
+When reading API responses or webhook events:
+
+- Check `format` before interpreting content. Preserve unknown formats if your integration cannot render them.
+- Keep the block tree if formatting matters; `text` alone loses links and styling.
+- Check `attachments` even when `text` is empty.
+- Test your target channel. The shared block schema does not guarantee that every channel renders every node or formatting flag.
+
+Continue with [Attachments](/docs/messages/attachments) for images, video, audio, and other message content.

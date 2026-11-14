@@ -1,0 +1,35 @@
+---
+sourceHash: 088282baebd4a9dbd2a8e58bed1595f0d1d56de9c15c70730c2bdb4145d28ec1
+title: "Create a user"
+description: " Create a user through the Subiz API."
+section: "Users"
+order: 10
+status: "verified"
+endpointId: "users-create"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Customer records
+
+A user represents a customer, not a staff agent. The gateway accepts customer attributes and optional channel identity fields.
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `attributes` | array | Attribute entries, such as `{"key":"fullname","text":"Alex Example"}`. |
+| `channel` | string | Optional channel identity context. |
+| `channel_source` | string | Optional source within the channel. |
+| `profile_id` | string | Optional external profile identifier. |
+
+Use configured attribute keys and matching value types. The gateway derives the account from authentication and forwards only these fields to the user service.
+
+## Result
+
+The gateway returns the created user from `CreateUser2`. Store its `id` for subsequent requests. Do not repeatedly create records to update an existing customer; use [Update a user](/docs/api-reference/users/update).
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

@@ -1,0 +1,42 @@
+---
+sourceHash: f8bc403f39f09ddecc53ede5450180fa71a00c9736cb9d4902fe20cf3713ce87
+title: "Xác thực"
+description: "Xác thực yêu cầu API bằng Bearer access token."
+section: "Get Started"
+order: 1
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+## Lấy access token
+
+1. Đăng nhập Subiz và mở [Mã truy cập cá nhân](https://app.subiz.com.vn/apikey).
+2. Nhấn **Tạo mã truy cập**.
+3. Chọn **Tài khoản** cần kết nối. Nhập **Ghi chú**, ví dụ `CRM integration`, và chọn **Thời hạn hết hạn**.
+4. Nhấn **Tạo mã** để xác nhận.
+5. Nhấn **Sao chép mã** và lưu an toàn trước khi đóng hộp thoại.
+
+**Token chỉ hiển thị một lần.** Nếu làm mất, hãy tạo token mới. Mỗi token thuộc tài khoản đã chọn khi tạo.
+
+## Kiểm tra access token
+
+Trong công cụ gọi API, gửi yêu cầu sau. Thay `YOUR_ACCESS_TOKEN` bằng token vừa sao chép. Không cần body.
+
+```http
+GET https://api.subiz.com.vn/4.1/me
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**Kết quả mong đợi:** `200 OK` cùng thông tin nhân viên của bạn dưới dạng JSON. Token hợp lệ cho yêu cầu này; các thao tác khác có thể cần thêm quyền.
+
+Lưu token phía máy chủ, chẳng hạn trong biến môi trường. Không đặt token trong mã trình duyệt, kho mã nguồn công khai hoặc URL.
+
+## Nếu xác thực thất bại
+
+Kiểm tra token có đúng, còn hạn, chưa bị xóa và thuộc tài khoản đang truy cập. Giữ nguyên tiền tố `Bearer `, gồm cả dấu cách.
+
+Lỗi xác thực có thể trả HTTP `400`. Đọc nội dung lỗi JSON trước khi thử lại.
+
+## Bước tiếp theo
+
+[Gửi tin nhắn](/docs/vi/api-reference/messages/send) bằng token và ID hội thoại đã có.

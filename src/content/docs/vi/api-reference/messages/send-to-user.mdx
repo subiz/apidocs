@@ -1,0 +1,37 @@
+---
+sourceHash: a7b1969cda9a8b61a8c71236b880801c0267280e4b856271a351644d174a2988
+title: "Gửi tin nhắn đến khách hàng"
+description: "Gửi tin nhắn qua định danh kênh của khách hàng."
+section: "Messages"
+order: 31
+status: "verified"
+endpointId: "messages-send-to-user"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Chọn đích trên kênh
+
+Dùng thao tác này khi gửi qua định danh kênh của khách hàng. Khác với [Gửi tin nhắn](/docs/vi/api-reference/messages/send), body là mảng `messages` gồm các sự kiện, mỗi sự kiện có touchpoint và dữ liệu tin nhắn riêng. ID user trong đường dẫn không thay thế đích gửi của sự kiện.
+
+| Trường | Kiểu | Mục đích |
+| --- | --- | --- |
+| `messages` | array | Các sự kiện tin nhắn ứng viên. |
+| `messages[].touchpoint` | object | Kênh, nguồn và ID hồ sơ bên ngoài. |
+| `messages[].data.message` | object | Nội dung tin nhắn. |
+
+Thay toàn bộ chỗ điền kênh bằng giá trị của tích hợp đã kết nối. Quyền và giới hạn chuyển phát của từng kênh vẫn áp dụng.
+
+## Cách thử các ứng viên
+
+Dịch vụ thử lần lượt và trả ngay sau lần gửi thành công đầu tiên. Đây không phải endpoint gửi hàng loạt. Nó có thể dừng khi gặp lỗi khách hàng đã hủy đăng ký. Dùng một ứng viên nếu bạn chỉ muốn gửi đến một đích.
+
+## Kết quả
+
+Dịch vụ trả một sự kiện, không phải mảng kết quả cho mọi ứng viên. API thành công không chứng minh tin đã được chuyển đến kênh bên ngoài. Không thử lại mù quáng sau timeout.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.astro/
+screenshots/
+
+# Private workstation instructions
+AGENTS.local.md

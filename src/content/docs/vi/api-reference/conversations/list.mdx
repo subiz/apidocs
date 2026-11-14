@@ -1,0 +1,33 @@
+---
+sourceHash: d0dee96c5d6efac885040d7224f2ccf9150d45740392014806a2d399e8f6f214
+title: "Liệt kê hội thoại"
+description: "Tìm các hội thoại của khách hàng."
+section: "Conversations"
+order: 20
+status: "verified"
+endpointId: "conversations-list"
+---
+
+## Trước khi bắt đầu
+
+Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+
+## Tìm hội thoại của khách hàng
+
+Dùng `user_id` để chọn khách hàng. Ví dụ yêu cầu tối đa 20 hội thoại. Dịch vụ dùng 20 khi `limit` bằng 0 hoặc bị bỏ qua; giới hạn dương được chặn ở 200.
+
+| Tham số truy vấn | Kiểu | Mục đích |
+| --- | --- | --- |
+| `user_id` | string | Khách hàng cần tìm hội thoại. |
+| `agent_id` | string | Bộ lọc trong nhánh liệt kê theo nhân viên. |
+| `limit` | integer | Số kết quả yêu cầu. |
+
+Thông tin xác thực loại user chỉ truy cập danh tính của chính user. Loại unknown và connector bị từ chối ở phương thức dịch vụ này. Các tổ hợp bộ lọc chạy theo nhánh xử lý riêng; không giả định mọi bộ lọc có thể kết hợp tự do.
+
+## Kết quả
+
+Phản hồi chứa mảng `conversations`. Đọc một hội thoại qua [Lấy hội thoại](/docs/vi/api-reference/conversations/retrieve). Route này không xác lập cơ chế phân trang theo offset hay trường phản hồi `next_cursor`.
+
+## Yêu cầu HTTP
+
+Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.

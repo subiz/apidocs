@@ -1,0 +1,60 @@
+---
+sourceHash: 240942e2ed499d253f4486f8c582196795a656bd61c7de3630b3c5758ef28e67
+title: "Authentication"
+description: "Authorize API requests with a Bearer access token."
+section: "Get Started"
+order: 1
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+## Get an access token
+
+1. Sign in to Subiz and open [Personal access token](https://app.subiz.com.vn/apikey).
+2. Click **Create token**.
+3. Select the **Account** you want to connect. Enter a **Note**, such as `CRM integration`, and choose an **Expiration**.
+4. Click **Create token** to confirm.
+5. Click **Copy token** and save it securely before closing the dialog.
+
+**The token is shown only once.** If you lose it, create a new one. Each token belongs to the account selected during creation.
+
+Requests made with this token act as your agent in that account. Your agent's permissions still apply; creating a token does not grant extra access.
+
+## Test your access token
+
+In your API client, send this request. Replace `YOUR_ACCESS_TOKEN` with the token you copied. No request body is needed.
+
+```http
+GET https://api.subiz.com.vn/4.1/me
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+**Expected result:** `200 OK` with your agent profile as JSON. Example below shows selected fields with placeholder values:
+
+```json
+{
+  "id": "YOUR_AGENT_ID",
+  "account_id": "YOUR_ACCOUNT_ID",
+  "fullname": "Example Agent"
+}
+```
+
+Check that `account_id` matches the account you want to connect. `id` identifies the agent making the request. A successful check confirms access to `/me`, not every API operation.
+
+## Replace or revoke a token
+
+To replace an expired or lost token, create a new one and update your integration. Test it with `/me`, then delete the old token if it is still listed.
+
+To revoke a token, open [Personal access token](https://app.subiz.com.vn/apikey), open its **…** menu, choose **Delete token**, and confirm. Deletion cannot be undone. If a token is exposed, revoke it before creating a replacement.
+
+Keep the token on your server, for example in an environment variable. Do not put it in browser code, public repositories, or URLs.
+
+## If authentication fails
+
+Check that the token is correct, has not expired or been deleted, and belongs to the account you are accessing. Keep the `Bearer ` prefix, including its space.
+
+Authentication failures can return HTTP `400`. Read the JSON error response before retrying.
+
+## Next step
+
+[Send a message](/docs/api-reference/messages/send) using your token and an existing conversation ID.

@@ -1,0 +1,50 @@
+{
+  "name": "@subiz/apidocs",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && pagefind --site dist",
+    "preview": "astro preview",
+    "check": "astro check",
+    "translations:status": "node scripts/translations.mjs status",
+    "translations:sync": "node scripts/translations.mjs sync",
+    "translations:mark": "node scripts/translations.mjs mark",
+    "translations:check": "node scripts/translations.mjs check",
+    "theme:build": "astryx theme build src/themes/subiz/subizTheme.ts --out src/themes/subiz/subiz.css"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subiz/apidocs.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/subiz/apidocs/issues"
+  },
+  "homepage": "https://github.com/subiz/apidocs#readme",
+  "dependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@astrojs/markdown-satteri": "^0.4.10",
+    "@astrojs/mdx": "^8.1.6",
+    "@astrojs/react": "^7.1.9",
+    "@astryxdesign/cli": "^0.7.16",
+    "@astryxdesign/core": "^0.7.16",
+    "@astryxdesign/theme-neutral": "^0.7.16",
+    "@stylexjs/stylex": "^0.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "astro": "^7.4.12",
+    "pagefind": "^1.6.0",
+    "playwright": "^1.65.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "yaml": "^2.9.1"
+  }
+}

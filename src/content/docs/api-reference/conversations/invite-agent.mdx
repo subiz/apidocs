@@ -1,0 +1,34 @@
+---
+sourceHash: b4dcceff8b5697adc3aabb00423781006e4e9f487330fcbcbca66efe3a71b213
+title: "Invite an agent"
+description: " Invite an agent through the Subiz API."
+section: "Conversations"
+order: 23
+status: "verified"
+endpointId: "conversations-invite-agent"
+---
+
+## Before you begin
+
+Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+
+## Add an existing agent
+
+This operation invites a staff agent into an existing conversation. It does not create an agent account or send an account invitation.
+
+| Field | Type | Purpose |
+| --- | --- | --- |
+| `cid` (path) | string | Target conversation. |
+| `type` | string | Set to `agent`. |
+| `id` | string | Existing Subiz agent ID. |
+
+The gateway sets account and conversation context. `JoinConversation` submits a `conversation_invited` event with the requested member.
+
+## Result
+
+The service returns an empty object on success. Read the conversation to check membership. Inviting participation and setting the conversation's `assignee` are separate operations; see [Assign an agent](/docs/api-reference/conversations/assign-agent).
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
+

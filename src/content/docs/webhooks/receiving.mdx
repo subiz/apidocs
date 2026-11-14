@@ -1,0 +1,157 @@
+---
+sourceHash: 9005a3a9a164be26c2ceb99e6289f270b2cb2676d78133c8f8ccf67cd1a2d34f
+title: "Receive webhook events"
+description: "Create a webhook in Subiz, verify deliveries, and process events safely."
+section: "Webhooks"
+order: 40
+status: "verified"
+apiScope: "webhook"
+---
+
+A webhook sends changes in your Subiz account to your server. Use it to sync customers with your CRM or react to new messages without polling the API.
+
+## Create a webhook in Subiz
+
+First, prepare a public HTTPS endpoint that accepts `POST`, such as `https://example.com/webhooks/subiz`. This URL belongs to your application.
+
+1. Sign in to the intended Subiz account and open [Webhook settings](https://app.subiz.com.vn/settings/webhooks).
+2. Click **Add a webhook**.
+3. Enter your receiving URL in the URL field.
+4. Choose **Custom event** and select the events you need. For customer synchronization, select `user_created` and `user_info_updated`. Add `message_sent` to receive messages. Clear any selections you do not need.
+5. Leave delivery enabled and click **Create webhook**.
+6. In the list, click **Edit** for the saved webhook. Copy its **Secret** into your server configuration. Subiz generates this value when creating the webhook; use the saved value, even if you entered a different one in the creation form.
+
+Keep the secret on your server. It is separate from your API access token. If you cannot access these settings, ask your Subiz administrator for webhook permissions.
+
+The list shows the saved webhook. Once your receiver is ready, make a customer update or send a message in that account and check the delivery result. Only selected events are delivered; a message will not trigger a webhook subscribed only to customer updates.
+
+## Receive an HTTP request
+
+Subiz sends a JSON object containing an `events` array. Process every item: one request can carry several events.
+
+This request uses synthetic values. `SIGNATURE_HEX` is a placeholder, not a valid signature.
+
+```http
+POST https://example.com/webhooks/subiz
+Content-Type: application/json
+User-Agent: Subiz-Hook/WEBHOOK_ID
+X-Subiz-Delivery: 42
+X-Hub-Signature-256: sha256=SIGNATURE_HEX
+
+{
+  "events": [
+    {
+      "id": "event_example_1",
+      "account_id": "account_example",
+      "created": 1794614400000,
+      "type": "message_sent",
+      "by": {
+        "id": "user_example",
+        "type": "user"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "plaintext",
+          "text": "Can you help with my order?"
+        }
+      }
+    }
+  ]
+}
+```
+
+| Header | Purpose |
+| --- | --- |
+| `Content-Type` | `application/json`. |
+| `User-Agent` | `Subiz-Hook/` followed by the webhook ID. It does not prove authenticity. |
+| `X-Subiz-Delivery` | Identifies a delivery within that webhook. Use it for troubleshooting, not event deduplication. |
+| `X-Hub-Signature-256` | HMAC-SHA256 signature of the raw request body. |
+
+Webhook requests use the shared secret for verification, not the Bearer token used to call the Subiz API.
+
+## Verify the signature
+
+**Verify before parsing or processing events.** Subiz signs the exact body bytes using HMAC-SHA256 and your secret. The digest is lowercase hexadecimal, not Base64.
+
+1. Keep the raw request body. Do not parse and re-serialize JSON first.
+2. Require `X-Hub-Signature-256` to start with `sha256=`. Split the remaining value on commas to get the candidate digests.
+3. Validate each candidate: 64 hexadecimal characters. Reject missing or malformed signatures.
+4. Calculate HMAC-SHA256 with your trusted secret as the key and the raw body as the message.
+5. Decode the candidate digests into bytes and compare with a constant-time comparison. Accept if one matches; otherwise reject the request.
+
+Do not leave **Secret** empty. A signature made with an empty key does not authenticate the sender. Never log your secret or select a secret based on unverified payload data.
+
+### When the secret changes
+
+For 24 hours after a secret change, deliveries can contain signatures for both the current and previous secrets:
+
+```http
+X-Hub-Signature-256: sha256=NEW_SECRET_DIGEST,PREVIOUS_SECRET_DIGEST
+```
+
+There is one `sha256=` prefix. Either digest may match your trusted secret. Update your receiver's secret during this window; the old signature stops being included after it expires.
+
+### Check your verifier locally
+
+Use this public test vector, not a production secret. The body is UTF-8 with **no trailing newline**:
+
+| Input | Value |
+| --- | --- |
+| Secret | `docs-example-secret` |
+| Raw body | `{"events":[]}` |
+
+The expected header is:
+
+```http
+X-Hub-Signature-256: sha256=145cedf7d7a150f4634f5fec31aef38195afc099c596a0f274fc5ef9c2136835
+```
+
+This is a signature test only. Adding a space or newline to the body must make this signature fail.
+
+## Acknowledge and process
+
+**Receive → Verify → Store → Respond → Process**
+
+1. Verify the signature, then parse the JSON. Check the account and the fields your integration needs.
+2. Save all accepted events to durable storage or a queue. Handle duplicates using `(account_id, id)` as the event key.
+3. Return `200 OK` after storage succeeds. Do slow work, such as CRM updates, in a background worker.
+
+```http
+HTTP/1.1 200 OK
+Content-Length: 0
+```
+
+The sender has a **30-second timeout per HTTP attempt** and does not follow redirects. Respond as soon as the events are safely stored. A successful response acknowledges the whole batch, not just the first event.
+
+If storage fails, return an error so the delivery can be retried. Once you return success, your worker must retry its own failures. Store the event and its pending work together so a crash cannot leave an event marked as handled without scheduling the work.
+
+## Retries and duplicate events
+
+A failed request can be sent again. This includes cases where your server saved the events but Subiz did not receive the response.
+
+- Deduplicate by event ID and account ID, not `X-Subiz-Delivery`: a retry can have a new delivery ID.
+- Return success for events you have already safely accepted. Do not repeat their side effects.
+- Ignore unsupported event types safely; do not fail the entire batch just because a new type appears.
+- Do not depend on arrival order or exactly-once delivery. Reconcile with current records when necessary.
+
+There is no fixed retry interval or attempt count promised here. Extended failures can stop delivery, and old queued events can be discarded. Recover promptly; do not treat the webhook queue as a permanent event archive.
+
+## Test and troubleshoot
+
+After creating the webhook, trigger one selected event in a test account. Check that your receiver verifies it, stores it, returns `200`, and performs the intended update **once**. Replay the same event locally to check deduplication, and change one body byte to check rejection.
+
+Open the webhook in Subiz to inspect recent deliveries and their HTTP responses. Compare them with your receiver and worker logs.
+
+| Problem | Check |
+| --- | --- |
+| No delivery | Correct Subiz account, delivery enabled, and the event selected in the webhook. |
+| Request never reaches your receiver | URL, DNS, HTTPS certificate, firewall, and any login or redirect in front of the endpoint. |
+| Signature mismatch | Same secret on both sides, exact raw body bytes, hex decoding, and multiple-digest handling. |
+| Timeout or server error | Store the batch before responding; move slow work to a worker. Check queue and database availability. |
+| `200` but no CRM change | Worker failures, unsupported event types, field mapping, and deduplication state. |
+| Delivery stopped after an outage | Fix the receiver, check the webhook status with your Subiz administrator, and reconcile any missing data. |
+
+Log delivery IDs, event IDs, and processing outcomes. Avoid logging secrets and unnecessary customer data.
+
+Next: [Event payload examples](/docs/webhooks/payloads).
