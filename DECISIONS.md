@@ -124,3 +124,39 @@ When explaining Subiz objects, include a JSON example for each core object and e
 ## D-0036 Separate message formats and attachment guides
 
 Add two English pages under Conversations & Messages: Message formats (plaintext, block trees, links, regular/bold text and other supported marks) and Attachments (image/video/audio/files and common structured attachments). Include source-verified JSON examples and link from Core concepts. New English pages may declare `translationPending: true` while Vietnamese work is deferred; do not publish fabricated Vietnamese translations or links to absent routes. Translation checks must continue reporting that backlog.
+
+
+## D-0037 Add Usage limits and Errors guides
+
+Add concise English guides under Get Started, after Authentication. Use Resend’s Usage Limits page as an organizational reference only; preserve Astryx styling. Publish Subiz limits and error semantics verified in the gateway and downstream services. Distinguish request throttling, payload validation, and plan/channel allowances; do not import another provider’s rates, quotas, or headers. Keep Vietnamese translations pending for this iteration.
+
+## D-0038 Use the official DocSearch interface for search
+
+The user explicitly approved Algolia's official DocSearch UI as an exception to D-0004 for search only. Integrate its React packages into the existing Astro island; do not migrate the site to Starlight solely to use its DocSearch plugin. Use a real editable search input in the header and keep the popup dimensions stable across loading, empty, and populated results. Preserve language/documentation scoping and the labeled Pagefind fallback until hosted indexing is available. The rest of the site continues to use Astryx.
+
+## D-0039 Put desktop search at the top of the sidebar
+
+Use the referenced Resend API documentation as a layout reference for search placement. Put the editable search field above desktop navigation and keep it visible while the navigation scrolls. Retain the visible mobile header input while the sidebar is collapsed into Menu. Keep one DocSearch provider/modal and the existing Astryx theme; keep articles and navigation statically rendered. This updates the header placement in D-0038.
+
+## D-0040 Make the application login the header CTA
+
+Place a primary “Log in” / “Trang quản trị” link to the Subiz application at the right edge of the header. Keep language and appearance controls secondary. Show system, light, and dark modes as accessible icon-only Astryx segmented choices; preserve saved preferences and system mode.
+
+
+## D-0041 Header homepage link and language dropdown
+
+The header Subiz logo opens https://subiz.com.vn/. Replace the alternate-language link with an official Astryx DropdownMenu with radio choices for English and Tiếng Việt, with the current locale selected. Preserve the current topic when changing languages. On an English-only page, show Vietnamese as unavailable rather than linking to a missing translation.
+
+## D-0042 Merge Core concepts into Overview
+
+Move the Users, conversations & messages article into Overview, including its object JSON examples, and remove the separate navigation item. Keep old Core concepts URLs as noindex redirects that preserve heading fragments; legacy Markdown URLs resolve from the same merged source. Move the existing Vietnamese material without translating new English content or stamping it reviewed. Translation tracking must keep the merged Vietnamese Overview stale until reviewed.
+
+
+## D-0043 Switch the Algolia application
+
+Use application ID S3B97BCQ1O for documentation search. Use the owner-supplied public search-only key and index subiz_com_vn_s3b97bcq1o_pages. Preserve the labeled Pagefind fallback when hosted records are unavailable. Adapt the index’s page records to DocSearch and scope displayed results to published documentation in the current language.
+
+
+## D-0044 Include the Subiz chat widget
+
+Load the exact owner-provided Subiz widget snippet in the shared documentation layout for account acpxkgumifuoofoosble. Keep its asynchronous loading and fallback behavior. No chat messages are sent as part of verification.

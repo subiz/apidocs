@@ -22,7 +22,7 @@ The goal is a gradual path from understanding Subiz's entities and authenticatio
 
 | Order | Group | Pages, in order |
 | --- | --- | --- |
-| 1 | Get Started / Bắt đầu | Overview; Users, conversations & messages; Authentication |
+| 1 | Get Started / Bắt đầu | Overview (including core concepts); Authentication; Usage limits (English only); Errors (English only) |
 | 2 | Conversations & Messages / Hội thoại và tin nhắn | Message formats (English only); Attachments (English only); Send to a conversation; Send to a customer; Get conversation details; Read message history; Invite an agent; Assign an agent |
 | 3 | Customers (Users) / Khách hàng | Create a customer; Get customer details; Update customer details; Find or create by channel identity |
 | 4 | Orders / Đơn hàng | Create an order; List orders; Get order details; Update an order — outline only |

@@ -24,10 +24,10 @@ try{
   assert.deepEqual(await page.locator('#sidebar summary').allTextContents(),locale?['Bắt đầu','Hội thoại và tin nhắn','Khách hàng','Đơn hàng','Sản phẩm','Webhook','Cập nhật']:['Get Started','Conversations & Messages','Customers (Users)','Orders','Products','Webhooks','Updates']);
   assert.equal(await page.locator('#sidebar .nav-planned').count(),8);
   assert.equal(await page.locator('#sidebar .nav-review-note').count(),2);
-  const expected=['introduction', 'get-started/concepts', 'get-started/authentication', ...(!locale?['messages/formats','messages/attachments']:[]), 'api-reference/messages/send', 'api-reference/messages/send-to-user', 'api-reference/conversations/retrieve', 'api-reference/conversations/history', 'api-reference/conversations/invite-agent', 'api-reference/conversations/assign-agent', 'api-reference/users/create', 'api-reference/users/retrieve', 'api-reference/users/update', 'api-reference/users/identity', 'webhooks/receiving', 'webhooks/payloads','changelog'].map(id=>'/developers'+locale+(id==='introduction'?'':'/'+id));
+  const expected=['introduction', 'get-started/authentication', ...(!locale?['get-started/usage-limits','get-started/errors','messages/formats','messages/attachments']:[]), 'api-reference/messages/send', 'api-reference/messages/send-to-user', 'api-reference/conversations/retrieve', 'api-reference/conversations/history', 'api-reference/conversations/invite-agent', 'api-reference/conversations/assign-agent', 'api-reference/users/create', 'api-reference/users/retrieve', 'api-reference/users/update', 'api-reference/users/identity', 'webhooks/receiving', 'webhooks/payloads','changelog'].map(id=>'/developers'+locale+(id==='introduction'?'':'/'+id));
   assert.deepEqual(await page.locator('#sidebar a').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href'))),expected);
   await page.goto('http://127.0.0.1:4321/developers'+locale+'/get-started/authentication');
-  assert.deepEqual(await page.locator('.pagination a').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href'))),[expected[1],expected[3]]);
+  assert.deepEqual(await page.locator('.pagination a').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href'))),[expected[0],expected[2]]);
   await page.setViewportSize({width:390,height:900});
   await page.getByRole('button',{name:locale?'Danh mục':'Menu',exact:true}).click();
   assert.deepEqual(await page.locator('.drawer-links a').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href'))),expected);

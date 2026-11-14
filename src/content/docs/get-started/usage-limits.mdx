@@ -1,0 +1,126 @@
+---
+sourceHash: ae23a46466ebacda3a08a723fd93b28a14df47a87ac902355e8c5db6c9a22180
+title: "Usage limits"
+description: "Understand token and account request limits, payload sizes, and retry timing."
+section: "Get Started"
+order: 3
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+translationPending: true
+---
+
+Check two things before sending requests: **how often you call the API** and **how much data each request contains**. A slower request rate does not fix an oversized payload.
+
+## Rate limits
+
+Authenticated agent requests have two layers of limits:
+
+| Scope | Requests per second | Requests per day |
+| --- | --- | --- |
+| Each agent access token | 100 | 144,000 |
+| All API keys in one account, combined | 100 | 864,000 |
+
+**Personal access tokens created in Subiz are subject to both limits.** The token limit is checked first, then the shared account limit. For example, two API keys sending 60 requests each in the same second exceed their account's combined 100-request limit.
+
+The token allowance follows the exact token across endpoints and accounts. Different tokens have separate token allowances; API keys for the same account still share the account allowance. Agent login and OAuth tokens have the per-token limit but do not consume the account's API-key allowance.
+
+### Counting and resets
+
+- The per-second limit uses a fixed calendar second.
+- Daily limits reset at **00:00 UTC** (07:00 in Vietnam), not 24 hours after the first request.
+- Requests that reach an operation count even if that operation later fails. This includes token checks with `/4.1/me`.
+
+Counters currently apply per gateway instance and reset when it restarts. These are not globally synchronized quotas. Keep your integration within the listed limits rather than relying on traffic reaching different instances.
+
+Use a queue, limit concurrent requests, and increase traffic gradually. Use [webhooks](/docs/webhooks/receiving) for updates instead of repeatedly fetching the same records.
+
+### Message sending limits
+
+Sending as a human agent also uses a shared allowance for that **agent in that account**:
+
+| Per second | Per minute | Per day |
+| --- | --- | --- |
+| 5 messages | 60 messages | 5,000 messages |
+
+All of the agent's tokens and devices share this allowance, across conversations and both [conversation sends](/docs/api-reference/messages/send) and [customer sends](/docs/api-reference/messages/send-to-user). Changing the sender in the request body does not change whose allowance is used.
+
+Internal messages count too; typing, seen, and other non-message events do not. The second and minute windows are fixed calendar windows; the day resets at 00:00 UTC. These counters also apply per gateway instance.
+
+For customer-send requests, each candidate in `messages` counts, even though the service stops after the first successful send. **Include at most five candidates per request.** This is not a bulk-send operation; use one candidate when targeting one destination.
+
+The limiter checks the entire candidate array before sending; if it rejects the request, none of its candidates are forwarded. These are attempt limits: reserved allowance is not refunded after a rejected request or a backend failure.
+
+### Detect throttling
+
+Exceeding a token, account, or agent message allowance returns **HTTP `429 Too Many Requests`** before the operation runs. The response includes `rate_limit` in `error.code` and these headers:
+
+| Header | Value |
+| --- | --- |
+| `Retry-After` | Seconds to wait: `1` for a per-second limit, seconds until the next minute for the message-per-minute limit, or seconds until 00:00 UTC for a daily limit. |
+| `Cache-Control` | `no-store` |
+| `Content-Type` | `application/json` |
+
+Example of a per-second rejection, showing selected response fields:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+Cache-Control: no-store
+Content-Type: application/json
+
+{
+  "code": "rate_limit,limit_exceeded,invalid_input",
+  "class": 400,
+  "error": {
+    "code": "rate_limit,limit_exceeded,invalid_input"
+  }
+}
+```
+
+The body's legacy `class: 400` does not change the HTTP `429` status. See [Errors](/docs/get-started/errors#error-response).
+
+The limiter does not return `ratelimit-limit`, `ratelimit-remaining`, or `ratelimit-reset`. Other operation-specific throttles can still return HTTP `400` with `rate_limit` and no `Retry-After`; handle those responses too.
+
+### Retry safely
+
+1. Pause the affected work and reduce concurrency.
+2. If the response includes `Retry-After`, wait at least that long.
+3. Otherwise, use increasing delays with a small random offset. Set a maximum number of attempts.
+4. Before retrying a message send after a timeout or lost response, check whether the message was already created. Repeating it can send a duplicate.
+
+Read each retry's response: waiting does not guarantee acceptance if another limit has been reached or other callers are using the shared allowance. See [Errors](/docs/get-started/errors#when-to-retry) for other failure types.
+
+## Message limits
+
+The conversation message validator applies these limits to messages sent through the API:
+
+| Field | Maximum | When exceeded |
+| --- | --- | --- |
+| `data.message.text` | 1,524,288 UTF-8 bytes | `payload_too_large` |
+| `data.message.attachments` | 50 entries | `limit_exceeded` |
+| `data.message.fields` | 540 entries | `limit_exceeded` |
+| Each `fields[].key` | 42,428 UTF-8 bytes | `limit_exceeded` |
+| Each `fields[].value` | 1,524,288 UTF-8 bytes | `limit_exceeded` |
+
+Text length is measured in **bytes**, not visible characters. Emoji and accented characters can use more than one byte. The text limit applies to the message's `text` field during validation, not the total JSON request size.
+
+These are Subiz validation ceilings, not recommended message sizes or guarantees of delivery on every channel. Keep messages short. Connected channels can impose additional restrictions on content and media. The attachment count is not a file-size allowance; see [Attachments](/docs/messages/attachments).
+
+## Customer attribute limits
+
+Customer creation and attribute updates check the size of the attribute input. The normal attribute-update flow checks normalized values:
+
+| Data | Maximum |
+| --- | --- |
+| Attributes in the validated input | 1,000 entries |
+| Each attribute's `text`, `datetime`, and all `other_values` combined | 2,048 UTF-8 bytes |
+
+Exceeding either limit produces `payload_too_large`. Reduce the affected input before retrying. Splitting a long value across `other_values` does not bypass the combined size limit.
+
+See [Create a customer](/docs/api-reference/users/create) and [Update customer details](/docs/api-reference/users/update) for supported fields.
+
+## Plan and channel allowances
+
+Request throttling, payload validation, and account or channel allowances are different constraints. This page does not define a universal monthly message quota, customer quota, or file-size limit. Check the relevant account plan and channel requirements before a large import or messaging job.
+
+If failures persist, send Subiz support the endpoint, request time, traffic rate, and error details. Remove access tokens and customer data first.

@@ -1,5 +1,5 @@
 ---
-sourceHash: 240942e2ed499d253f4486f8c582196795a656bd61c7de3630b3c5758ef28e67
+sourceHash: a040214577de9e90348b26f70675691976ce098d711298092183ab9763d8fb0f
 title: "Authentication"
 description: "Authorize API requests with a Bearer access token."
 section: "Get Started"
@@ -41,6 +41,8 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 
 Check that `account_id` matches the account you want to connect. `id` identifies the agent making the request. A successful check confirms access to `/me`, not every API operation.
 
+Token checks also count toward [usage limits](/docs/get-started/usage-limits). If `/me` returns `429`, wait for the `Retry-After` interval before testing again.
+
 ## Replace or revoke a token
 
 To replace an expired or lost token, create a new one and update your integration. Test it with `/me`, then delete the old token if it is still listed.
@@ -53,7 +55,7 @@ Keep the token on your server, for example in an environment variable. Do not pu
 
 Check that the token is correct, has not expired or been deleted, and belongs to the account you are accessing. Keep the `Bearer ` prefix, including its space.
 
-Authentication failures can return HTTP `400`. Read the JSON error response before retrying.
+Authentication failures can return HTTP `400`. Read the [JSON error response](/docs/get-started/errors) before retrying.
 
 ## Next step
 

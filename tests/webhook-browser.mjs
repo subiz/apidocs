@@ -33,8 +33,8 @@ try {
    await page.screenshot({path:`screenshots/webhook-${name}-detail.png`});
   }
  }
- await page.keyboard.press('Control+k');await page.locator('#query').fill('user_info_updated');
- await page.locator('#results a').first().waitFor();
- assert((await page.locator('#results a').allTextContents()).some(t=>t.includes('Event payload')));
+ await page.keyboard.press('Control+k');await page.locator('.DocSearch-Input').fill('user_info_updated');
+ await page.locator('[role="option"]').first().waitFor();
+ assert((await page.locator('[role="option"]').allTextContents()).some(t=>t.includes('Event payload')));
  assert.deepEqual(errors,[]);console.log('PASS: webhook pages at 390/768/1440 in both themes, typography, anchors and active TOC, no copy buttons, Markdown exports, search, no runtime errors');
 }finally{await browser.close()}

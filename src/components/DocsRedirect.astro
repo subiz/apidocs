@@ -1,0 +1,22 @@
+---
+import {text,type Locale} from '../lib/i18n';
+const {destination,hash,locale}=Astro.props as {destination:string;hash:string;locale:Locale};
+const title=text(locale,'This page has moved','Trang này đã được chuyển');
+---
+<!doctype html>
+<html lang={locale}>
+ <head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width"/>
+  <meta name="robots" content="noindex"/>
+  <title>{title}</title>
+  <link rel="canonical" href={new URL(destination,Astro.site)}/>
+  <script is:inline define:vars={{destination,hash}}>
+   // Astro preview's base-root lookup needs a slash before a query string.
+   const target=destination+(destination==='/developers'&&window.location.search?'/':'');
+   window.location.replace(target+window.location.search+(window.location.hash||hash));
+  </script>
+  <meta http-equiv="refresh" content={`0;url=${destination}`}/>
+ </head>
+ <body><p>{title}: <a href={destination+hash}>{text(locale,'Overview','Tổng quan')}</a>.</p></body>
+</html>

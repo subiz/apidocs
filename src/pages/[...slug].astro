@@ -1,4 +1,18 @@
 ---
-import {render} from 'astro:content'; import {docs,routeSlug} from '../lib/docs'; import Layout from '../components/Layout.astro'; export async function getStaticPaths(){return (await docs()).map(p=>({params:{slug:routeSlug(p.id).replace(/\/$/,'')||undefined},props:{page:p}}));} const {page}=Astro.props; const {Content,headings}=await render(page);
+import {render} from 'astro:content';
+import {docs,routeSlug,url} from '../lib/docs';
+import {docsRedirects} from '../lib/redirects';
+import {localeOf} from '../lib/i18n';
+import Layout from '../components/Layout.astro';
+import DocsRedirect from '../components/DocsRedirect.astro';
+export async function getStaticPaths(){
+ return [
+  ...(await docs()).map(page=>({params:{slug:routeSlug(page.id).replace(/\/$/,'')||undefined},props:{page,redirect:undefined}})),
+  ...docsRedirects.map(redirect=>({params:{slug:redirect.slug},props:{page:undefined,redirect}})),
+ ];
+}
+const {page,redirect}=Astro.props;
+const rendered=page?await render(page):null;
+const Content=rendered?.Content;
 ---
-<Layout page={page} headings={headings}><Content/></Layout>
+{redirect?<DocsRedirect destination={url(redirect.pageId)} hash={redirect.hash} locale={localeOf(redirect.pageId)}/>:Content&&<Layout page={page} headings={rendered?.headings}><Content/></Layout>}

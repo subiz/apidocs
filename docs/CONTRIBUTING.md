@@ -30,7 +30,7 @@ Use Node 22.18+ (or Node 24+) for the translation commands. English is the origi
 
 1. Edit English pages, then run `npm run translations:sync`. This updates only English hashes.
 2. Run `npm run translations:status` (or append `-- --json`) to find stale, missing, or untracked Vietnamese pages. It also detects English edits before sync.
-3. Update the corresponding Vietnamese page. After reviewing it, run `npm run translations:mark -- get-started/concepts --hash HASH_FROM_STATUS`. This stamps only that pair, and rejects a hash if English changed again.
+3. Update the corresponding Vietnamese page. After reviewing it, run `npm run translations:mark -- introduction --hash HASH_FROM_STATUS`. This stamps only that pair, and rejects a hash if English changed again.
 4. Run `npm run translations:check` in your publishing checks. It exits nonzero for stale/missing translations or unsynchronized English hashes. A normal local build remains available while translating.
 
 Never copy hashes to Vietnamese merely to silence the check. Adding a new page requires a counterpart and a source hash; run sync, translate, then mark the reviewed pair. Code samples are shared across locales, so changing an endpoint flags only translations using that endpoint.
@@ -62,3 +62,5 @@ Current iteration: update English content only (D-0031). Do not update Vietnames
 Set `translationPending: true` on an English page only when its Vietnamese counterpart is intentionally deferred (D-0036). This is the explicit exception to the counterpart requirement above. Add its navigation entry as usual; the site omits it from Vietnamese navigation and omits the unavailable language switch and hreflang link on that page. Existing bilingual routes are unchanged. Unexpected missing translations still fail the build. Do not create Vietnamese placeholder articles.
 
 `translations:status` reports these pages as `pending`; `translations:check` continues to fail until the translation backlog is resolved. When translating, remove the pending flag, create the Vietnamese page, sync the English hash, and record the reviewed hash using `translations:mark`.
+
+Core concepts now lives in Overview (`introduction.mdx`). Its former HTML URLs redirect with heading fragments preserved; Markdown aliases are generated from the merged page via `src/lib/redirects.ts`. Do not recreate a separate article or sidebar entry.

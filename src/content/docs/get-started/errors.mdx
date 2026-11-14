@@ -1,0 +1,95 @@
+---
+sourceHash: 3346b22e292c2cc0403d5aaa939d30842ec3df70a2e9f87e7ae2238276a92eec
+title: "Errors"
+description: "Read API error responses, fix requests, and decide when to retry."
+section: "Get Started"
+order: 4
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+translationPending: true
+---
+
+Read the **HTTP status and JSON error body** together. Token, account, and agent message allowances return HTTP `429`. Invalid input, denied access, and some other operation-specific limits can return HTTP `400`.
+
+## Error response
+
+The following example shows selected fields from a payload-size error. The sizes are illustrative:
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "code": "payload_too_large,invalid_input,internal",
+  "class": 400,
+  "error": {
+    "code": "payload_too_large,invalid_input,internal",
+    "attrs": {
+      "current_size": {
+        "type": "number",
+        "value": "2049"
+      },
+      "maximum_size": {
+        "type": "number",
+        "value": "2048"
+      }
+    }
+  }
+}
+```
+
+| Field | How to use it |
+| --- | --- |
+| `error.code` | Comma-separated error codes. Split on commas and match individual values. |
+| `error.message` | Human-readable messages, commonly keyed by `en_US` and `vi_VN`. Do not use message text for program logic. |
+| `error.attrs` | Optional details such as a field name, current size, or maximum size. Each value has a `type` and a string `value`; numeric values are encoded as strings. |
+| `error.id` | Error occurrence identifier, when present. Include it in a support report. |
+| `error.number` | Diagnostic grouping code, when present. Include it alongside the ID. |
+| Top-level `code` | Repeats the error codes in the standard response envelope. |
+| Top-level `class` | Legacy classification. Use the actual HTTP status and error codes instead. |
+
+The gateway can append `internal` to a more specific error. Its presence alone does **not** mean a request is safe to retry. In the example above, reduce the attribute size first.
+
+## Common error codes
+
+This is a practical subset, not an exhaustive list. A response can contain several of these codes.
+
+| Code | What to do |
+| --- | --- |
+| `invalid_input` | Check the JSON body, required fields, and value types. |
+| `invalid_field` | Correct the named field, such as an unsupported message format. |
+| `access_deny` | Check the token's account and the issuing agent's permissions or conversation access. |
+| `access_token_expired` | Create a replacement token and update your integration. |
+| `locked_agent`, `locked_account` | Ask an account administrator to check the agent or account status. |
+| `missing_resource` | Check the resource ID and account. Repeating the same request will not create the missing resource. |
+| `conversation_ended` | Check the conversation state before sending an ordinary message. |
+| `invalid_integration` | Check that the conversation's channel integration is still connected. |
+| `payload_too_large` | Reduce the data identified by the error. See [Usage limits](/docs/get-started/usage-limits). |
+| `limit_exceeded` | Check the affected count or capacity. Waiting does not fix a structural limit. |
+| `rate_limit` | Slow down. Token, account, and agent message limits return HTTP `429` with `Retry-After` in seconds; daily exhaustion requires waiting until 00:00 UTC. |
+| `service_unavailable`, `timeout`, `retryable` | Treat as potentially temporary; follow the retry guidance below. |
+
+For authentication problems, [test the token with `/4.1/me`](/docs/get-started/authentication#test-your-access-token). A successful token check does not grant access to every operation.
+
+## HTTP status codes
+
+| Status | Handling |
+| --- | --- |
+| `400` | Inspect `error.code`. Authentication, permissions, validation, and some limits use this status. |
+| `429` | Token or account usage limit, or another throttle. Honor `Retry-After` and reduce traffic. The body's legacy `class` may still be `400`. |
+| `500` | Server failure. The standard gateway uses this for `service_unavailable`, among other failures. |
+
+Also handle other non-success statuses and network failures. A proxy or failed connection may return an empty or non-JSON body. Keep the status and a sanitized response excerpt instead of failing while parsing the error.
+
+## When to retry
+
+- **Invalid data or denied access:** fix the request, token, or permissions first.
+- **Rate limiting:** queue the work and use [delayed retries](/docs/get-started/usage-limits#retry-safely).
+- **Temporary failure on a read:** use increasing delays with jitter and a fixed attempt limit.
+- **Timeout or lost response on a write:** the operation may have succeeded. Check the resulting state before resubmitting.
+
+For a message send, inspect [message history](/docs/api-reference/conversations/history) or received [webhook events](/docs/webhooks/payloads). If the outcome remains unclear, stop automatic retries and reconcile it. Do not assume every endpoint supports an idempotency key.
+
+## Get help
+
+Include the HTTP method and endpoint, request time with timezone, status, and `error.code`. Add `error.id` and `error.number` if available. Share only the relevant, sanitized request fields; never include the access token.

@@ -1,0 +1,35 @@
+/* Official DocSearch UI: search-only exception approved in D-0038. */
+:root {
+  --docsearch-primary-color: var(--color-accent);
+  --docsearch-highlight-color: var(--color-accent);
+  --docsearch-font-family: var(--font-family-body);
+  --docsearch-modal-width: 800px;
+  --docsearch-modal-height: min(680px, 85dvh);
+  --docsearch-modal-variable-height: 100%;
+}
+.DocSearch-Modal {height:var(--docsearch-modal-height);margin-block-start:min(60px, 5dvh);font-size:16px}
+.DocSearch-Dropdown {flex:1;min-height:0;max-height:none}
+.DocSearch-SearchBar,.DocSearch-Footer {flex-shrink:0}
+.DocSearch-Container .DocSearch-Hit-path,.DocSearch-Container .DocSearch-Commands,
+.DocSearch-Container .DocSearch-Label,.DocSearch-Container .DocSearch-Help,
+.DocSearch-Container .DocSearch-Escape-Key {font-size:14px}
+.docs-search-provider {font-size:14px;white-space:nowrap;color:var(--docsearch-secondary-text-color)}
+@media(max-width:768px){
+  .DocSearch-Modal {height:100dvh;margin:0}
+}
+/* Astryx resolves light/dark/system; use the same tokens without mutating html. */
+:root,:root[data-theme=dark] {
+  --docsearch-text-color:var(--color-text-primary);
+  --docsearch-secondary-text-color:var(--color-text-secondary);
+  --docsearch-modal-background:var(--color-background-surface);
+  --docsearch-background-color:var(--color-background-body);
+  --docsearch-hit-background:var(--color-background-surface);
+  --docsearch-hit-focus-background:var(--color-background-body);
+  --docsearch-searchbox-background:var(--color-background-surface);
+  --docsearch-searchbox-focus-background:var(--color-background-surface);
+  --docsearch-footer-background:var(--color-background-surface);
+  --docsearch-subtle-color:var(--color-border);
+  --docsearch-highlight-color:var(--color-accent);
+  --docsearch-focus-color:var(--color-accent);
+}
+@media(max-width:768px){html{scrollbar-gutter:auto}}

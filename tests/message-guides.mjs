@@ -4,7 +4,7 @@ import {inventory,parsePage} from '../scripts/translations.mjs';
 import {navigationPages} from '../src/lib/navigation.ts';
 const ids=['messages/formats','messages/attachments'];
 const pending=(await inventory()).filter(row=>row.status==='pending').map(row=>row.id);
-assert.deepEqual(pending, [...ids].sort());
+assert(ids.every(id=>pending.includes(id)));
 for(const id of ids){
  const source=parsePage(await readFile(`src/content/docs/${id}.mdx`,'utf8'));
  assert.equal(source.data.translationPending,true);

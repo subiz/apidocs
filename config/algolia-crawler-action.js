@@ -1,9 +1,9 @@
 // Merge this action into the EXISTING Algolia crawler; do not replace help-center actions.
 // Add https://subiz.com.vn/developers to its startUrls after the site is deployed there.
-// In the subiz-com index settings, APPEND filterOnly(docset) and filterOnly(language) to attributesForFaceting.
+// In the subiz_com_vn_s3b97bcq1o_pages index settings, APPEND filterOnly(docset) and filterOnly(language) to attributesForFaceting.
 // This is a crawler dashboard action, not code executed by the Astro app.
 ({
-  indexName: 'subiz-com',
+  indexName: 'subiz_com_vn_s3b97bcq1o_pages',
   pathsToMatch: ['https://subiz.com.vn/developers', 'https://subiz.com.vn/developers/**'],
   recordExtractor: ({ $, helpers }) => {
     if (!$('#main h1').length) return [];

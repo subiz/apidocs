@@ -9,8 +9,9 @@ export type NavigationItem = {id:string; en:string; vi:string; planned?:boolean}
 export const navigation: Record<Section, readonly NavigationItem[]> = {
  'Get Started': [
   {id:'introduction',en:'Overview',vi:'Tổng quan'},
-  {id:'get-started/concepts',en:'Users, conversations & messages',vi:'Khách hàng, hội thoại và tin nhắn'},
   {id:'get-started/authentication',en:'Authentication',vi:'Xác thực'},
+  {id:'get-started/usage-limits',en:'Usage limits',vi:'Giới hạn sử dụng'},
+  {id:'get-started/errors',en:'Errors',vi:'Xử lý lỗi'},
  ],
  'Conversations & Messages': [
   {id:'messages/formats',en:'Message formats',vi:'Định dạng tin nhắn'},
