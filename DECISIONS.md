@@ -182,3 +182,7 @@ By user request, every English page has a reviewed Vietnamese counterpart. This 
 ## D-0049 Do not document ETag behavior
 
 By user request, public pages do not mention `ETag`, `If-None-Match`, or `304 Not Modified` responses, in either language. These are optional optimizations, not required for integration. Evidence stays in SOURCES.md only.
+
+## D-0050 Keep "agent" as the Vietnamese term
+
+By user request, Vietnamese pages and navigation use "agent" (lowercase mid-sentence, "Agent" at the start), matching the Subiz app, instead of "nhân viên". Definitions may still explain that an agent is a staff member ("nhân viên"), and the salesperson role keeps the app label "nhân viên bán hàng". The Agents sidebar group is "Agent".

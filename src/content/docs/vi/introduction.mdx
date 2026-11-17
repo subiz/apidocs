@@ -8,9 +8,9 @@ status: "verified"
 apiVersions: ["4.0", "4.1"]
 ---
 
-Dùng Subiz API để đồng bộ hồ sơ khách hàng với CRM, gửi tin nhắn, điều phối nhân viên và nhận cập nhật trên máy chủ của bạn.
+Dùng Subiz API để đồng bộ hồ sơ khách hàng với CRM, gửi tin nhắn, điều phối agent và nhận cập nhật trên máy chủ của bạn.
 
-Trong Subiz, **user** là khách hàng và **agent** là nhân viên. Một **hội thoại** (conversation) kết nối những người tham gia với tin nhắn và lịch sử sự kiện của họ.
+Trong Subiz, **user** là khách hàng và **agent** là nhân viên của doanh nghiệp. Một **hội thoại** (conversation) kết nối những người tham gia với tin nhắn và lịch sử sự kiện của họ.
 
 ## Bắt đầu từ đây
 
@@ -18,7 +18,7 @@ Trong Subiz, **user** là khách hàng và **agent** là nhân viên. Một **h�
 2. Làm theo [Xác thực](/docs/vi/get-started/authentication) để tạo access token cho tài khoản của bạn.
 3. [Kiểm tra token bằng `/4.1/me`](/docs/vi/get-started/authentication#kiểm-tra-access-token), rồi chọn một tác vụ bên dưới.
 
-Giữ token trên máy chủ của bạn. Yêu cầu dùng quyền của nhân viên đã tạo token. Thay ID và giá trị mẫu bằng dữ liệu của tài khoản bạn đang tích hợp.
+Giữ token trên máy chủ của bạn. Yêu cầu dùng quyền của agent đã tạo token. Thay ID và giá trị mẫu bằng dữ liệu của tài khoản bạn đang tích hợp.
 
 ## Chọn tác vụ
 
@@ -27,7 +27,7 @@ Giữ token trên máy chủ của bạn. Yêu cầu dùng quyền của nhân v
 | Đồng bộ hồ sơ khách hàng | [Tạo khách hàng](/docs/vi/api-reference/users/create) hoặc [cập nhật thông tin khách hàng](/docs/vi/api-reference/users/update). |
 | Trả lời trong một hội thoại có sẵn | [Gửi tin nhắn vào hội thoại](/docs/vi/api-reference/messages/send), dùng ID hội thoại. |
 | Gửi qua kênh của khách hàng | [Gửi tin nhắn cho khách hàng](/docs/vi/api-reference/messages/send-to-user), dùng ID khách hàng và đích đến trên kênh. |
-| Điều phối nhân viên | [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) tham gia, hoặc [giao nhân viên](/docs/vi/api-reference/conversations/assign-agent) phụ trách hội thoại. |
+| Điều phối agent | [Mời agent](/docs/vi/api-reference/conversations/invite-agent) tham gia, hoặc [giao agent](/docs/vi/api-reference/conversations/assign-agent) phụ trách hội thoại. |
 | Phản ứng khi khách hàng hoặc tin nhắn thay đổi | [Thiết lập máy nhận webhook](/docs/vi/webhooks/receiving) và đọc [ví dụ dữ liệu sự kiện](/docs/vi/webhooks/payloads). |
 
 Với nội dung phong phú, xem [Định dạng tin nhắn](/docs/vi/messages/formats) cho văn bản, block và liên kết, và [Tệp đính kèm](/docs/vi/messages/attachments) cho ảnh, video, âm thanh và tệp.
@@ -51,7 +51,7 @@ Các ví dụ hiển thị một số trường được chọn từ schema đ�
 
 ## Account
 
-`Account` đại diện cho một doanh nghiệp trong Subiz. Định danh của chính nó là `id`; các đối tượng khác tham chiếu tới nó qua `account_id`. `owner_id` là nhân viên sở hữu tài khoản.
+`Account` đại diện cho một doanh nghiệp trong Subiz. Định danh của chính nó là `id`; các đối tượng khác tham chiếu tới nó qua `account_id`. `owner_id` là agent sở hữu tài khoản.
 
 ```json
 {
@@ -66,7 +66,7 @@ Dùng access token của đúng tài khoản. Xem [Xác thực](/docs/vi/get-sta
 
 ## Agent
 
-`Agent` là một nhân viên trong tài khoản. Dùng `id` của agent khi mời nhân viên hoặc đặt `assignee` của hội thoại.
+`Agent` là một nhân viên trong tài khoản. Dùng `id` của agent khi mời agent hoặc đặt `assignee` của hội thoại.
 
 ```json
 {
@@ -131,7 +131,7 @@ Các giá trị này tương ứng với `channel`, `channel_source` và `profil
 
 ## Hội thoại, thành viên và người phụ trách
 
-`Conversation` có ID riêng, thành viên, ngữ cảnh kênh và lịch sử sự kiện. Một khách hàng có thể tham gia nhiều hội thoại. Ở đây, Sam vừa là thành viên vừa là nhân viên phụ trách:
+`Conversation` có ID riêng, thành viên, ngữ cảnh kênh và lịch sử sự kiện. Một khách hàng có thể tham gia nhiều hội thoại. Ở đây, Sam vừa là thành viên vừa là agent phụ trách:
 
 ```json
 {
@@ -160,7 +160,7 @@ Các giá trị này tương ứng với `channel`, `channel_source` và `profil
 }
 ```
 
-`assignee` là nhân viên phụ trách. Trường này có thể rỗng hoặc bị lược bỏ khi hội thoại chưa được giao. `members` mô tả việc tham gia; nó không đồng nghĩa với quyền phụ trách.
+`assignee` là agent phụ trách. Trường này có thể rỗng hoặc bị lược bỏ khi hội thoại chưa được giao. `members` mô tả việc tham gia; nó không đồng nghĩa với quyền phụ trách.
 
 ### Thành viên hội thoại
 
@@ -175,7 +175,7 @@ Các giá trị này tương ứng với `channel`, `channel_source` và `profil
 }
 ```
 
-[Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) thêm một nhân viên có sẵn làm người tham gia. [Giao nhân viên](/docs/vi/api-reference/conversations/assign-agent) thay đổi người phụ trách. Giao việc trực tiếp không thêm nhân viên vào `members`.
+[Mời agent](/docs/vi/api-reference/conversations/invite-agent) thêm một agent có sẵn làm người tham gia. [Giao agent](/docs/vi/api-reference/conversations/assign-agent) thay đổi người phụ trách. Giao việc trực tiếp không thêm agent vào `members`.
 
 ## Tin nhắn và sự kiện
 
@@ -362,7 +362,7 @@ Tài liệu này bao gồm API **4.0** và **4.1**. Dùng đúng phiên bản tr
 
 ## Trước khi chạy thật
 
-- Đọc [Giới hạn sử dụng](/docs/vi/get-started/usage-limits) để biết hạn mức theo token, tài khoản và tin nhắn của nhân viên. Xếp hàng yêu cầu và tuân theo `Retry-After` khi bị giới hạn.
+- Đọc [Giới hạn sử dụng](/docs/vi/get-started/usage-limits) để biết hạn mức theo token, tài khoản và tin nhắn của agent. Xếp hàng yêu cầu và tuân theo `Retry-After` khi bị giới hạn.
 - Làm theo [Xử lý lỗi](/docs/vi/get-started/errors) để xử lý thất bại. Sau khi gửi tin nhắn bị hết thời gian chờ, kiểm tra kết quả trước khi thử lại để tránh trùng lặp.
 - Khi nhận webhook, [xác minh chữ ký và xử lý sự kiện trùng lặp](/docs/vi/webhooks/receiving).
 

@@ -25,7 +25,7 @@ Mọi bộ lọc đều tùy chọn và được kết hợp theo điều kiện
 | `created_hour_from`, `created_hour_to` | integer | Khoảng thời gian tạo, tính bằng **giờ** kể từ Unix epoch (số giây Unix ÷ 3600). Bao gồm cả hai đầu. |
 | `is_draft` | boolean | `true` chỉ trả đơn nháp. |
 | `tags` | array | Đơn có một trong các ID thẻ này. `["no"]` trả các đơn không có thẻ. |
-| `salesperson` | array | Đơn có nhân viên bán hàng là một trong các ID nhân viên này. `["no"]` trả các đơn chưa có nhân viên bán hàng. |
+| `salesperson` | array | Đơn có nhân viên bán hàng là một trong các ID agent này. `["no"]` trả các đơn chưa có nhân viên bán hàng. |
 | `include_deleted` | boolean | Bao gồm đơn đã xóa. Mặc định `false`. |
 
 ## Sắp xếp và phân trang
@@ -70,7 +70,7 @@ Yêu cầu thành công trả HTTP `200`:
 
 ## Ai thấy những đơn nào
 
-Kết quả phụ thuộc vào nhân viên sở hữu token. Nhân viên có quyền xem mọi đơn sẽ nhận mọi kết quả khớp. Nhân viên khác chỉ nhận các đơn mà họ là `salesperson` hoặc được giao ở một giai đoạn pipeline. Dùng token có quyền xem toàn bộ đơn hàng cho tích hợp.
+Kết quả phụ thuộc vào agent sở hữu token. Agent có quyền xem mọi đơn sẽ nhận mọi kết quả khớp. Agent khác chỉ nhận các đơn mà họ là `salesperson` hoặc được giao ở một giai đoạn pipeline. Dùng token có quyền xem toàn bộ đơn hàng cho tích hợp.
 
 ## Dùng GET
 

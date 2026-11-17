@@ -18,7 +18,7 @@ apiVersions: ["4.0", "4.1"]
 
 **Token chỉ hiển thị một lần.** Nếu làm mất, hãy tạo token mới. Mỗi token thuộc tài khoản đã chọn khi tạo.
 
-Yêu cầu gửi bằng token này hoạt động với tư cách nhân viên của bạn trong tài khoản đó. Quyền của nhân viên vẫn được áp dụng; tạo token không cấp thêm quyền.
+Yêu cầu gửi bằng token này hoạt động với tư cách agent của bạn trong tài khoản đó. Quyền của agent vẫn được áp dụng; tạo token không cấp thêm quyền.
 
 ## Kiểm tra access token
 
@@ -29,7 +29,7 @@ GET https://api.subiz.com.vn/4.1/me
 Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-**Kết quả mong đợi:** `200 OK` cùng hồ sơ nhân viên của bạn dưới dạng JSON. Ví dụ dưới đây hiển thị một số trường với giá trị mẫu:
+**Kết quả mong đợi:** `200 OK` cùng hồ sơ agent của bạn dưới dạng JSON. Ví dụ dưới đây hiển thị một số trường với giá trị mẫu:
 
 ```json
 {
@@ -39,7 +39,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 }
 ```
 
-Kiểm tra `account_id` trùng với tài khoản bạn muốn kết nối. `id` là nhân viên đang gửi yêu cầu. Kiểm tra thành công chỉ xác nhận quyền truy cập `/me`, không phải mọi thao tác API.
+Kiểm tra `account_id` trùng với tài khoản bạn muốn kết nối. `id` là agent đang gửi yêu cầu. Kiểm tra thành công chỉ xác nhận quyền truy cập `/me`, không phải mọi thao tác API.
 
 Yêu cầu kiểm tra token cũng được tính vào [giới hạn sử dụng](/docs/vi/get-started/usage-limits). Nếu `/me` trả `429`, hãy chờ hết khoảng `Retry-After` rồi mới thử lại.
 

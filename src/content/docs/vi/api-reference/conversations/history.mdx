@@ -8,7 +8,7 @@ status: "verified"
 endpointId: "conversations-history"
 ---
 
-Dùng endpoint này để đọc những gì đã diễn ra trong hội thoại: tin nhắn của khách hàng và nhân viên, cùng các sự kiện hội thoại khác.
+Dùng endpoint này để đọc những gì đã diễn ra trong hội thoại: tin nhắn của khách hàng và agent, cùng các sự kiện hội thoại khác.
 
 ## Yêu cầu
 
@@ -53,7 +53,7 @@ Coi kết quả rỗng hoặc `null` là không có sự kiện nào.
 ## Đọc sự kiện đúng cách
 
 - **Kiểm tra `type` trước.** Không phải sự kiện nào cũng là tin nhắn. Chỉ đọc `data.message` với sự kiện tin nhắn như `message_sent`.
-- **Kiểm tra người gửi.** `by.type` cho biết khách hàng (`user`) hay nhân viên (`agent`) đã thực hiện, và `by.id` xác định người đó.
+- **Kiểm tra người gửi.** `by.type` cho biết khách hàng (`user`) hay agent (`agent`) đã thực hiện, và `by.id` xác định người đó.
 - **Kiểm tra định dạng.** Tin nhắn có thể là văn bản thuần, cây block hoặc chỉ có tệp đính kèm. Xem [Định dạng tin nhắn](/docs/vi/messages/formats) và [Tệp đính kèm](/docs/vi/messages/attachments).
 - **Loại trùng theo `id`.** Khi đồng bộ lịch sử với [sự kiện webhook](/docs/vi/webhooks/payloads), dùng `id` của sự kiện để tránh lưu một tin nhắn hai lần.
 

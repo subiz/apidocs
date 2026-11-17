@@ -54,8 +54,8 @@ Yêu cầu thành công trả HTTP `200` cùng một đối tượng `Conversati
 | --- | --- |
 | `id` | ID hội thoại. |
 | `state` | Trạng thái hiện tại, như `active` hoặc `ended`. |
-| `assignee` | Nhân viên phụ trách hội thoại. Bị lược bỏ khi chưa giao. |
-| `members` | Người tham gia. Mỗi người có `type` (`user` cho khách hàng, `agent` cho nhân viên), `id` và trạng thái `membership`. |
+| `assignee` | Agent phụ trách hội thoại. Bị lược bỏ khi chưa giao. |
+| `members` | Người tham gia. Mỗi người có `type` (`user` cho khách hàng, `agent` cho agent), `id` và trạng thái `membership`. |
 | `touchpoint` | Kênh mà hội thoại diễn ra. |
 | `created`, `ended` | Dấu thời gian Unix tính bằng mili giây. `ended` bị lược bỏ khi hội thoại còn mở. |
 | `last_message_sent` | Sự kiện tin nhắn không nội bộ gần nhất, nếu có. |
@@ -65,10 +65,10 @@ Trường rỗng bị lược bỏ. Đối tượng có nhiều trường hơn v
 ## Bước tiếp theo
 
 - Đọc tin nhắn bằng [Đọc lịch sử tin nhắn](/docs/vi/api-reference/conversations/history).
-- Thêm nhân viên làm người tham gia bằng [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent).
-- Đổi người phụ trách bằng [Giao nhân viên](/docs/vi/api-reference/conversations/assign-agent).
+- Thêm agent làm người tham gia bằng [Mời agent](/docs/vi/api-reference/conversations/invite-agent).
+- Đổi người phụ trách bằng [Giao agent](/docs/vi/api-reference/conversations/assign-agent).
 
-Là thành viên và là `assignee` là hai việc riêng. Nhân viên có thể phụ trách hội thoại mà không nằm trong `members`.
+Là thành viên và là `assignee` là hai việc riêng. Agent có thể phụ trách hội thoại mà không nằm trong `members`.
 
 ## Yêu cầu HTTP
 

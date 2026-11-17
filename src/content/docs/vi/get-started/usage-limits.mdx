@@ -12,16 +12,16 @@ Kiểm tra hai điều trước khi gửi yêu cầu: **bạn gọi API thườn
 
 ## Giới hạn tốc độ
 
-Yêu cầu đã xác thực của nhân viên có hai lớp giới hạn:
+Yêu cầu đã xác thực của agent có hai lớp giới hạn:
 
 | Phạm vi | Yêu cầu mỗi giây | Yêu cầu mỗi ngày |
 | --- | --- | --- |
-| Mỗi access token của nhân viên | 100 | 144.000 |
+| Mỗi access token của agent | 100 | 144.000 |
 | Tất cả API key trong một tài khoản, cộng chung | 100 | 864.000 |
 
 **Mã truy cập cá nhân tạo trong Subiz chịu cả hai giới hạn.** Giới hạn theo token được kiểm tra trước, sau đó tới giới hạn chung của tài khoản. Ví dụ, hai API key cùng gửi 60 yêu cầu trong cùng một giây sẽ vượt giới hạn chung 100 yêu cầu của tài khoản.
 
-Hạn mức theo token gắn với đúng token đó trên mọi endpoint và tài khoản. Các token khác nhau có hạn mức token riêng; các API key của cùng tài khoản vẫn dùng chung hạn mức tài khoản. Token đăng nhập và OAuth của nhân viên chịu giới hạn theo token nhưng không tiêu hao hạn mức API key của tài khoản.
+Hạn mức theo token gắn với đúng token đó trên mọi endpoint và tài khoản. Các token khác nhau có hạn mức token riêng; các API key của cùng tài khoản vẫn dùng chung hạn mức tài khoản. Token đăng nhập và OAuth của agent chịu giới hạn theo token nhưng không tiêu hao hạn mức API key của tài khoản.
 
 ### Cách đếm và đặt lại
 
@@ -35,13 +35,13 @@ Dùng hàng đợi, giới hạn số yêu cầu đồng thời và tăng lưu l
 
 ### Giới hạn gửi tin nhắn
 
-Gửi tin với tư cách nhân viên còn dùng một hạn mức chung cho **nhân viên đó trong tài khoản đó**:
+Gửi tin với tư cách agent còn dùng một hạn mức chung cho **agent đó trong tài khoản đó**:
 
 | Mỗi giây | Mỗi phút | Mỗi ngày |
 | --- | --- | --- |
 | 5 tin nhắn | 60 tin nhắn | 5.000 tin nhắn |
 
-Mọi token và thiết bị của nhân viên dùng chung hạn mức này, trên mọi hội thoại và cả hai cách [gửi vào hội thoại](/docs/vi/api-reference/messages/send) và [gửi cho khách hàng](/docs/vi/api-reference/messages/send-to-user). Đổi người gửi trong body yêu cầu không làm thay đổi hạn mức của ai được sử dụng.
+Mọi token và thiết bị của agent dùng chung hạn mức này, trên mọi hội thoại và cả hai cách [gửi vào hội thoại](/docs/vi/api-reference/messages/send) và [gửi cho khách hàng](/docs/vi/api-reference/messages/send-to-user). Đổi người gửi trong body yêu cầu không làm thay đổi hạn mức của ai được sử dụng.
 
 Tin nhắn nội bộ cũng được tính; sự kiện đang gõ, đã xem và các sự kiện không phải tin nhắn khác thì không. Cửa sổ giây và phút là cửa sổ lịch cố định; ngày được đặt lại lúc 00:00 UTC. Các bộ đếm này cũng áp dụng riêng cho từng instance gateway.
 
@@ -51,7 +51,7 @@ Bộ giới hạn kiểm tra toàn bộ mảng ứng viên trước khi gửi; n
 
 ### Nhận biết khi bị điều tiết
 
-Vượt hạn mức theo token, tài khoản hoặc tin nhắn của nhân viên sẽ trả **HTTP `429 Too Many Requests`** trước khi thao tác được thực hiện. Phản hồi có `rate_limit` trong `error.code` và các header sau:
+Vượt hạn mức theo token, tài khoản hoặc tin nhắn của agent sẽ trả **HTTP `429 Too Many Requests`** trước khi thao tác được thực hiện. Phản hồi có `rate_limit` trong `error.code` và các header sau:
 
 | Header | Giá trị |
 | --- | --- |

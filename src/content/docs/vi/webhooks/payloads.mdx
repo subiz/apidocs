@@ -17,8 +17,8 @@ Các ví dụ dưới đây là payload rút gọn với giá trị giả lập.
 | `message_sent` | `data.message` | Nhận tin nhắn và liên kết chúng với hội thoại. |
 | `user_created` | `data.user` | Tạo hoặc liên kết hồ sơ khách hàng trong CRM. |
 | `user_info_updated` | `data.user` | Đồng bộ thông tin khách hàng. |
-| `conversation_assigned` | `data.conversation` | Cập nhật nhân viên phụ trách. |
-| `conversation_unassigned` | `data.conversation` | Bỏ nhân viên phụ trách. |
+| `conversation_assigned` | `data.conversation` | Cập nhật agent phụ trách. |
+| `conversation_unassigned` | `data.conversation` | Bỏ agent phụ trách. |
 
 Chọn ba loại đầu tiên trong **Tùy chỉnh sự kiện** khi [tạo webhook](/docs/vi/webhooks/receiving#tạo-webhook-trong-subiz). Sự kiện giao việc được backend hỗ trợ nhưng chưa có trong form tạo hiện tại; các ví dụ giao việc chỉ áp dụng cho những đăng ký đã được cấu hình sẵn cho các loại đó.
 
@@ -40,7 +40,7 @@ Trường có giá trị rỗng có thể bị lược bỏ. `by` có thể khô
 
 ## Tin nhắn được gửi
 
-Sự kiện `message_sent` có thể là tin nhắn của khách hàng, câu trả lời của nhân viên hoặc nội dung tự động. Bản thân nó không xác nhận tin đã tới kênh bên ngoài.
+Sự kiện `message_sent` có thể là tin nhắn của khách hàng, câu trả lời của agent hoặc nội dung tự động. Bản thân nó không xác nhận tin đã tới kênh bên ngoài.
 
 ```json
 {
@@ -66,7 +66,7 @@ Sự kiện `message_sent` có thể là tin nhắn của khách hàng, câu tr�
 }
 ```
 
-Dùng `data.message.conversation_id` để liên kết tin nhắn với hội thoại. Kiểm tra `by.type` để phân biệt khách hàng (`user`) với nhân viên (`agent`), và kiểm tra `data.message.is_internal` trước khi coi tin nhắn là hiển thị với khách hàng. Đừng tự động trả lời mọi sự kiện `message_sent`: chính câu trả lời của bạn cũng có thể kích hoạt loại sự kiện này.
+Dùng `data.message.conversation_id` để liên kết tin nhắn với hội thoại. Kiểm tra `by.type` để phân biệt khách hàng (`user`) với agent (`agent`), và kiểm tra `data.message.is_internal` trước khi coi tin nhắn là hiển thị với khách hàng. Đừng tự động trả lời mọi sự kiện `message_sent`: chính câu trả lời của bạn cũng có thể kích hoạt loại sự kiện này.
 
 ### Block trong tin nhắn phong phú
 
@@ -114,7 +114,7 @@ Nội dung này hiển thị là “Hello **Alex**”. Giữ cây block khi lưu
 
 ## Khách hàng được tạo
 
-`user_created` chứa khách hàng trong `data.user`. Dùng `(account_id, data.user.id)` làm tham chiếu Subiz trong CRM của bạn. Khách hàng là user, không phải nhân viên.
+`user_created` chứa khách hàng trong `data.user`. Dùng `(account_id, data.user.id)` làm tham chiếu Subiz trong CRM của bạn. Khách hàng là user, không phải agent.
 
 ```json
 {
@@ -189,7 +189,7 @@ Chỉ upsert các trường CRM của bạn dùng. Thuộc tính bị lược b�
 
 ## Hội thoại được giao
 
-`conversation_assigned` mang ID hội thoại và nhân viên phụ trách trong `data.conversation`. Đây là quyền phụ trách, không phải tư cách thành viên hay lời mời tham gia.
+`conversation_assigned` mang ID hội thoại và agent phụ trách trong `data.conversation`. Đây là quyền phụ trách, không phải tư cách thành viên hay lời mời tham gia.
 
 ```json
 {
@@ -232,7 +232,7 @@ Chỉ upsert các trường CRM của bạn dùng. Thuộc tính bị lược b�
 }
 ```
 
-Xem [Giao nhân viên phụ trách](/docs/vi/api-reference/conversations/assign-agent) cho thao tác hội thoại tương ứng.
+Xem [Giao agent phụ trách](/docs/vi/api-reference/conversations/assign-agent) cho thao tác hội thoại tương ứng.
 
 ## Xử lý một lô an toàn
 

@@ -41,7 +41,7 @@ Các thay đổi thường gặp:
 | `items` | Thay thế mọi dòng. Tổng tiền được tính lại. |
 | `shipping` | Thay thế thông tin giao hàng. |
 | `note`, `private_note` | Ghi chú của đơn. |
-| `salesperson` | ID nhân viên phụ trách đơn. |
+| `salesperson` | ID agent phụ trách đơn. |
 | `cancellation_note`, `cancellation_code` | Lý do khi hủy. |
 
 Đừng đưa `source_id` vào body cập nhật. Nếu nó trùng với đơn khác, đơn đó sẽ bị cập nhật thay vì đơn này.
@@ -49,7 +49,7 @@ Các thay đổi thường gặp:
 ## Subiz làm gì
 
 - Tính lại `subtotal`, `total_tax`, `total`, `payment_made` và `payment_status`. Giá trị bạn gửi cho các trường này bị bỏ qua.
-- Giữ nguyên `created`, `created_by`, cùng thẻ và nhân viên của đơn.
+- Giữ nguyên `created`, `created_by`, cùng thẻ và agent của đơn.
 - Khi trạng thái chuyển sang `closed` hoặc `canceled`, đặt `closed`. Với `canceled`, đặt thêm `cancelled_at` và `cancelled_by`.
 - Nếu sau khi cập nhật đơn ở trạng thái `closed` hoặc `canceled` và có mã vận đơn, Subiz sẽ thử hủy vận đơn với đơn vị vận chuyển. Điều này cũng xảy ra khi bạn sửa một đơn đã đóng từ trước. Đừng cập nhật đơn đã đóng có vận đơn đang hoạt động trừ khi bạn chủ ý làm vậy.
 

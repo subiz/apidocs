@@ -1,25 +1,25 @@
 ---
 sourceHash: 794cf39b018788ad2251016628e5d0ddfab1b5e8d0252d7a0bf0fa3cb63bf43a
-title: "Mời nhân viên tham gia"
-description: "Thêm một nhân viên có sẵn vào hội thoại với vai trò người tham gia."
+title: "Mời agent tham gia"
+description: "Thêm một agent có sẵn vào hội thoại với vai trò người tham gia."
 section: "Conversations"
 order: 23
 status: "verified"
 endpointId: "conversations-invite-agent"
 ---
 
-Dùng endpoint này để đưa một nhân viên khác vào hội thoại, ví dụ một chuyên viên cần hỗ trợ. Nhân viên đó phải đã có tài khoản Subiz.
+Dùng endpoint này để đưa một agent khác vào hội thoại, ví dụ một chuyên viên cần hỗ trợ. Agent đó phải đã có tài khoản Subiz.
 
 ## Mời, giao hay tự động phân bổ?
 
 | Bạn muốn | Dùng |
 | --- | --- |
-| Thêm nhân viên làm người tham gia | Endpoint này. |
-| Giao cho nhân viên phụ trách hội thoại | [Giao nhân viên](/docs/vi/api-reference/conversations/assign-agent). |
-| Thêm nhân viên mới vào tài khoản | Ứng dụng Subiz. Endpoint này không tạo nhân viên hay gửi lời mời tham gia tài khoản. |
-| Để Subiz tự chọn nhân viên | Phân bổ tự động. Endpoint này luôn dùng đúng nhân viên bạn chỉ định. |
+| Thêm agent làm người tham gia | Endpoint này. |
+| Giao cho agent phụ trách hội thoại | [Giao agent](/docs/vi/api-reference/conversations/assign-agent). |
+| Thêm agent mới vào tài khoản | Ứng dụng Subiz. Endpoint này không tạo agent hay gửi lời mời tham gia tài khoản. |
+| Để Subiz tự chọn agent | Phân bổ tự động. Endpoint này luôn dùng đúng agent bạn chỉ định. |
 
-Mời nhân viên không thay đổi `assignee` của hội thoại.
+Mời agent không thay đổi `assignee` của hội thoại.
 
 ## Body yêu cầu
 
@@ -29,7 +29,7 @@ Body là một thành viên hội thoại.
 | --- | --- | --- |
 | `cid` (đường dẫn) | string | ID hội thoại. |
 | `type` | string | Đặt là `agent`. |
-| `id` | string | ID của nhân viên có sẵn cần mời. |
+| `id` | string | ID của agent có sẵn cần mời. |
 
 ```json
 {
@@ -48,7 +48,7 @@ Yêu cầu thành công trả HTTP `200` cùng một đối tượng rỗng:
 {}
 ```
 
-Subiz ghi một sự kiện `conversation_invited` vào hội thoại. Để xác nhận kết quả, [lấy thông tin hội thoại](/docs/vi/api-reference/conversations/retrieve) và kiểm tra nhân viên đã có trong `members`:
+Subiz ghi một sự kiện `conversation_invited` vào hội thoại. Để xác nhận kết quả, [lấy thông tin hội thoại](/docs/vi/api-reference/conversations/retrieve) và kiểm tra agent đã có trong `members`:
 
 ```json
 {
@@ -61,4 +61,4 @@ Subiz ghi một sự kiện `conversation_invited` vào hội thoại. Để xá
 
 ## Yêu cầu HTTP
 
-Thay `YOUR_CID` bằng ID hội thoại, `YOUR_AGENT_ID` bằng ID nhân viên và `YOUR_ACCESS_TOKEN` bằng token của bạn.
+Thay `YOUR_CID` bằng ID hội thoại, `YOUR_AGENT_ID` bằng ID agent và `YOUR_ACCESS_TOKEN` bằng token của bạn.

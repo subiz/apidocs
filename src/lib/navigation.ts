@@ -20,8 +20,8 @@ export const navigation: Record<Section, readonly NavigationItem[]> = {
   {id:'api-reference/messages/send-to-user',en:'Send to a customer',vi:'Gửi tin nhắn cho khách hàng'},
   {id:'api-reference/conversations/retrieve',en:'Get conversation details',vi:'Lấy thông tin hội thoại'},
   {id:'api-reference/conversations/history',en:'Read message history',vi:'Đọc lịch sử tin nhắn'},
-  {id:'api-reference/conversations/invite-agent',en:'Invite an agent',vi:'Mời nhân viên tham gia'},
-  {id:'api-reference/conversations/assign-agent',en:'Assign an agent',vi:'Giao nhân viên phụ trách'},
+  {id:'api-reference/conversations/invite-agent',en:'Invite an agent',vi:'Mời agent tham gia'},
+  {id:'api-reference/conversations/assign-agent',en:'Assign an agent',vi:'Giao agent phụ trách'},
  ],
  'Users': [
   {id:'users/format',en:'User and attribute format',vi:'Định dạng khách hàng và thuộc tính'},
@@ -31,9 +31,9 @@ export const navigation: Record<Section, readonly NavigationItem[]> = {
   {id:'api-reference/users/identity',en:'Find or create by channel identity',vi:'Tìm hoặc tạo theo định danh kênh'},
  ],
  'Agents': [
-  {id:'agents/format',en:'Agent format',vi:'Định dạng nhân viên'},
-  {id:'api-reference/agents/list',en:'List agents',vi:'Lấy danh sách nhân viên'},
-  {id:'api-reference/agents/retrieve',en:'Get agent details',vi:'Lấy thông tin nhân viên'},
+  {id:'agents/format',en:'Agent format',vi:'Định dạng agent'},
+  {id:'api-reference/agents/list',en:'List agents',vi:'Lấy danh sách agent'},
+  {id:'api-reference/agents/retrieve',en:'Get agent details',vi:'Lấy thông tin agent'},
  ],
  'Orders': [
   {id:'orders/format',en:'Order format',vi:'Định dạng đơn hàng'},

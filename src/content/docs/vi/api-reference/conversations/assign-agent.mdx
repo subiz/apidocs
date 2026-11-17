@@ -1,19 +1,19 @@
 ---
 sourceHash: c5a8026b0d02adf12fc073e7c9e738b351ea46eef43a876c1ccc4253fd372d1a
-title: "Giao nhân viên phụ trách"
-description: "Giao cho một nhân viên cụ thể phụ trách hội thoại."
+title: "Giao agent phụ trách"
+description: "Giao cho một agent cụ thể phụ trách hội thoại."
 section: "Conversations"
 order: 24
 status: "verified"
 endpointId: "conversations-assign-agent"
 ---
 
-Dùng endpoint này để đặt người phụ trách hội thoại, tức `assignee`, là một nhân viên cụ thể. Dùng khi chuyển giao, ví dụ khi CRM của bạn quyết định nhân viên bán hàng nào chăm sóc khách hàng.
+Dùng endpoint này để đặt người phụ trách hội thoại, tức `assignee`, là một agent cụ thể. Dùng khi chuyển giao, ví dụ khi CRM của bạn quyết định nhân viên bán hàng nào chăm sóc khách hàng.
 
 ## Trước khi bắt đầu
 
 - Lấy [Bearer access token](/docs/vi/get-started/authentication) và ID tài khoản.
-- Lấy ID của một nhân viên có sẵn trong tài khoản.
+- Lấy ID của một agent có sẵn trong tài khoản.
 
 ## Body yêu cầu
 
@@ -21,7 +21,7 @@ Dùng endpoint này để đặt người phụ trách hội thoại, tức `ass
 | --- | --- | --- |
 | `accid` (đường dẫn) | string | ID tài khoản của bạn. |
 | `cid` (đường dẫn) | string | Hội thoại cần giao. |
-| `assignee` | string | ID nhân viên sẽ phụ trách hội thoại. |
+| `assignee` | string | ID agent sẽ phụ trách hội thoại. |
 
 ```json
 {
@@ -48,7 +48,7 @@ Khi người phụ trách thay đổi, Subiz phát sự kiện `conversation_ass
 
 ## Giao việc không phải là tham gia
 
-Giao nhân viên không thêm họ vào `members`. Nếu nhân viên cũng cần tham gia, hãy [mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) nữa.
+Giao agent không thêm họ vào `members`. Nếu agent cũng cần tham gia, hãy [mời agent](/docs/vi/api-reference/conversations/invite-agent) nữa.
 
 ## Bỏ giao việc
 
@@ -68,7 +68,7 @@ Content-Type: application/json
 
 ## Phân bổ tự động là việc khác
 
-`POST /4.1/conversations/{cid}/assign` yêu cầu Subiz chạy lại phân bổ tự động. Nó không nhận ID nhân viên. Dùng endpoint trên trang này để chọn một nhân viên cụ thể.
+`POST /4.1/conversations/{cid}/assign` yêu cầu Subiz chạy lại phân bổ tự động. Nó không nhận ID agent. Dùng endpoint trên trang này để chọn một agent cụ thể.
 
 ## Yêu cầu HTTP
 

@@ -8,7 +8,7 @@ status: "verified"
 apiVersions: ["4.0", "4.1"]
 ---
 
-Đọc **mã trạng thái HTTP và body lỗi JSON** cùng nhau. Hạn mức theo token, tài khoản và tin nhắn của nhân viên trả HTTP `429`. Dữ liệu không hợp lệ, bị từ chối truy cập và một số giới hạn riêng của từng thao tác có thể trả HTTP `400`.
+Đọc **mã trạng thái HTTP và body lỗi JSON** cùng nhau. Hạn mức theo token, tài khoản và tin nhắn của agent trả HTTP `429`. Dữ liệu không hợp lệ, bị từ chối truy cập và một số giới hạn riêng của từng thao tác có thể trả HTTP `400`.
 
 ## Phản hồi lỗi
 
@@ -57,15 +57,15 @@ Gateway có thể thêm `internal` vào một lỗi cụ thể hơn. Chỉ riên
 | --- | --- |
 | `invalid_input` | Kiểm tra body JSON, trường bắt buộc và kiểu giá trị. |
 | `invalid_field` | Sửa trường được nêu tên, ví dụ định dạng tin nhắn không được hỗ trợ. |
-| `access_deny` | Kiểm tra tài khoản của token và quyền của nhân viên tạo token, hoặc quyền truy cập hội thoại. |
+| `access_deny` | Kiểm tra tài khoản của token và quyền của agent tạo token, hoặc quyền truy cập hội thoại. |
 | `access_token_expired` | Tạo token thay thế và cập nhật tích hợp. |
-| `locked_agent`, `locked_account` | Nhờ quản trị viên tài khoản kiểm tra trạng thái nhân viên hoặc tài khoản. |
+| `locked_agent`, `locked_account` | Nhờ quản trị viên tài khoản kiểm tra trạng thái agent hoặc tài khoản. |
 | `missing_resource` | Kiểm tra ID tài nguyên và tài khoản. Lặp lại cùng yêu cầu sẽ không tạo ra tài nguyên còn thiếu. |
 | `conversation_ended` | Kiểm tra trạng thái hội thoại trước khi gửi tin nhắn thông thường. |
 | `invalid_integration` | Kiểm tra tích hợp kênh của hội thoại vẫn còn kết nối. |
 | `payload_too_large` | Giảm dữ liệu được lỗi chỉ ra. Xem [Giới hạn sử dụng](/docs/vi/get-started/usage-limits). |
 | `limit_exceeded` | Kiểm tra số lượng hoặc dung lượng bị ảnh hưởng. Chờ đợi không khắc phục được giới hạn về cấu trúc. |
-| `rate_limit` | Giảm tốc độ. Giới hạn theo token, tài khoản và tin nhắn của nhân viên trả HTTP `429` kèm `Retry-After` tính bằng giây; hết hạn mức ngày thì phải chờ tới 00:00 UTC. |
+| `rate_limit` | Giảm tốc độ. Giới hạn theo token, tài khoản và tin nhắn của agent trả HTTP `429` kèm `Retry-After` tính bằng giây; hết hạn mức ngày thì phải chờ tới 00:00 UTC. |
 | `service_unavailable`, `timeout`, `retryable` | Coi là có thể tạm thời; làm theo hướng dẫn thử lại bên dưới. |
 
 Với lỗi xác thực, [kiểm tra token bằng `/4.1/me`](/docs/vi/get-started/authentication#kiểm-tra-access-token). Kiểm tra token thành công không có nghĩa là được truy cập mọi thao tác.

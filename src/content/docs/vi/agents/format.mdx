@@ -1,16 +1,16 @@
 ---
 sourceHash: 9ffea52b2c7836debe58401ebbfeb36c0a86cb66ff2864171eb3495c785952c0
-title: "Định dạng nhân viên"
-description: "Hiểu đối tượng nhân viên: định danh, thông tin liên hệ, vai trò và trạng thái."
+title: "Định dạng agent"
+description: "Hiểu đối tượng agent: định danh, thông tin liên hệ, vai trò và trạng thái."
 section: "Agents"
 order: 30
 status: "verified"
 apiVersions: ["4.1"]
 ---
 
-`Agent` là một nhân viên trong tài khoản Subiz của bạn. Nhân viên trả lời khách hàng, tham gia hội thoại và phụ trách hội thoại với vai trò `assignee`. Khách hàng là đối tượng `User`, không phải agent. Mọi ID và giá trị bên dưới chỉ mang tính minh họa.
+`Agent` là một nhân viên trong tài khoản Subiz của bạn. Agent trả lời khách hàng, tham gia hội thoại và phụ trách hội thoại với vai trò `assignee`. Khách hàng là đối tượng `User`, không phải agent. Mọi ID và giá trị bên dưới chỉ mang tính minh họa.
 
-Để lấy nhân viên, xem [Lấy danh sách nhân viên](/docs/vi/api-reference/agents/list) và [Lấy thông tin nhân viên](/docs/vi/api-reference/agents/retrieve).
+Để lấy agent, xem [Lấy danh sách agent](/docs/vi/api-reference/agents/list) và [Lấy thông tin agent](/docs/vi/api-reference/agents/retrieve).
 
 ## Agent
 
@@ -39,10 +39,10 @@ Một số trường của `Agent`:
 
 | Trường | Kiểu | Mô tả |
 | --- | --- | --- |
-| `id` | string | ID nhân viên. Dùng làm `assignee` khi [giao hội thoại](/docs/vi/api-reference/conversations/assign-agent), hoặc làm `id` thành viên khi [mời nhân viên](/docs/vi/api-reference/conversations/invite-agent). |
-| `account_id` | string | Tài khoản mà nhân viên thuộc về. |
-| `type` | string | `agent` cho nhân viên, hoặc `bot`. Rỗng nghĩa là `agent`. |
-| `state` | string | Trạng thái nhân viên. Xem [Trạng thái](#trạng-thái). |
+| `id` | string | ID agent. Dùng làm `assignee` khi [giao hội thoại](/docs/vi/api-reference/conversations/assign-agent), hoặc làm `id` thành viên khi [mời agent](/docs/vi/api-reference/conversations/invite-agent). |
+| `account_id` | string | Tài khoản mà agent thuộc về. |
+| `type` | string | `agent` cho agent, hoặc `bot`. Rỗng nghĩa là `agent`. |
+| `state` | string | Trạng thái agent. Xem [Trạng thái](#trạng-thái). |
 | `fullname` | string | Tên hiển thị. |
 | `email` | string | Địa chỉ email. |
 | `phone` | string | Số điện thoại. |
@@ -51,10 +51,10 @@ Một số trường của `Agent`:
 | `lang` | string | Ngôn ngữ ưa dùng. |
 | `timezone` | string | Múi giờ. |
 | `scopes` | array | Vai trò cấp tài khoản, như `owner` hoặc `supervisor`. |
-| `invited_by` | string | ID của nhân viên đã mời nhân viên này. |
+| `invited_by` | string | ID của agent đã mời agent này. |
 | `client_id` | string | Với bot: ID của bot. |
 | `extension` | integer | Số máy lẻ, nếu đã đặt. |
-| `joined`, `modified` | integer | Thời điểm nhân viên tham gia tài khoản và thời điểm bản ghi thay đổi gần nhất. |
+| `joined`, `modified` | integer | Thời điểm agent tham gia tài khoản và thời điểm bản ghi thay đổi gần nhất. |
 
 Trường rỗng bị lược bỏ, và đối tượng có nhiều trường hơn ví dụ. `account_id` là ID của tài khoản; bản thân đối tượng tài khoản dùng `id`.
 
@@ -63,13 +63,13 @@ Trường rỗng bị lược bỏ, và đối tượng có nhiều trường h�
 | `state` | Ý nghĩa |
 | --- | --- |
 | `pending` | Đã được mời, đang chờ chấp nhận lời mời. |
-| `active` | Nhân viên đang hoạt động. |
+| `active` | Đang hoạt động. |
 | `inactive` | Đã bị vô hiệu hóa. |
 | `deleted` | Đã bị xóa khỏi tài khoản. |
 
-Khi chọn nhân viên để mời hoặc giao việc, hãy chọn người có `type` là `agent` và `state` là `active`.
+Khi chọn agent để mời hoặc giao việc, hãy chọn người có `type` là `agent` và `state` là `active`.
 
-## Nhân viên và khách hàng
+## Agent và khách hàng
 
 | | Agent | User |
 | --- | --- | --- |
