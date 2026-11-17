@@ -1,0 +1,95 @@
+---
+sourceHash: 4b60a1e66e050dacdb77db3b995e0f61d6ba74238003c689c5f6b7148f14394d
+title: "Update a product"
+description: "Change a product's price, stock, availability, or other fields."
+section: "Products"
+order: 64
+status: "verified"
+endpointId: "products-update"
+translationPending: true
+---
+
+Use this endpoint to change a product, for example to update its price or stock after a change in your shop.
+
+## Always list the fields to change
+
+Add `x-fields` to the query string with a comma-separated list of the fields you send:
+
+```http
+POST https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/products/YOUR_PID?x-fields=price,stock
+```
+
+Only the listed fields change.
+
+**Without `x-fields`, the body replaces the whole product.** Every field you leave out is cleared, including images and description. If you must send a full product, [read it](/docs/api-reference/products/retrieve) first and send it back with your changes.
+
+## Always send `name`
+
+Every request body must contain a non-empty `name`, even when you do not change it. Without `name`, the request fails. If `name` is not in `x-fields`, the name you send is only checked, not saved.
+
+## Request body
+
+Send `name` and the new values of the fields listed in `x-fields`:
+
+```json
+{
+  "name": "Ceramic mug",
+  "price": 99000,
+  "stock": 40
+}
+```
+
+Common changes:
+
+| Field | Notes |
+| --- | --- |
+| `price`, `market_price` | Prices. |
+| `stock` | Units in stock. |
+| `availability` | `in_stock`, `out_of_stock`, `online_only`, `pre_order`, `pre_sale`, or `sold_out`. Checked even when not listed in `x-fields`. |
+| `visibility` | `published` or `hidden`. |
+| `images` | Replaces all images. Subiz stores its own copies. See [Images](/docs/products/format#images). |
+| `props` | Replaces all attributes. |
+
+Subiz sets `updated` and `updated_by`. It keeps `created` and `created_by` unchanged. Values you send for these fields are ignored.
+
+## Changes to variants
+
+Some fields are shared by all variants in a group. When you change `name`, `description`, `url`, `handle`, `category`, `brand`, `note`, `condition`, `visibility`, `images`, `videos`, or `options`, Subiz applies the change to every other product with the same `product_group_id`. See [Variants](/docs/products/format#variants).
+
+## Use an existing product ID
+
+If no product has the ID in the path, Subiz does not return a not-found error. It looks for a product with the `source_id` (or, without `source_id`, the `sku`) in your body and updates it. If none matches, it **creates a new product with a new ID**.
+
+Check the `id` in the response. To make sure the product exists, [read it](/docs/api-reference/products/retrieve) first.
+
+## Response
+
+A successful request returns HTTP `200` with the full updated product. Selected fields:
+
+```json
+{
+  "id": "product_example",
+  "name": "Ceramic mug",
+  "sku": "MUG-01",
+  "price": 99000,
+  "stock": 40,
+  "availability": "in_stock",
+  "updated": 1763193600000
+}
+```
+
+## Errors
+
+| Problem | Result |
+| --- | --- |
+| `name` missing or empty | Invalid-input error naming `name`. |
+| `category` is longer than 255 bytes | Invalid-input error naming `category`. |
+| `availability`, `visibility`, or `condition` has another value | Invalid-field error naming the field. |
+| An image URL cannot be downloaded | The request fails. |
+| Missing permission to update products | Permission error. |
+
+See [Errors](/docs/get-started/errors).
+
+## HTTP request
+
+Replace `YOUR_ACCID`, `YOUR_PID`, and `YOUR_ACCESS_TOKEN` with your values.

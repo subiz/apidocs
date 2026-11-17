@@ -1,26 +1,75 @@
 ---
-sourceHash: 9162e224b7052d30e4105b32c458cdc3691f93428c53cd1a836caa0f79cf5ab5
-title: "Retrieve a conversation"
-description: " Retrieve a conversation through the Subiz API."
+sourceHash: 63114b2945456f815732db9761d079d87b42a88ce7f9d5a1f5229cb5670db06c
+title: "Get conversation details"
+description: "Read a conversation's state, members, owner, and channel."
 section: "Conversations"
 order: 21
 status: "verified"
 endpointId: "conversations-retrieve"
 ---
 
-## Before you begin
+Use this endpoint to check a conversation before acting on it: who participates, who owns it, and which channel it uses.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Request
 
-## Conversation context
+Send a `GET` request with the conversation ID in the path. There is no request body. Subiz reads the conversation in the account of your [access token](/docs/get-started/authentication).
 
-Replace `cid` with an existing conversation ID. The gateway forwards the authenticated account and conversation ID to `GetConversation`.
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `cid` (path) | string | Conversation ID. |
 
-## Result
+## Response
 
-Inspect the conversation returned by the service before choosing the next action. [Invite an agent](/docs/api-reference/conversations/invite-agent) adds participation; [Assign an agent](/docs/api-reference/conversations/assign-agent) sets ownership.
+A successful request returns HTTP `200` with a `Conversation` object. Selected fields:
+
+```json
+{
+  "id": "conversation_example",
+  "account_id": "account_example",
+  "created": 1763107200000,
+  "state": "active",
+  "assignee": "agent_example",
+  "members": [
+    {
+      "id": "user_example",
+      "type": "user",
+      "membership": "active"
+    },
+    {
+      "id": "agent_example",
+      "type": "agent",
+      "conversation_id": "conversation_example",
+      "membership": "active"
+    }
+  ],
+  "touchpoint": {
+    "channel": "facebook",
+    "source": "page_example",
+    "id": "profile_example"
+  }
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `id` | Conversation ID. |
+| `state` | Current state, such as `active` or `ended`. |
+| `assignee` | Agent responsible for the conversation. Omitted when unassigned. |
+| `members` | Participants. Each has a `type` (`user` for the customer, `agent` for staff), an `id`, and a `membership` state. |
+| `touchpoint` | Channel the conversation happens on. |
+| `created`, `ended` | Unix timestamps in milliseconds. `ended` is omitted while the conversation is open. |
+| `last_message_sent` | The latest non-internal message event, when present. |
+
+Empty fields are omitted. The object has more fields than shown; ignore those your integration does not use.
+
+## Next steps
+
+- Read the messages with [Read message history](/docs/api-reference/conversations/history).
+- Add an agent as a participant with [Invite an agent](/docs/api-reference/conversations/invite-agent).
+- Change the owner with [Assign an agent](/docs/api-reference/conversations/assign-agent).
+
+Being a member and being the `assignee` are separate. An agent can own a conversation without being in `members`.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_CID` with the conversation ID and `YOUR_ACCESS_TOKEN` with your token.

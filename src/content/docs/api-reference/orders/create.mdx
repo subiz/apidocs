@@ -1,0 +1,89 @@
+---
+sourceHash: c8fe63cef1931a9881f6e774207cecf1851242bb80917a2adc5079580ab2e92d
+title: "Create an order"
+description: "Create an order for an existing customer."
+section: "Orders"
+order: 41
+status: "verified"
+endpointId: "orders-create"
+translationPending: true
+---
+
+Use this endpoint to record a sale in Subiz, for example when an order is placed in your shop or CRM. See [Order format](/docs/orders/format) for all fields.
+
+## Before you begin
+
+- Get a [Bearer access token](/docs/get-started/authentication) and your account ID.
+- Get the customer's Subiz user ID. Every order needs a customer. Use [Find or create by channel identity](/docs/api-reference/users/identity) or [Create a customer](/docs/api-reference/users/create) first if needed.
+
+## Request body
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `user.id` | string | Required. ID of an existing customer. |
+| `items` | array | Order lines. Each has a `quantity` and a `product` with `name`, `sku`, and `price`. |
+| `source_id` | string | Recommended. Your own order ID. See [Avoid duplicates](#avoid-duplicates). |
+| `currency` | string | Currency of the amounts, such as `VND`. Empty means the account's base currency. |
+| `shipping` | object | Delivery address and `nominal_fee`. |
+| `status` | string | Optional. `open` (default), `unconfirmed`, `closed`, or `canceled`. |
+| `number` | string | Optional. Order number. Must not already be used by another order. |
+| `note`, `private_note` | string | Optional notes. |
+| `discount_type`, `discount_amount`, `discount_percentage` | | Optional order-level discount. |
+
+Line items keep the product data you send, including `price`. Send the price you charged; Subiz does not look it up again.
+
+If a line has `product.source_id` but no `product.id`, Subiz links it to the catalog product with that source ID and uses the catalog data. If no such product exists, Subiz creates one named after the source ID, without a price.
+
+## Fields Subiz sets
+
+Do not send these fields; Subiz sets or computes them:
+
+- `id`, `created`, `created_by`, `updated`.
+- `subtotal`, `total_tax`, `total`, and line `total`, computed from the items, discounts, shipping fee, and adjustment.
+- `payment_made` and `payment_status`, computed from payments recorded on the order. A new order is `unpaid`.
+- `user.attributes`: if you omit the customer's `fullname` or `phones`, Subiz copies them from the customer record.
+- `pipeline_stage`: if you send no pipeline, the order starts in the first stage of the default sales pipeline.
+
+## Avoid duplicates
+
+Set `source_id` to the order's ID in your system. If an order with the same `source_id` already exists, Subiz **replaces that order** with the fields you send instead of creating another one. This makes retries safe. Always send the complete order.
+
+Without `source_id`, every request creates a new order. Do not retry blindly after a timeout; first check with [List orders](/docs/api-reference/orders/list).
+
+## Response
+
+A successful request returns HTTP `200` with the saved order, including its `id` and computed totals. Selected fields:
+
+```json
+{
+  "id": "order_example",
+  "account_id": "account_example",
+  "source_id": "crm-1001",
+  "status": "open",
+  "payment_status": "unpaid",
+  "currency": "VND",
+  "user": {
+    "id": "user_example"
+  },
+  "subtotal": 240000,
+  "total": 270000,
+  "created": 1763107200000
+}
+```
+
+Store the `id` to [read](/docs/api-reference/orders/retrieve) or [update](/docs/api-reference/orders/update) the order later.
+
+## Errors
+
+| Problem | Result |
+| --- | --- |
+| `user.id` is missing | Error naming the missing `user`. |
+| Customer does not exist | Not-found error for the user. |
+| `status` is not one of the four values above | Invalid-input error for `status`. |
+| `number` already used | The request fails. Use a new number or omit it. |
+
+See [Errors](/docs/get-started/errors) for the error format.
+
+## HTTP request
+
+Replace `YOUR_ACCID`, `YOUR_USER_ID`, `YOUR_SOURCE_ORDER_ID`, and `YOUR_ACCESS_TOKEN` with your values.

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {parsePage} from '../scripts/translations.mjs';
 async function files(dir){return (await Promise.all((await readdir(dir,{withFileTypes:true})).map(e=>e.isDirectory()?files(dir+'/'+e.name):[dir+'/'+e.name]))).flat()}
 const all=await files('dist');const html=all.filter(f=>f.endsWith('.html'));
-assert.equal(html.filter(f=>!f.startsWith('dist/releases/')).length,38);
+assert.equal(html.filter(f=>!f.startsWith('dist/releases/')).length,52);
 for(const f of html){const body=await readFile(f,'utf8');assert(!body.includes('data-markdown='),f+' has a copy button');for(const [,href] of body.matchAll(/href="([^"#]+)(?:#[^"]*)?"/g)){if(!href.startsWith('/')||href.startsWith('//'))continue;assert(href.startsWith('/developers'),`${f}: unscoped ${href}`);const path=href.split('?')[0].replace(/^\/developers(?=\/|$)/,'');assert(all.includes('dist'+path)||all.includes('dist'+path+'/index.html')||all.includes('dist'+path+'index.html'),`${f}: broken ${href}`)}}
 const full=await readFile('dist/llms-full.txt','utf8');for(const title of ['Invite an agent','Assign an agent','Receive webhook events','Event payload examples'])assert(full.includes('# '+title));assert(!full.includes('api.example.com'));assert(!/^# Create a webhook$/m.test(full));assert(!full.includes('# List Contacts'));
 assert(!/```(?:javascript|python|java|go|bash)/.test(full));

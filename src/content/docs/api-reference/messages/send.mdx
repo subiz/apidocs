@@ -1,57 +1,91 @@
 ---
-sourceHash: 8ec29a151920faa438684f584cc8aabdcfc63ce326f86a08e35558de5928d909
-title: "Send Message"
-description: "Send a text message to an existing conversation."
+sourceHash: 49641cd8359a8e1a60a3825e64dbbf6b3a30c30c17dd78042649fe4e88d76aaa
+title: "Send to a conversation"
+description: "Send a message into an existing conversation."
 section: "Messages"
 order: 30
 status: "verified"
 endpointId: "messages-send"
 ---
 
+Use this endpoint when you already have a conversation ID. To contact a customer through a channel identity instead, use [Send to a customer](/docs/api-reference/messages/send-to-user).
+
 ## Before you send
 
-Prepare a valid [Bearer access token](/docs/get-started/authentication) and a conversation ID your integration can access. Running the request sends a real message; use an appropriate test conversation.
+- Get a [Bearer access token](/docs/get-started/authentication).
+- Find the conversation ID, for example from a [webhook event](/docs/webhooks/payloads) or [Get conversation details](/docs/api-reference/conversations/retrieve).
+- Use a test conversation while developing. Each successful request sends a real message.
 
 ## Request body
 
-The API accepts an event envelope, with the message inside `data.message`.
+The body is an event. The message goes in `data.message`.
 
-| Field | Type | Behavior |
+| Field | Type | Description |
 | --- | --- | --- |
-| `cid` (path) | string | Identifies the target conversation. |
-| `type` | string | Optional. Defaults to `message_sent` when omitted. |
-| `data.message` | object | Message content for this text-message request. |
-| `data.message.text` | string | Text to send. |
-| `data.message.format` | string | Use `plaintext` for the example below. |
+| `cid` (path) | string | Conversation to send to. |
+| `type` | string | Optional. Defaults to `message_sent`. |
+| `data.message.format` | string | `plaintext` or `block`. See [Message formats](/docs/messages/formats). |
+| `data.message.text` | string | Message text for `plaintext`. |
+| `data.message.block` | object | Block tree for `block` messages. |
+| `data.message.attachments` | array | Optional files, buttons, or cards. See [Attachments](/docs/messages/attachments). |
+
+A plain-text message:
 
 ```json
 {
   "type": "message_sent",
   "data": {
     "message": {
-      "text": "Hello! How can we help?",
-      "format": "plaintext"
+      "format": "plaintext",
+      "text": "Hello! How can we help?"
     }
   }
 }
 ```
 
-## Server-assigned fields
+## Fields Subiz sets
 
-The gateway sets the event's `created` timestamp and `account_id`. It copies the path's conversation ID into `data.message.conversation_id` and `data.conversation.id`. You do not need to provide those fields for this route.
+You do not need to send these fields. Subiz sets them for every request:
+
+- `created`: the current time, in Unix milliseconds.
+- `account_id`: the account of your access token.
+- `data.message.conversation_id` and `data.conversation.id`: the `cid` from the URL. Values in the body are replaced.
 
 ## Response
 
-On success, the gateway returns HTTP `200` with the event returned by the conversation service, serialized directly as JSON. There is no additional `data` wrapper added by the gateway. The event schema includes fields such as `id`, `type`, `created`, and `data.message`; fields can be omitted when empty.
+A successful request returns HTTP `200` with the sent event as JSON, without an extra wrapper. Selected fields:
 
-A successful API response is not a guarantee of delivery to an external channel. The gateway repository does not define all channel-specific delivery rules or downstream validation requirements.
+```json
+{
+  "id": "event_example",
+  "account_id": "account_example",
+  "type": "message_sent",
+  "created": 1763107200000,
+  "data": {
+    "message": {
+      "conversation_id": "conversation_example",
+      "format": "plaintext",
+      "text": "Hello! How can we help?"
+    }
+  }
+}
+```
 
-## Handle failures
+Empty fields are omitted. Store the event `id` if you need to match the message later in [message history](/docs/api-reference/conversations/history) or webhook events.
 
-Check the HTTP status before processing the response. The gateway can reject malformed JSON, invalid authentication, or banned senders; downstream services can also reject the operation. Avoid blindly retrying a timed-out send because the message may already have been accepted. This route does not establish an idempotency guarantee in the inspected handler.
+A `200` response means Subiz accepted the message. It does not confirm delivery to an external channel such as Facebook or Zalo.
+
+## Limits
+
+- Message sends made with an agent's token count toward that agent's allowance: 5 per second, 60 per minute, and 5,000 per UTC day. See [Message sending limits](/docs/get-started/usage-limits#message-sending-limits).
+- Text, attachment, and field sizes are limited. See [Message limits](/docs/get-started/usage-limits#message-limits).
+
+## Errors and retries
+
+Check the HTTP status before reading the body. Requests can fail because of invalid JSON, authentication, a blocked sender, rate limits (`429`), or validation in the conversation service. See [Errors](/docs/get-started/errors).
+
+Do not retry blindly after a timeout. The message may already have been sent, and this endpoint has no idempotency key. Check message history first.
 
 ## HTTP request
 
-Replace `YOUR_CID` with the conversation ID and `YOUR_ACCESS_TOKEN` with your access token. Send the headers and JSON body shown below.
-
-Learn how the entities fit together in [Core concepts](/docs#how-the-entities-fit-together), including rich messages with blocks.
+Replace `YOUR_CID` with the conversation ID and `YOUR_ACCESS_TOKEN` with your token.

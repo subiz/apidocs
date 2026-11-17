@@ -160,3 +160,17 @@ Use application ID S3B97BCQ1O for documentation search. Use the owner-supplied p
 ## D-0044 Include the Subiz chat widget
 
 Load the exact owner-provided Subiz widget snippet in the shared documentation layout for account acpxkgumifuoofoosble. Keep its asynchronous loading and fallback behavior. No chat messages are sent as part of verification.
+
+## D-0045 Replace the Orders outline with Order format
+
+By user request, the Orders group shows a single English “Order format” page (`orders/format`) instead of the four planned create/list/retrieve/update outline items. The page documents the `Order` object and nested items, shipping, amounts, and statuses from the canonical `header` schema. Vietnamese translation is pending (D-0031). This supersedes D-0025 for Orders; Products remain an outline.
+
+Update (same day): after the `proder` source became available, the four order endpoint pages (create, list, retrieve, update) were verified and published after Order format, in English only.
+
+## D-0046 Add an Agents section
+
+By user request, add an Agents / Nhân viên group after Customers (Users) with two English pages: Agent format (`agents/format`, the `Agent` object from `header`) List agents (GET `/4.1/agents`), and Get agent details (GET `/4.0/agents/{agid}`, added by follow-up request). Read-only reference for finding agent IDs used by invite and assign; no staff invitation or account administration APIs. Vietnamese translation pending (D-0031).
+
+## D-0047 Publish the Products pages like Orders
+
+By user request, replace the Products outline with five English pages: Product format (`products/format`), Create a product, List products, Get product details, and Update a product, verified against `api`, `proder`, and `header`. Deletion, imports, feeds, and crawling stay out of scope. Vietnamese translation pending (D-0031). This supersedes D-0025 for Products.

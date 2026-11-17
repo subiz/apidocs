@@ -1,0 +1,88 @@
+---
+sourceHash: 97b2240630f47aebf16e31fed49384d34430894b83854fd7c1b6521e1b653d36
+title: "Create a product"
+description: "Add a product to your catalog, or update it by your own product ID."
+section: "Products"
+order: 61
+status: "verified"
+endpointId: "products-create"
+translationPending: true
+---
+
+Use this endpoint to add a product to your Subiz catalog, for example when you sync products from your shop. See [Product format](/docs/products/format) for all fields.
+
+## Before you begin
+
+- Get a [Bearer access token](/docs/get-started/authentication) and your account ID.
+- The token's agent needs permission to create **and** update products.
+
+## Request body
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `name` | string | Required. Product name. |
+| `source_id` | string | Recommended. Your own product ID. See [Avoid duplicates](#avoid-duplicates). |
+| `sku` | string | Stock-keeping unit. |
+| `price`, `market_price` | number | Selling price and reference price. |
+| `currency` | string | Currency of the prices, such as `VND`. |
+| `stock` | integer | Units in stock. |
+| `availability` | string | `in_stock`, `out_of_stock`, `online_only`, `pre_order`, `pre_sale`, or `sold_out`. |
+| `visibility` | string | `published` (default) or `hidden`. |
+| `condition` | string | `new`, `refurbished`, or `used`. |
+| `description`, `category`, `brand`, `url` | string | Optional details. `category` is at most 255 bytes. |
+| `image`, `images` | string, array | Image URLs. Subiz stores its own copies. See [Images](/docs/products/format#images). |
+| `props` | array | Attributes as `key`/`value` pairs. |
+| `product_group_id` | string | Optional. Put the product in an existing variant group. See [Variants](/docs/products/format#variants). |
+
+Do not send `id`. Subiz ignores it and generates one. Subiz also sets `created`, `created_by`, `updated`, and `updated_by`.
+
+## Avoid duplicates
+
+Before creating a product, Subiz looks for an existing product:
+
+1. If you send `source_id`, Subiz looks for a product with the same `source_id`.
+2. If you do not send `source_id`, Subiz looks for a product with the same `sku`.
+
+If one is found, Subiz **replaces that product** with the fields you send instead of creating another one. Fields you leave out are cleared. Always send the complete product.
+
+Set `source_id` to the product's ID in your system. This makes retries safe. Without `source_id` and `sku`, every request creates a new product.
+
+## Response
+
+A successful request returns HTTP `200` with the saved product. Selected fields:
+
+```json
+{
+  "id": "product_example",
+  "account_id": "account_example",
+  "source_id": "shop-sku-mug-01",
+  "name": "Ceramic mug",
+  "sku": "MUG-01",
+  "price": 120000,
+  "currency": "VND",
+  "stock": 25,
+  "availability": "in_stock",
+  "visibility": "published",
+  "product_group_id": "product_example",
+  "created": 1763107200000,
+  "updated": 1763107200000
+}
+```
+
+Store the `id` to [read](/docs/api-reference/products/retrieve) or [update](/docs/api-reference/products/update) the product later.
+
+## Errors
+
+| Problem | Result |
+| --- | --- |
+| `name` is missing | Invalid-input error naming `name`. |
+| `category` is longer than 255 bytes | Invalid-input error naming `category`. |
+| `availability`, `visibility`, or `condition` has another value | Invalid-field error naming the field. |
+| An image URL cannot be downloaded | The request fails. |
+| Missing permission | Permission error. |
+
+See [Errors](/docs/get-started/errors) for the error format.
+
+## HTTP request
+
+Replace `YOUR_ACCID` and `YOUR_ACCESS_TOKEN` with your values.

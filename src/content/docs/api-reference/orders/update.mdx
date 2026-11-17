@@ -1,0 +1,84 @@
+---
+sourceHash: 3e0039378a2e04232f8c4f1a789eb9791967b24819704d96ce398daa3818e6b9
+title: "Update an order"
+description: "Change selected fields of an order, such as its status or note."
+section: "Orders"
+order: 44
+status: "verified"
+endpointId: "orders-update"
+translationPending: true
+---
+
+Use this endpoint to change an order, for example to close it when the customer confirms, or to cancel it.
+
+## Always list the fields to change
+
+Add `x-fields` to the query string with a comma-separated list of the fields you send:
+
+```http
+POST https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/orders/YOUR_OID?x-fields=status,note
+```
+
+Only the listed fields change.
+
+**Without `x-fields`, the body replaces the whole order.** Every field you leave out is cleared, including items, shipping, and notes. If you must send a full order, [read it](/docs/api-reference/orders/retrieve) first and send it back with your changes.
+
+## Request body
+
+Send the new values of the fields listed in `x-fields`:
+
+```json
+{
+  "status": "closed",
+  "note": "Customer confirmed by phone."
+}
+```
+
+Common changes:
+
+| Field | Notes |
+| --- | --- |
+| `status` | `open`, `unconfirmed`, `closed`, or `canceled`. |
+| `items` | Replaces all lines. Totals are recomputed. |
+| `shipping` | Replaces the shipping details. |
+| `note`, `private_note` | Order notes. |
+| `salesperson` | Agent ID responsible for the order. |
+| `cancellation_note`, `cancellation_code` | Reason when canceling. |
+
+Do not put `source_id` in the update body. If it matches another order, that order is updated instead.
+
+## What Subiz does
+
+- Recomputes `subtotal`, `total_tax`, `total`, `payment_made`, and `payment_status`. Values you send for these are ignored.
+- Keeps `created`, `created_by`, and the order's tags and agents unchanged.
+- When the status changes to `closed` or `canceled`, sets `closed`. For `canceled`, also sets `cancelled_at` and `cancelled_by`.
+- If the order is `closed` or `canceled` after the update and has a shipping code, Subiz tries to cancel the shipment with the shipping provider. This also happens when you edit an order that was already closed. Do not update closed orders with active shipments unless you intend this.
+
+## Response
+
+A successful request returns HTTP `200` with the full updated order. Selected fields:
+
+```json
+{
+  "id": "order_example",
+  "status": "closed",
+  "note": "Customer confirmed by phone.",
+  "payment_status": "unpaid",
+  "total": 270000,
+  "closed": 1763193600000,
+  "updated": 1763193600000
+}
+```
+
+## Errors
+
+| Problem | Result |
+| --- | --- |
+| No order with this ID | Not-found error. |
+| `status` is not one of the four values | Invalid-input error for `status`. |
+
+See [Errors](/docs/get-started/errors).
+
+## HTTP request
+
+Replace `YOUR_ACCID`, `YOUR_OID`, and `YOUR_ACCESS_TOKEN` with your values. Change `x-fields` to match the fields in your body.

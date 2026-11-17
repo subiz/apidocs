@@ -1,0 +1,81 @@
+---
+sourceHash: 2bbc6c2f8fec1fc2ed10a566d36c87170108ce1edc2bdeb153687b0112a53915
+title: "Agent format"
+description: "Understand the agent object: identity, contact details, role, and state."
+section: "Agents"
+order: 30
+status: "verified"
+apiVersions: ["4.1"]
+translationPending: true
+---
+
+An `Agent` is a staff member in your Subiz account. Agents reply to customers, join conversations, and own conversations as the `assignee`. Customers are `User` objects, not agents. All IDs and values below are illustrative.
+
+To get agents, see [List agents](/docs/api-reference/agents/list) and [Get agent details](/docs/api-reference/agents/retrieve).
+
+## Agent
+
+Selected fields of an `Agent`:
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "type": "agent",
+  "state": "active",
+  "fullname": "Sam Example",
+  "email": "sam@example.com",
+  "phone": "+84900000001",
+  "avatar_url": "https://example.com/avatars/sam.png",
+  "lang": "en",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "scopes": [
+    "supervisor"
+  ],
+  "invited_by": "agent_owner_example",
+  "joined": 1763107200000,
+  "modified": 1763193600000
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Agent ID. Use it as `assignee` when [assigning a conversation](/docs/api-reference/conversations/assign-agent), or as the member `id` when [inviting an agent](/docs/api-reference/conversations/invite-agent). |
+| `account_id` | string | The account the agent belongs to. |
+| `type` | string | `agent` for a staff member, or `bot`. Empty means `agent`. |
+| `state` | string | Agent state. See [States](#states). |
+| `fullname` | string | Display name. |
+| `email` | string | Email address. |
+| `phone` | string | Phone number. |
+| `avatar_url`, `avatar_url_128` | string | Avatar image, and a 128×128 version. |
+| `gender` | string | `male` or `female`, when set. |
+| `lang` | string | Preferred language. |
+| `timezone` | string | Time zone. |
+| `scopes` | array | Account-level roles, such as `owner` or `supervisor`. |
+| `invited_by` | string | ID of the agent who invited this agent. |
+| `client_id` | string | For bots: the ID of the bot. |
+| `extension` | integer | Phone extension number, when set. |
+| `joined`, `modified` | integer | Timestamps when the agent joined the account and when the record last changed. |
+
+Empty fields are omitted, and the object has more fields than shown. `account_id` is the account's ID; the account object itself uses `id`.
+
+## States
+
+| `state` | Meaning |
+| --- | --- |
+| `pending` | Invited, waiting for the invitation to be accepted. |
+| `active` | Active staff member. |
+| `inactive` | Deactivated. |
+| `deleted` | Removed from the account. |
+
+When you choose an agent to invite or assign, pick one whose `type` is `agent` and whose `state` is `active`.
+
+## Agents and customers
+
+| | Agent | User |
+| --- | --- | --- |
+| Who | Your staff | Your customers |
+| Name | `fullname` field | `fullname` attribute |
+| In a conversation | Member or `assignee` | Member |
+
+See [User and attribute format](/docs/users/format) for the customer object.

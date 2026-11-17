@@ -1,0 +1,82 @@
+---
+sourceHash: b0c90ef07d5c0a9946c3f37b9d6ebe3712819e35cf9e325ad5220ad831c02bea
+title: "List orders"
+description: "Search orders by customer, status, date, and more."
+section: "Orders"
+order: 42
+status: "verified"
+endpointId: "orders-list"
+translationPending: true
+---
+
+Use this endpoint to find orders, for example all open orders of one customer. Filters go in a JSON body.
+
+## Filters
+
+All filters are optional and combined with AND.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `user_id` | string | Orders of this customer. |
+| `status` | string | Orders with this status. |
+| `statuses`, `not_statuses` | array | Orders with, or without, any of these statuses. |
+| `payment_status` | string | `paid` or `unpaid`. |
+| `shipping_statuses`, `not_shipping_statuses` | array | Filter by shipping status. |
+| `query` | string | Text search in order ID, number, notes, items, and the customer's name, email, and phone. |
+| `created_hour_from`, `created_hour_to` | integer | Creation time range, in **hours** since the Unix epoch (Unix seconds ÷ 3600). Both ends included. |
+| `is_draft` | boolean | `true` returns draft orders only. |
+| `tags` | array | Orders with any of these tag IDs. `["no"]` returns orders without tags. |
+| `salesperson` | array | Orders whose salesperson is any of these agent IDs. `["no"]` returns orders without a salesperson. |
+| `include_deleted` | boolean | Include deleted orders. Default `false`. |
+
+## Sort and paginate
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `order_by` | string | Field and direction, such as `created desc`. Fields: `created`, `issue_date`, `due_date`, `assigned`, `total`. Direction: `asc` or `desc` (default). |
+| `limit` | integer | Orders per page. Default and maximum: 200. |
+| `offset` | integer | Number of orders to skip. |
+
+To page, increase `offset` by `limit` until you have read `total` orders. Canceled and deleted orders are always sorted after other orders.
+
+## Response
+
+A successful request returns HTTP `200`:
+
+```json
+{
+  "orders": [
+    {
+      "id": "order_example",
+      "status": "open",
+      "payment_status": "unpaid",
+      "currency": "VND",
+      "user": {
+        "id": "user_example"
+      },
+      "total": 270000,
+      "created": 1763107200000
+    }
+  ],
+  "total": 1,
+  "total_value": 270000
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `orders` | Orders on this page. Omitted when the page is empty. |
+| `total` | Number of orders matching the filters, across all pages. |
+| `total_value` | Sum of `total` of all matching orders. Mixed currencies are added as plain numbers. |
+
+## Who sees which orders
+
+Results depend on the agent who owns the token. Agents with permission to see all orders get every match. Other agents only get orders where they are the `salesperson` or are assigned to a pipeline stage. Use a token with full order access for integrations.
+
+## GET alternative
+
+`GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/orders` accepts the same filters as query parameters, such as `?user_id=YOUR_USER_ID&limit=50`. The POST form is easier for array filters.
+
+## HTTP request
+
+Replace `YOUR_ACCID`, `YOUR_USER_ID`, and `YOUR_ACCESS_TOKEN` with your values.

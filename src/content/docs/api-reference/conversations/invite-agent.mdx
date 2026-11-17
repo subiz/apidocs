@@ -1,34 +1,64 @@
 ---
-sourceHash: b4dcceff8b5697adc3aabb00423781006e4e9f487330fcbcbca66efe3a71b213
+sourceHash: 794cf39b018788ad2251016628e5d0ddfab1b5e8d0252d7a0bf0fa3cb63bf43a
 title: "Invite an agent"
-description: " Invite an agent through the Subiz API."
+description: "Add an existing agent to a conversation as a participant."
 section: "Conversations"
 order: 23
 status: "verified"
 endpointId: "conversations-invite-agent"
 ---
 
-## Before you begin
+Use this endpoint to bring another staff member into a conversation, for example a specialist who needs to help. The agent must already have a Subiz account.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Invite, assign, or route?
 
-## Add an existing agent
+| You want to | Use |
+| --- | --- |
+| Add an agent as a participant | This endpoint. |
+| Make an agent responsible for the conversation | [Assign an agent](/docs/api-reference/conversations/assign-agent). |
+| Add a new staff member to your account | The Subiz app. This endpoint does not create agents or send account invitations. |
+| Let Subiz pick an agent automatically | Automatic routing. This endpoint always uses the agent you specify. |
 
-This operation invites a staff agent into an existing conversation. It does not create an agent account or send an account invitation.
+Inviting an agent does not change the conversation's `assignee`.
 
-| Field | Type | Purpose |
+## Request body
+
+The body is a conversation member.
+
+| Field | Type | Description |
 | --- | --- | --- |
-| `cid` (path) | string | Target conversation. |
+| `cid` (path) | string | Conversation ID. |
 | `type` | string | Set to `agent`. |
-| `id` | string | Existing Subiz agent ID. |
+| `id` | string | ID of the existing agent to invite. |
 
-The gateway sets account and conversation context. `JoinConversation` submits a `conversation_invited` event with the requested member.
+```json
+{
+  "type": "agent",
+  "id": "agent_example"
+}
+```
 
-## Result
+Subiz sets the account from your [access token](/docs/get-started/authentication) and the conversation from the path.
 
-The service returns an empty object on success. Read the conversation to check membership. Inviting participation and setting the conversation's `assignee` are separate operations; see [Assign an agent](/docs/api-reference/conversations/assign-agent).
+## Response
+
+A successful request returns HTTP `200` with an empty object:
+
+```json
+{}
+```
+
+Subiz records a `conversation_invited` event in the conversation. To confirm the result, [get the conversation](/docs/api-reference/conversations/retrieve) and check that the agent appears in `members`:
+
+```json
+{
+  "id": "agent_example",
+  "type": "agent",
+  "conversation_id": "conversation_example",
+  "membership": "active"
+}
+```
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_CID` with the conversation ID, `YOUR_AGENT_ID` with the agent ID, and `YOUR_ACCESS_TOKEN` with your token.

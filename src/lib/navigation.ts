@@ -1,7 +1,7 @@
 import {localizedId, type Locale} from './i18n.ts';
 
-export const sections = ['Get Started', 'Messages', 'Users', 'Conversations', 'Webhooks', 'Updates'] as const;
-export const navigationSections = ['Get Started', 'Conversations & Messages', 'Users', 'Orders', 'Products', 'Webhooks', 'Updates'] as const;
+export const sections = ['Get Started', 'Messages', 'Users', 'Conversations', 'Agents', 'Orders', 'Products', 'Webhooks', 'Updates'] as const;
+export const navigationSections = ['Get Started', 'Conversations & Messages', 'Users', 'Agents', 'Orders', 'Products', 'Webhooks', 'Updates'] as const;
 type Section = typeof navigationSections[number];
 export type NavigationItem = {id:string; en:string; vi:string; planned?:boolean};
 
@@ -24,22 +24,30 @@ export const navigation: Record<Section, readonly NavigationItem[]> = {
   {id:'api-reference/conversations/assign-agent',en:'Assign an agent',vi:'Giao nhân viên phụ trách'},
  ],
  'Users': [
+  {id:'users/format',en:'User and attribute format',vi:'Định dạng khách hàng và thuộc tính'},
   {id:'api-reference/users/create',en:'Create a customer',vi:'Tạo khách hàng'},
   {id:'api-reference/users/retrieve',en:'Get customer details',vi:'Lấy thông tin khách hàng'},
   {id:'api-reference/users/update',en:'Update customer details',vi:'Cập nhật thông tin khách hàng'},
   {id:'api-reference/users/identity',en:'Find or create by channel identity',vi:'Tìm hoặc tạo theo định danh kênh'},
  ],
+ 'Agents': [
+  {id:'agents/format',en:'Agent format',vi:'Định dạng nhân viên'},
+  {id:'api-reference/agents/list',en:'List agents',vi:'Lấy danh sách nhân viên'},
+  {id:'api-reference/agents/retrieve',en:'Get agent details',vi:'Lấy thông tin nhân viên'},
+ ],
  'Orders': [
-  {id:'api-reference/orders/create',en:'Create an order',vi:'Tạo đơn hàng',planned:true},
-  {id:'api-reference/orders/list',en:'List orders',vi:'Lấy danh sách đơn hàng',planned:true},
-  {id:'api-reference/orders/retrieve',en:'Get order details',vi:'Lấy thông tin đơn hàng',planned:true},
-  {id:'api-reference/orders/update',en:'Update an order',vi:'Cập nhật đơn hàng',planned:true},
+  {id:'orders/format',en:'Order format',vi:'Định dạng đơn hàng'},
+  {id:'api-reference/orders/create',en:'Create an order',vi:'Tạo đơn hàng'},
+  {id:'api-reference/orders/list',en:'List orders',vi:'Lấy danh sách đơn hàng'},
+  {id:'api-reference/orders/retrieve',en:'Get order details',vi:'Lấy thông tin đơn hàng'},
+  {id:'api-reference/orders/update',en:'Update an order',vi:'Cập nhật đơn hàng'},
  ],
  'Products': [
-  {id:'api-reference/products/create',en:'Create a product',vi:'Tạo sản phẩm',planned:true},
-  {id:'api-reference/products/list',en:'List products',vi:'Lấy danh sách sản phẩm',planned:true},
-  {id:'api-reference/products/retrieve',en:'Get product details',vi:'Lấy thông tin sản phẩm',planned:true},
-  {id:'api-reference/products/update',en:'Update a product',vi:'Cập nhật sản phẩm',planned:true},
+  {id:'products/format',en:'Product format',vi:'Định dạng sản phẩm'},
+  {id:'api-reference/products/create',en:'Create a product',vi:'Tạo sản phẩm'},
+  {id:'api-reference/products/list',en:'List products',vi:'Lấy danh sách sản phẩm'},
+  {id:'api-reference/products/retrieve',en:'Get product details',vi:'Lấy thông tin sản phẩm'},
+  {id:'api-reference/products/update',en:'Update a product',vi:'Cập nhật sản phẩm'},
  ],
  'Updates': [{id:'changelog',en:'Changelog',vi:'Nhật ký thay đổi'}],
  'Webhooks': [

@@ -1,0 +1,62 @@
+---
+sourceHash: 0396d22637ac4a76d8e5903e8ac1569c1bfc13b25523524f3c82eb5d8a8cdacb
+title: "Get agent details"
+description: "Get one agent in your account by agent ID."
+section: "Agents"
+order: 32
+status: "verified"
+endpointId: "agents-retrieve"
+translationPending: true
+---
+
+Use this endpoint to get one agent by ID, for example to show the name of a conversation's `assignee`.
+
+Put the agent ID in the path. The account comes from your access token. There is no request body.
+
+## Response
+
+A successful request returns HTTP `200` with an `Agent` object:
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "type": "agent",
+  "state": "active",
+  "fullname": "Sam Example",
+  "email": "sam@example.com",
+  "avatar_url": "https://example.com/avatars/sam.png",
+  "scopes": [
+    "supervisor"
+  ]
+}
+```
+
+This example shows selected fields. See [Agent format](/docs/agents/format) for every field.
+
+## Fields depend on your permissions
+
+If the agent who owns the token can view agents in the account, the response contains the full agent object.
+
+Otherwise, the response contains only these fields:
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "fullname": "Sam Example",
+  "avatar_url": "https://example.com/avatars/sam.png"
+}
+```
+
+Use a token with permission to view agents if your integration needs `state`, `email`, or other fields.
+
+If no agent has this ID, the request returns an error. See [Errors](/docs/get-started/errors).
+
+## Other path
+
+`GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/agents/YOUR_AGID` behaves the same way.
+
+## HTTP request
+
+Replace `YOUR_AGID` and `YOUR_ACCESS_TOKEN` with your values.

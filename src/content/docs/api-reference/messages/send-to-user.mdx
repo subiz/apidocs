@@ -1,38 +1,91 @@
 ---
-sourceHash: a7b1969cda9a8b61a8c71236b880801c0267280e4b856271a351644d174a2988
-title: "Send a message to a user"
-description: " Send a message to a user through the Subiz API."
+sourceHash: 559d8a7adf1fe9ce0aae33b2a13b3bc50a4b566d857d5087cd98a2dec516d283
+title: "Send to a customer"
+description: "Send a message to a customer through a connected channel."
 section: "Messages"
 order: 31
 status: "verified"
 endpointId: "messages-send-to-user"
 ---
 
-## Before you begin
+Use this endpoint to message a customer through a channel identity, such as a Facebook or Zalo profile. You do not need a conversation ID. If you already have one, [Send to a conversation](/docs/api-reference/messages/send) is simpler.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Before you send
 
-## Choose the channel destination
+- Get a [Bearer access token](/docs/get-started/authentication) and your account ID.
+- Know the customer's channel identity: channel, source, and profile ID from your connected integration.
+- Use a test customer while developing. Each successful request sends a real message.
 
-Use this operation when sending through a customer's channel identity. Unlike [Send Message](/docs/api-reference/messages/send), the body is a `messages` array of events, each with its own touchpoint and message data. The path user ID alone is not a substitute for the event's destination.
+## Identify the customer
 
-| Field | Type | Purpose |
+Choose one of two options:
+
+- **Subiz user ID.** Put the customer's ID in the `uid` path segment.
+- **Channel identity.** Set `channel`, `channel_source`, and `profile_id` at the top level of the body. Subiz finds the customer with that identity, or creates one, and uses that customer instead of the path `uid`.
+
+Both `channel` and `profile_id` are needed for the second option. Otherwise the path `uid` is used.
+
+## Request body
+
+| Field | Type | Description |
 | --- | --- | --- |
-| `messages` | array | Candidate message events. |
-| `messages[].touchpoint` | object | Channel, source, and external profile ID. |
-| `messages[].data.message` | object | Message content. |
+| `accid` (path) | string | Your account ID. |
+| `uid` (path) | string | Customer ID. Ignored when the channel identity is set. |
+| `channel` | string | Optional. Channel of the identity, such as `facebook` or `zalo`. |
+| `channel_source` | string | Optional. Connected page or account, such as a Facebook page ID. |
+| `profile_id` | string | Optional. Customer's ID on that channel. |
+| `messages` | array | Message events to try, in order. Up to five. |
+| `messages[].type` | string | Use `message_sent`. |
+| `messages[].touchpoint` | object | Where to deliver: `channel`, `source`, and `id`. |
+| `messages[].data.message` | object | Message content. See [Message formats](/docs/messages/formats). |
 
-Replace all channel placeholders with values from your connected integration. Channel-specific permissions and delivery restrictions still apply.
+A touchpoint describes one destination:
 
-## Candidate behavior
+```json
+{
+  "channel": "facebook",
+  "source": "page_example",
+  "id": "profile_example"
+}
+```
 
-The inspected service tries candidates in order and returns on the first successful send. This is not a bulk-send endpoint. It can stop on an unsubscribed-user error. Use a single candidate when you intend one destination.
+`source` is the connected page or account. The meaning of `id` depends on the channel; it is usually the customer's profile ID there. Use values from your integration, not the Subiz user ID.
 
-## Result
+## Fallback destinations
 
-The service returns an event, not an array of results for all candidates. A successful API call does not prove external delivery. Avoid retrying blindly after timeouts.
+`messages` is a list of alternatives, not a batch. Subiz tries each item in order and stops after the first successful send. Use this to fall back to another channel, for example Zalo when Facebook fails.
+
+To reach one destination, send one item. With an agent's token, arrays longer than five are rejected, and every item counts toward the [message sending limits](/docs/get-started/usage-limits#message-sending-limits), even if it is never sent.
+
+Subiz can stop early if the customer has unsubscribed from the channel.
+
+## Response
+
+A successful request returns HTTP `200` with one event: the message that was sent. It does not list results for the other items. Selected fields:
+
+```json
+{
+  "id": "event_example",
+  "account_id": "account_example",
+  "type": "message_sent",
+  "created": 1763107200000,
+  "data": {
+    "message": {
+      "format": "plaintext",
+      "text": "Hello! How can we help?"
+    }
+  }
+}
+```
+
+A `200` response does not confirm delivery by the external channel.
+
+## Errors and retries
+
+Check the HTTP status before reading the body. The send can also be rejected by the channel, for example when the integration is disconnected or the channel does not allow the message. See [Errors](/docs/get-started/errors).
+
+Do not retry blindly after a timeout; the message may already have been sent.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace the `YOUR_…` placeholders. Add `channel`, `channel_source`, and `profile_id` at the top level to identify the customer by channel identity instead of `uid`.

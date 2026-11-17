@@ -1,0 +1,84 @@
+---
+sourceHash: 155f2777bc62040cc18bdd6d4786e6a21a0c069275fd3c54f4ab43a5f3f7c1bc
+title: "List products"
+description: "Search your catalog by text, SKU, price, availability, and more."
+section: "Products"
+order: 62
+status: "verified"
+endpointId: "products-list"
+translationPending: true
+---
+
+Use this endpoint to find products in your catalog, for example to look up a product by SKU or to read the whole catalog. Filters go in a JSON body.
+
+## Filters
+
+All filters are optional and combined with AND.
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `query` | string | Text search in name, ID, SKU, `source_id`, URL, description, brand, and note. Ignores case. |
+| `sku` | string | Products with exactly this SKU. |
+| `source_id` | string | Products with exactly this `source_id`. |
+| `category` | string | Products in exactly this category. |
+| `visibility` | string | `published` or `hidden`. |
+| `availability` | string | `instock` returns products with `stock` above 0. `out_of_stock` returns products with `stock` of 0. |
+| `price_gte`, `price_lte` | number | Minimum and maximum `price`. |
+| `props` | array | `key`/`value` pairs. A product must have every pair, with the exact value. |
+| `grouped` | boolean | `true` returns one product per variant group instead of every variant. |
+| `variant_of` | string | A product ID. Returns all products in its variant group, including itself. Other filters are ignored. |
+
+The `availability` filter uses `stock`, not the product's `availability` field. Note the spelling `instock`.
+
+## Paginate
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `limit` | integer | Products per page. Default 100, maximum 1000. Values outside 1–1000 use 100. |
+| `anchor` | string | `next_anchor` from the previous page. Omit for the first page. |
+
+Products are sorted by `id` in descending order. To read every page, send the `next_anchor` of each response as `anchor` in the next request. Stop when a response has no `products`.
+
+Use `anchor`, not `offset`. `offset` only skips products within the first `limit` results, so it does not page through the catalog.
+
+## Response
+
+A successful request returns HTTP `200`:
+
+```json
+{
+  "products": [
+    {
+      "id": "product_example",
+      "source_id": "shop-sku-mug-01",
+      "name": "Ceramic mug",
+      "sku": "MUG-01",
+      "price": 120000,
+      "currency": "VND",
+      "stock": 25,
+      "availability": "in_stock",
+      "visibility": "published"
+    }
+  ],
+  "total": 1,
+  "next_anchor": "product_example"
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `products` | Products on this page. Omitted when the page is empty. |
+| `total` | Number of products matching the filters, across all pages. |
+| `next_anchor` | Send as `anchor` to get the next page. |
+
+## Permissions
+
+The token's agent needs permission to read products. Without it, the request does not return a list: it returns at most one best match for `query` in a `product` field. Use a token with product read access for integrations.
+
+## GET alternative
+
+`GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/products` accepts the same filters as query parameters, such as `?sku=MUG-01`. The POST form is easier for `props`.
+
+## HTTP request
+
+Replace `YOUR_ACCID` and `YOUR_ACCESS_TOKEN` with your values.

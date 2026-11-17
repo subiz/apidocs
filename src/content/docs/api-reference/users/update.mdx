@@ -1,33 +1,72 @@
 ---
-sourceHash: ccce05833bcb984aad6466f40b93e42b9a6599c494e90694460c539375975c73
-title: "Update a user"
-description: " Update a user through the Subiz API."
+sourceHash: 9a0901b213140cccbad1ae77287050de210d2d6adfa1408d16f42452174a6925
+title: "Update customer details"
+description: "Change a customer's attributes, such as name, email, or phone."
 section: "Users"
 order: 12
 status: "verified"
 endpointId: "users-update"
 ---
 
-## Before you begin
+Use this endpoint to keep a customer in sync with your system, for example after the customer changes their email in your CRM.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Request body
 
-## Update attributes
+Send only the attributes you want to change.
 
-Send an `attributes` array with the keys and typed values to update. The example updates the text attribute `fullname`. Do not send an entire cached customer object: the gateway selects supported fields before forwarding the request.
-
-| Field | Type | Purpose |
+| Field | Type | Description |
 | --- | --- | --- |
-| `uid` (path) | string | Customer to update. |
-| `attributes` | array | Attribute keys and values. |
+| `uid` (path) | string | Subiz user ID. |
+| `attributes` | array | Attributes to change. Each item has a `key` and a value. |
+| `attributes[].key` | string | Attribute key, such as `fullname`. See [Common attributes](/docs/api-reference/users/create#common-attributes). |
+| `attributes[].text` | string | New value for text attributes. Use `number`, `boolean`, or `datetime` for other types; see [Value types](/docs/users/format#value-types). |
 
-The handler also supports identity and ownership fields, but this example intentionally updates only a customer attribute. Credentials of type user are restricted to their own identity.
+```json
+{
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex.new@example.com"
+    }
+  ]
+}
+```
 
-## Verify the change
+Subiz reads only a few fields from the body, mainly `attributes`. Other fields, such as `id`, `created`, or `labels`, are ignored, so you cannot change them here. Do not send back a whole customer object you read earlier.
 
-Read the customer again with [Retrieve a user](/docs/api-reference/users/retrieve) and compare the updated attributes. Do not assume every field in the shared User schema is writable.
+## Response
+
+A successful request returns HTTP `200` with the updated customer. Selected fields:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex.new@example.com"
+    }
+  ]
+}
+```
+
+When customer data changes, subscribed webhooks receive a `user_info_updated` event. Rapid updates can be combined into one event. See [Customer information updated](/docs/webhooks/payloads#customer-information-updated).
+
+## Limits and errors
+
+A request can contain up to 1,000 attributes, and each value up to 2,048 bytes. See [Customer attribute limits](/docs/get-started/usage-limits#customer-attribute-limits).
+
+An invalid `uid` returns an error. If you only have the customer's channel identity, first get the user ID with [Find or create by channel identity](/docs/api-reference/users/identity). See [Errors](/docs/get-started/errors) for the error format.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_UID` with the user ID and `YOUR_ACCESS_TOKEN` with your token.

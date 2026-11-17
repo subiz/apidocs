@@ -1,35 +1,96 @@
 ---
-sourceHash: 088282baebd4a9dbd2a8e58bed1595f0d1d56de9c15c70730c2bdb4145d28ec1
-title: "Create a user"
-description: " Create a user through the Subiz API."
+sourceHash: 7fc6803d36791d842e645db273fce2d090a51b7e349b79c331874c98d541b623
+title: "Create a customer"
+description: "Create a customer record with attributes and an optional channel identity."
 section: "Users"
 order: 10
 status: "verified"
 endpointId: "users-create"
 ---
 
+In the API, a customer is a **user**. Agents are your staff and are not created here.
+
+Use this endpoint to add a customer from your system, such as a CRM contact or a new sign-up. If the customer comes from a connected channel such as Facebook or Zalo, use [Find or create by channel identity](/docs/api-reference/users/identity) instead to avoid duplicates.
+
 ## Before you begin
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+- Get a [Bearer access token](/docs/get-started/authentication). The customer is created in the token's account.
+- Use attribute keys defined in your account, with values of the matching type.
 
-## Customer records
+## Request body
 
-A user represents a customer, not a staff agent. The gateway accepts customer attributes and optional channel identity fields.
-
-| Field | Type | Purpose |
+| Field | Type | Description |
 | --- | --- | --- |
-| `attributes` | array | Attribute entries, such as `{"key":"fullname","text":"Alex Example"}`. |
-| `channel` | string | Optional channel identity context. |
-| `channel_source` | string | Optional source within the channel. |
-| `profile_id` | string | Optional external profile identifier. |
+| `attributes` | array | Customer data, one item per attribute. |
+| `attributes[].key` | string | Attribute key, such as `fullname`. |
+| `attributes[].text` | string | Value for text attributes. Use `number`, `boolean`, or `datetime` for other types. |
+| `channel` | string | Optional. Channel of an external identity, such as `facebook`. |
+| `channel_source` | string | Optional. Connected page or account on that channel. |
+| `profile_id` | string | Optional. Customer's ID on that channel. |
 
-Use configured attribute keys and matching value types. The gateway derives the account from authentication and forwards only these fields to the user service.
+Other fields, such as `id` or `account_id`, are ignored.
 
-## Result
+```json
+{
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex@example.com"
+    },
+    {
+      "key": "phones",
+      "text": "+84900000000"
+    }
+  ]
+}
+```
 
-The gateway returns the created user from `CreateUser2`. Store its `id` for subsequent requests. Do not repeatedly create records to update an existing customer; use [Update a user](/docs/api-reference/users/update).
+## Common attributes
+
+These built-in keys exist in every account. See [User and attribute format](/docs/users/format) for value types and multiple values.
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `fullname` | text | Full name. |
+| `display_name` | text | Display name. |
+| `emails` | text | Email address. |
+| `phones` | text | Phone number. |
+| `address`, `city`, `district` | text | Address. |
+| `gender` | text | Gender. |
+| `job_title` | text | Job title. |
+| `birthdate` | datetime | Date of birth. |
+
+Some built-in attributes, such as `created` or `last_message_sent`, are set by Subiz and are read-only.
+
+## Response
+
+A successful request returns HTTP `200` with the new customer. Selected fields:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    }
+  ]
+}
+```
+
+Store the `id`. You need it to [read](/docs/api-reference/users/retrieve), [update](/docs/api-reference/users/update), or [message](/docs/api-reference/messages/send-to-user) this customer.
+
+Each request creates a new record. To change an existing customer, use [Update customer details](/docs/api-reference/users/update) instead of creating it again.
+
+## Limits and errors
+
+A request can contain up to 1,000 attributes, and each value up to 2,048 bytes. See [Customer attribute limits](/docs/get-started/usage-limits#customer-attribute-limits) and [Errors](/docs/get-started/errors).
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_ACCESS_TOKEN` with your token.

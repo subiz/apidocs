@@ -1,5 +1,5 @@
 ---
-sourceHash: 56949944c8c591a1d33bd13d1c908ddc4ebdd574dc508126603988bb5b448ce0
+sourceHash: 5876e9d0e36b60e49b034c7d44996539d2638827c99b3f3b62c9e0d78aa92b99
 title: "Changelog"
 description: "Track documentation updates and confirmed API changes."
 section: "Updates"
@@ -13,6 +13,19 @@ apiVersions: ["4.0", "4.1"]
 Each endpoint page displays its API route version, such as **API 4.0** or **API 4.1**, above the title. Use the exact HTTP method and URL shown on that page. A different version number is not a reason to replace the version in an existing URL.
 
 Shared guides list the versions they cover. Webhook receiving and payload pages describe delivery to your server, so they are not tied to a version in a Subiz API route.
+
+## 2026-11-17 — Documentation update
+
+**Documentation only · No API behavior change announced**
+
+- Rewrote the English Conversations & Messages endpoint pages: Send to a conversation, Send to a customer, Get conversation details, Read message history, Invite an agent, and Assign an agent. Pages now include response examples, limits, and next steps.
+- Rewrote the English Customers (Users) pages: Create a customer, Get customer details, Update customer details, and Find or create by channel identity. Pages now list the built-in customer attributes and include response examples.
+- Added the English User and attribute format page under Customers (Users), covering the User and Attribute objects, value types, multiple values, and built-in attributes.
+- Added English Orders pages: Order format, Create an order, List orders, Get order details, and Update an order. They replace the Orders navigation outline.
+- Added English Products pages: Product format, Create a product, List products, Get product details, and Update a product. They replace the Products navigation outline.
+- Added English Agents pages: Agent format, List agents, and Get agent details.
+- Send to a customer now documents identifying the customer by channel identity with top-level `channel`, `channel_source`, and `profile_id`.
+- Vietnamese translations of these pages are awaiting an update.
 
 ## 2026-11-14 — Documentation update
 

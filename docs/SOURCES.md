@@ -152,3 +152,86 @@ The updated gateway implementation supersedes the earlier Usage limits statement
 Customer sends reserve len(messages), reject arrays larger than five before reserving, and may consume partial allowance before rejecting a smaller array; no reserved quota is refunded on rejection or backend failure. Cross-checked `conversation/conversation.go:SendOmniChannelMessage`: messages are ordered candidates, returning on first success, not a bulk-delivery array. The guide therefore describes a maximum of five candidates and recommends one for a single destination instead of promising that every candidate is sent. `api/agent_message_ratelimit_test.go` covers concurrency, minute/day exhaustion, event/principal scope, forged sender IDs, handlers, and pre-send batch rejection.
 
 Verification: ran the gateway's TestAPIKeyRateLimit, TestAgentTokenRateLimit, and TestAgentMessage test groups offline with vendored dependencies, without changing backend files or sending live API requests.
+
+## Conversations & Messages endpoint rewrite — English only, 2026-11-17
+
+Gateway (`api`) and vendored `header` schema rechecked; the `conversation` service source was not available locally, so downstream behavior relies on the earlier conversation-service checks recorded above and no new downstream verification is claimed.
+
+- `api/router.go`: POST `/4.1/conversations/{cid}/messages`, POST `/4.0/accounts/{accid}/users/{uid}/messages`, GET `/4.0/conversations/{cid}`, GET `/4.0/conversations/{cid}/messages`, POST `/4.0/conversations/{cid}/members`, POST `/4.0/accounts/{accid}/conversations/{cid}`, POST `/4.1/conversations/{cid}/assign`.
+- `api/handler.go:handleSendEvent`: default `message_sent`, rate-limit check, server `created`/`account_id`, path cid overrides message and conversation IDs, returns SendMessage's Event.
+- `api/handler.go:handleSendOmniChannelEvent`: top-level `channel` + `profile_id` (+ `channel_source`) resolve the customer through `ReadOrCreateUserByContactProfile` and replace the path uid; `SendOmniChannelMessageRequest` fields from `header.pb.go`.
+- `api/handler.go:handleReadConversation,handleListConversationEvents,handleJoinConversation,handleUpdateConvoInfo`; `service_grpc.pb.go` return types (Conversation, Events→array, Empty, Conversation). `hparam.go:Decode2` decodes GET query parameters into `ListConversationEventsRequest` (`start_id`, `limit`).
+- `api/auth.go`: `x-fields` query parsed into context fields, supporting the clear-assignee example.
+- `api/agent_message_ratelimit.go`: per-agent message allowance and five-candidate ceiling apply to human-agent tokens.
+
+Response JSON examples are selected fields with synthetic IDs. Vietnamese prose and reviewed hashes unchanged (D-0031).
+
+## Customers (Users) endpoint rewrite — English only, 2026-11-17
+
+Gateway (`api`) and `header` rechecked; the `user` service source was not available locally, so downstream behavior relies on the earlier `user/mgr.go`/`user/userdb.go` checks recorded above.
+
+- `api/handler.go:handleCreateUserDirectly`: forwards only channel, channel_source, profile_id, attributes; account from token; returns CreateUser2's User.
+- `api/handler.go:handleReadUser`: uid must pass `idgen.IsUserID` (or an internal record_id prefix) else EMissingId; sets an `ETag` header to the MD5 of the returned JSON.
+- `api/handler.go:handleUpdateUser`: forwards only attributes plus primary_id, lead_owners, channel, channel_source, profile_id; the page documents attributes only. Returns UpdateUser's User.
+- `api/handler.go:handleGetUserByContactProfile,handleGetOrCreateUserByContactProfile`: GET reads, POST read-or-creates by path channel/source/id.
+- `header/attrdef.go`: built-in attribute keys and types (fullname, display_name, emails, phones, address, city, district, gender, job_title, birthdate); created/modified/seen/total_conversations/last_message_sent are read-only.
+
+Unverified downstream semantics (dry-run, partial-update merge rules, alternate uid prefixes, update-by-profile) are intentionally not documented.
+
+## User and attribute format — English only, 2026-11-17
+
+- `header/header.proto` / vendored `header.pb.go`: User (id, account_id, attributes, channel, channel_source, profile_id, labels, created, updated) and Attribute (key, type read-only, text/number/boolean/datetime, other_values, modified) field names and JSON tags; AttributeDefinition types text/number/boolean/datetime.
+- `header/attrdef.go`: built-in attribute keys/types; created, modified, seen, total_conversations, last_message_sent are system read-only.
+- `header/userutil.go`: datetime values parsed/formatted as RFC 3339.
+- `header/header.go`: primary value in `text`, additional values in `other_values` (PushOtherValues/cleanOtherValues; `emails` test fixtures in all_test.go).
+- `api/handler.go:handleReadUser` serializes with encoding/json and `omitempty` tags, so empty strings, 0, and false are omitted.
+
+Not published pending `user` service review: the `action` update operations (upsert/replace/insert/delete/push/unshift), writing `other_values`, and treatment of undefined attribute keys. They are defined in `header/header.go:UpdateAttribute` but the service's use of them was not checked.
+
+## Order format — English only, 2026-11-17
+
+Canonical `header/header.proto` (Order, OrderItem, ShippingInfo, Address, Tax, OrderStatusCode, Product.price/sku/name). Proto comments establish: item product is a copy; item discount is before tax and order discount after tax; discount_percentage scale 1234 = 12.34%; Tax.percentage scale 2000 = 20%; currency empty = base currency; payment_status unpaid/paid computed from total and payment_made; status values open/closed/canceled (+ unconfirmed in OrderStatusCode, with won/lost comments); weight grams, dimensions cm; source_id is the source order ID. `header/header.go:CalcTotalOrder` shows subtotal/tax/discount/nominal shipping fee/adjustment composition and fpv_* fixed-point copies.
+
+Gateway `api/router.go` / `handler.go`: order routes are 4.0 (`handleCreateOrder`, `handleReadOrder`, `handleUpdateOrder`, `handleListOrders`) and forward `header.Order` / `OrdersRequest` to the `proder` service. The `proder` source was not available locally, so no endpoint page, request requirements, permissions, or computation guarantees beyond the schema are published. The page uses selected synthetic fields only.
+
+## Order endpoints — English only, 2026-11-17
+
+Source: `proder` (order service) plus gateway `api` and `header`.
+
+- Routes (`api/router.go`): POST `/4.0/accounts/{accid}/orders`, POST `/4.0/accounts/{accid}/orders-search` and GET `/4.0/accounts/{accid}/orders` (both `handleListOrders`), GET and POST `/4.0/accounts/{accid}/orders/{oid}`. Handlers set account (and `oid` → id) and forward to proder.
+- `proder/main.go:CreateOrder`: items with product.source_id and no id are linked to (or create) catalog products; then `upsertOrder`.
+- `proder/main.go:upsertOrder`: lookup order by source_id (update existing or create), else by id (EMissing), else by number (existing number leaves dborder nil → EMissingId user, so duplicates fail), else create. `user.id` required and must exist (`userclient.GetUser`). New orders default status open. `header.Assign(dborder, order, ctx.Fields)`: with no `x-fields`, every field is copied, clearing omitted ones; user is refilled from the customer record, fullname/phones attributes copied when empty. Default pipeline first stage. Status limited to open/closed/canceled/unconfirmed (else EInvalidInput status; unknown enum strings fall back). `header.CalcTotalOrder` recomputes totals (items without product skipped). payment_made from bills; payment_status paid/unpaid. Agents and tags retained. closed/cancelled_at/cancelled_by set on transition. Events order_created / order_updated / order_status_updated.
+- `proder/main.go:UpdateOrder`: after upsert, if Closed != 0 and a shipping code exists and the shipment is not cancelled, `CancelShippingOrder` runs asynchronously (also for edits of already-closed orders).
+- `proder/main.go:ReadOrder`: EMissing when absent; agent needs ORDER READ access feature.
+- `proder/main.go:ListOrders,listAllOrders,less`: ORDER READ access; non-manager agents limited to salesperson/stage-agent orders; filters user_id, status(es), not_statuses, payment_status, shipping statuses, query (id/number/notes/items/customer name/email/phone), created/due/issue hour ranges (`clock.UnixHour`), is_draft, tags (any; "no"), salesperson (any; "no"), include_deleted; order_by created/issue_date/due_date/assigned/total asc|desc (default desc by id); canceled/deleted sorted last; limit default/max 200; offset; response orders/total/total_value. `anchor` is not used.
+
+## Agents — English only, 2026-11-17
+
+Sources: gateway `api` and canonical `header`. The `account` service source (downstream `ListAgents`) was not available locally, so no new downstream verification is claimed.
+
+- `header/account.proto:Agent`: id, account_id, fullname, email, phone, gender, avatar_url(_128), lang, timezone, joined, invited_by, state (AgentState pending/active/inactive/deleted), modified, type (bot or agent, default agent), client_id (bot ID), scopes (owner, supervisor), extension. `header/account/account.pb.go`: snake_case JSON tags with omitempty. Timestamp units for joined/modified are not stated in the schema, so the page does not claim one; example values are synthetic.
+- `api/router.go`: GET `/4.0/agents` and `/4.1/agents` (WithETag) and GET `/4.0/accounts/{accid}/agents` (no WithETag) → `handleListAgents`.
+- `api/handler.go:handleListAgents`: sets AccountId from the authenticated context and returns `ListAgents(...).GetAgents()`, i.e. a bare JSON array; no pagination fields. `api/auth.go:buildCtxCore` sets the context account from the token.
+- `api/router.go:writeETagResponse,matchesETag`: weak SHA-256 ETag, `Cache-Control: private, no-cache`, `If-None-Match` match → 304 with no body. ETag/conditional-request behavior is intentionally omitted from the public page by user request (optional optimization).
+
+Not published (unverified without `account`): which states/types the list includes (e.g. whether deleted agents or bots are returned), ordering, and permission requirements. The page tells readers to filter by `state`/`type` instead. A client library (`acclient.listAgentsDB`) drops deleted agents on its own side; that is not evidence of the service response. Vietnamese translation pending (D-0031).
+
+### Get agent details (follow-up, same day)
+
+- `api/router.go`: GET `/4.0/agents/{agid}` and `/4.0/accounts/{accid}/agents/{agid}` → `handleReadAgent`; GET `/4.1/accounts/{accid}/agents/{agid}` → `handleReadAgent2` (plain GetAgent, permission handling only downstream); GET `/4.1/agents/{agid}` → `handleGetAgentProfile` (cross-account agent profile, a different object — not documented).
+- `api/handler.go:handleReadAgent`: `LookupAgentById` (error returned as-is when missing); if `acclient.AccessFeature(acc, AGENT, READ, cred)` passes, returns full `GetAgent`; otherwise returns only account_id, id, fullname, avatar_url. `api/vendor/github.com/subiz/acclient/v2/main.go:AccessFeature` consults the token agent's permissions (internal credential types and manager admin role bypass). The page documents the 4.0 route because this gateway-visible permission split is verifiable; the exact not-found error code depends on the unavailable `account` service and is not published.
+
+## Products — English only, 2026-11-17
+
+Sources: gateway `api`, order/product service `proder`, canonical `header`.
+
+- `api/router.go`: POST `/4.0/accounts/{accid}/products` (`handleCreateProduct`), POST `/4.0/accounts/{accid}/products-search` and GET `/4.0/accounts/{accid}/products` (`handleListProducts2`), GET (`handleReadProduct`) and POST (`handleUpdateProduct`) `/4.0/accounts/{accid}/products/{pid}`. Handlers set account (and path pid) and forward to proder. `api/hparam.go:Decode2` decodes GET query parameters into the request message.
+- `header/header.proto:Product,ProductsRequest,KV,ProductOption`: fields and JSON names; proder validation narrows visibility to published/hidden and condition to new/refurbished/used.
+- `proder/main.go:CreateProduct`: PRODUCT CREATE access feature, clears id, then UpdateProduct (which also checks PRODUCT UPDATE).
+- `proder/main.go:UpdateProduct`: GetProduct by id; if absent, `db.go:getOrCreateProduct` matches id, else source_id (when sent), else sku, else creates a new product with a generated id. Validation on the request body before assignment: name required, category ≤255 bytes, visibility ≤63 bytes, availability in the six values (lowercased/trimmed). `header.Assign` with x-fields, skipping created/created_by/updated/updated_by/modified/error/enrichment-cost fields; without x-fields all fields copy. Visibility default published; condition validated after assignment. updated_by = token issuer.
+- `proder/main.go:handleProductImages,uploadProductImage`: changed image/images imported via `ImportCDNFile` and replaced with a 500×500 JPEG resize URL; failure fails the request.
+- `proder/main.go:upsertProduct,shareProduct`: product_group_id defaults to id; created/updated/modified in ms; shared fields (url, handle, category, brand, note, condition, visibility, name, description, images, videos, options) are copied to other products in the group.
+- `proder/main.go:ReadProduct`: PRODUCT READ; EMissing when absent; num_variants and up to 5 other_variants via `db.go:ListProductVariants` (excludes the product itself).
+- `proder/main.go:ListProducts2,filterProducts`: PRODUCT READ, otherwise a single best match for `query` in `product`. Sorted by id descending (string). Filters documented: query (normalized contains), sku, source_id, category, visibility, availability instock/out_of_stock (by stock), price_gte/lte, props (exact key+value, all required), grouped, variant_of (early return, other filters skipped). limit ≤0 or >1000 → 100; anchor = ids lower than anchor; next_anchor = last id. `offset` is applied after truncation to `limit`, so it does not page; documented as not for paging. ids/last_modifieds, collection_ids, discount filters, include_deleted, id_only are not documented.
+
+Product deletion, imports, feeds, crawling, and product search for chat are out of scope. Vietnamese translation pending (D-0031).

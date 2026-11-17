@@ -1,0 +1,54 @@
+---
+sourceHash: 38ccbaf68700b9d87b173d4e1acea2e8c78a53442a6ca93e90698b30012a909f
+title: "List agents"
+description: "Get the agents in your account, for example to find an agent ID."
+section: "Agents"
+order: 31
+status: "verified"
+endpointId: "agents-list"
+translationPending: true
+---
+
+Use this endpoint to get the agents in your account, for example to find the agent ID to use when you [invite an agent](/docs/api-reference/conversations/invite-agent) or [assign an agent](/docs/api-reference/conversations/assign-agent).
+
+The account comes from your access token. There are no request parameters and no request body.
+
+## Response
+
+A successful request returns HTTP `200` with a JSON **array** of agents, not an object:
+
+```json
+[
+  {
+    "id": "agent_example",
+    "account_id": "account_example",
+    "type": "agent",
+    "state": "active",
+    "fullname": "Sam Example",
+    "email": "sam@example.com",
+    "scopes": [
+      "supervisor"
+    ]
+  },
+  {
+    "id": "agent_second_example",
+    "account_id": "account_example",
+    "type": "agent",
+    "state": "pending",
+    "fullname": "Jamie Example",
+    "email": "jamie@example.com"
+  }
+]
+```
+
+This example shows selected fields. See [Agent format](/docs/agents/format) for every field and `state` value. The list is not paginated.
+
+Filter the array in your code. For example, keep agents whose `state` is `active` before you show them as choices for assignment.
+
+## Other paths
+
+`GET https://api.subiz.com.vn/4.0/agents` and `GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/agents` return the same list.
+
+## HTTP request
+
+Replace `YOUR_ACCESS_TOKEN` with your token.

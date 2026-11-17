@@ -1,0 +1,187 @@
+---
+sourceHash: 8c32c9cb9de6ab62acdf88131d3607879094ea2f04bd50e8df001e7bed6e731f
+title: "User and attribute format"
+description: "Understand the customer object and how attribute values are stored."
+section: "Users"
+order: 9
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+translationPending: true
+---
+
+In the API, a customer is a `User`. Most customer data, such as name, email, and phone, is stored in its `attributes` array. This page describes both objects. All IDs and values below are illustrative.
+
+## User
+
+The examples below are selected fields of a `User` object, as returned by [Get customer details](/docs/api-reference/users/retrieve):
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex@example.com"
+    }
+  ],
+  "created": 1763107200000,
+  "updated": 1763193600000
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Subiz user ID. Use it in customer and message endpoints. |
+| `account_id` | string | Account the customer belongs to. |
+| `attributes` | array | Customer data. See [Attribute](#attribute). |
+| `channel` | string | Channel the customer came from, such as `facebook` or `zalo`. |
+| `channel_source` | string | Connected page or account on that channel. |
+| `profile_id` | string | Customer's ID on that channel. |
+| `labels` | array | Labels added to the customer in Subiz. |
+| `created`, `updated` | integer | Unix timestamps in milliseconds. |
+
+`channel`, `channel_source`, and `profile_id` together form the customer's channel identity. Keep them separate from the Subiz `id`. See [Find or create by channel identity](/docs/api-reference/users/identity).
+
+The object has more fields than shown. Ignore fields your integration does not use.
+
+## Attribute
+
+Each item in `attributes` stores one piece of customer data:
+
+```json
+{
+  "key": "fullname",
+  "text": "Alex Example",
+  "modified": 1763193600000
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `key` | string | Attribute key, such as `fullname`. Identifies the attribute. |
+| `type` | string | Read-only. `text`, `number`, `boolean`, or `datetime`. |
+| `text` | string | Value of a `text` attribute. |
+| `number` | number | Value of a `number` attribute. |
+| `boolean` | boolean | Value of a `boolean` attribute. |
+| `datetime` | string | Value of a `datetime` attribute, in RFC 3339 format. |
+| `other_values` | array of strings | Additional values of a text attribute, such as more email addresses. |
+| `modified` | integer | When the value last changed, in Unix milliseconds. |
+
+Each attribute uses exactly one value field, chosen by its type. In requests, send only `key` and the matching value field.
+
+## Value types
+
+Use the value field that matches the attribute's type.
+
+**Text** — names, emails, phone numbers, and other strings:
+
+```json
+{
+  "key": "job_title",
+  "text": "Purchasing manager"
+}
+```
+
+**Number** — a decimal number, not a string:
+
+```json
+{
+  "key": "loyalty_points",
+  "number": 1250
+}
+```
+
+**Boolean** — `true` or `false`:
+
+```json
+{
+  "key": "newsletter_opt_in",
+  "boolean": true
+}
+```
+
+**Datetime** — an RFC 3339 date-time string, including the time zone:
+
+```json
+{
+  "key": "birthdate",
+  "datetime": "1990-05-20T00:00:00Z"
+}
+```
+
+`loyalty_points` and `newsletter_opt_in` are examples of custom attributes. They exist only if your account defines them.
+
+## Multiple values
+
+Some text attributes, such as `emails` and `phones`, can hold more than one value. The primary value is in `text`; the others are in `other_values`:
+
+```json
+{
+  "key": "emails",
+  "text": "alex@example.com",
+  "other_values": [
+    "alex.work@example.com"
+  ]
+}
+```
+
+When you need a single email or phone number, use `text`. To find a customer by any of their addresses, check both fields.
+
+## Built-in attributes
+
+Every account has these attributes:
+
+| Key | Type | Description |
+| --- | --- | --- |
+| `fullname` | text | Full name. |
+| `display_name` | text | Display name. |
+| `emails` | text | Email addresses. |
+| `phones` | text | Phone numbers. |
+| `address`, `city`, `district` | text | Address. |
+| `gender` | text | Gender. |
+| `job_title` | text | Job title. |
+| `birthdate` | datetime | Date of birth. |
+| `avatar_url` | text | Profile picture URL. |
+| `timezone` | text | Customer's time zone. |
+
+Subiz maintains some built-in attributes and they are read-only, for example `created`, `modified`, `seen`, `total_conversations`, and `last_message_sent`. You can read them, but you cannot change them.
+
+## Custom attributes
+
+Your account can define its own attributes in addition to the built-in ones. Use the exact key from your account, and send values of the attribute's type.
+
+## Read attributes safely
+
+- **Find attributes by `key`.** The order of the array is not fixed.
+- **Handle missing attributes.** An attribute can be absent when the customer has no value for it.
+- **Expect omitted defaults.** Empty strings, `0`, and `false` are omitted from JSON. A `boolean` attribute without a `boolean` field is `false`.
+- **Read by type.** Do not assume every value is in `text`.
+
+## Write attributes
+
+[Create a customer](/docs/api-reference/users/create) and [Update customer details](/docs/api-reference/users/update) take an `attributes` array in this format:
+
+```json
+{
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "birthdate",
+      "datetime": "1990-05-20T00:00:00Z"
+    }
+  ]
+}
+```
+
+Send only `key` and the value. Read-only fields such as `type` and `modified` are set by Subiz. Size limits apply; see [Customer attribute limits](/docs/get-started/usage-limits#customer-attribute-limits).

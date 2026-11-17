@@ -1,28 +1,64 @@
 ---
-sourceHash: 85fd2845865de397044fe5ac39214d1aa969e4509582cf4319f9d1d3ee03ac38
+sourceHash: bd0e95b9476a67b4d87af02d800af2600ec6ade0520b527f85e3ac453de3935b
 title: "Read message history"
-description: " Read message history through the Subiz API."
+description: "List the messages and other events in a conversation."
 section: "Conversations"
 order: 22
 status: "verified"
 endpointId: "conversations-history"
 ---
 
-## Before you begin
+Use this endpoint to read what happened in a conversation: messages from the customer and agents, plus other conversation events.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Request
 
-## Read conversation events
+Send a `GET` request with the conversation ID in the path. There is no request body.
 
-This endpoint returns the events from `ListEvents`, not a fabricated messages envelope. Event types can differ; inspect `type` before reading `data.message`.
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `cid` (path) | string | Conversation ID. |
+| `start_id` (query) | string | Optional. Event ID to page from. |
+| `limit` (query) | integer | Optional. Number of events to request. |
 
-The request schema supports `limit` and `start_id` query parameters. Confirm the next boundary from your returned events; do not assume an offset or a `next_cursor` field. The caller must have access to the conversation.
+To read further, pass an event ID from your previous result as `start_id`. The response has no `next_cursor` or total; do not page by offset.
 
-## Result
+## Response
 
-The gateway extracts the service's events array and returns it directly. Keep event identifiers when synchronizing history to avoid duplicates.
+A successful request returns HTTP `200` with a JSON **array** of events. There is no wrapper object. Selected fields:
+
+```json
+[
+  {
+    "id": "event_example",
+    "account_id": "account_example",
+    "type": "message_sent",
+    "created": 1763107200000,
+    "by": {
+      "id": "user_example",
+      "type": "user"
+    },
+    "data": {
+      "message": {
+        "conversation_id": "conversation_example",
+        "format": "plaintext",
+        "text": "Hi, is my order ready?"
+      }
+    }
+  }
+]
+```
+
+Treat an empty or `null` result as no events.
+
+## Read events correctly
+
+- **Check `type` first.** Not every event is a message. Read `data.message` only for message events such as `message_sent`.
+- **Check the sender.** `by.type` tells you whether a customer (`user`) or staff member (`agent`) acted, and `by.id` identifies them.
+- **Check the format.** A message can be plain text, a block tree, or attachments only. See [Message formats](/docs/messages/formats) and [Attachments](/docs/messages/attachments).
+- **Deduplicate by `id`.** When syncing history with [webhook events](/docs/webhooks/payloads), use the event `id` to avoid storing a message twice.
+
+`created` is in Unix milliseconds.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_CID` with the conversation ID and `YOUR_ACCESS_TOKEN` with your token. Add `start_id` or `limit` to the query string when needed.

@@ -24,10 +24,11 @@ The goal is a gradual path from understanding Subiz's entities and authenticatio
 | --- | --- | --- |
 | 1 | Get Started / Bắt đầu | Overview (including core concepts); Authentication; Usage limits (English only); Errors (English only) |
 | 2 | Conversations & Messages / Hội thoại và tin nhắn | Message formats (English only); Attachments (English only); Send to a conversation; Send to a customer; Get conversation details; Read message history; Invite an agent; Assign an agent |
-| 3 | Customers (Users) / Khách hàng | Create a customer; Get customer details; Update customer details; Find or create by channel identity |
-| 4 | Orders / Đơn hàng | Create an order; List orders; Get order details; Update an order — outline only |
-| 5 | Products / Sản phẩm | Create a product; List products; Get product details; Update a product — outline only |
-| 6 | Webhooks / Webhook | Receive & verify events; Event payloads |
+| 3 | Customers (Users) / Khách hàng | User and attribute format (English only); Create a customer; Get customer details; Update customer details; Find or create by channel identity |
+| 4 | Agents / Nhân viên | Agent format; List agents; Get agent details (English only, D-0046) |
+| 5 | Orders / Đơn hàng | Order format; Create an order; List orders; Get order details; Update an order (English only, D-0045) |
+| 6 | Products / Sản phẩm | Product format; Create a product; List products; Get product details; Update a product (English only, D-0047) |
+| 7 | Webhooks / Webhook | Receive & verify events; Event payloads |
 
 List conversations is removed from navigation at the user's request. Its existing article and URL are preserved during this sidebar-only review. It does not appear in mobile navigation or previous/next links either.
 
@@ -53,6 +54,8 @@ Route evidence below comes from api/router.go. Paths are candidates for document
 | Send to conversation | POST `/4.1/conversations/{cid}/messages`; `handleSendEvent` |
 | Send to user | POST `/4.0/accounts/{accid}/users/{uid}/messages`; `handleSendOmniChannelEvent`, `SendOmniChannelMessageRequest` |
 | Invite an agent to a conversation | POST `/4.0/conversations/{cid}/members`; `handleJoinConversation` decodes ConversationMember and JoinConversation emits conversation_invited. This is not inviting a new staff account. |
+| List agents | GET `/4.1/agents` (also `/4.0/agents`, `/4.0/accounts/{accid}/agents`); `handleListAgents` returns a JSON array of `Agent` |
+| Get agent details | GET `/4.0/agents/{agid}` (also `/4.0/accounts/{accid}/agents/{agid}`); `handleReadAgent` |
 | Assign a conversation to an agent | POST `/4.0/accounts/{accid}/conversations/{cid}` with `assignee`; verified in UpdateConversationInfo/updateConversationAssignee. The `/4.1/conversations/{cid}/assign` route is automatic reassignment; the member-update route is restricted to AI bot membership. Neither is the explicit-agent assignment operation. |
 
 Webhook content must be verified against the Sendback service before documenting event names, payloads, signing headers/algorithm, acknowledgements, retry timing, ordering or duplicate handling. Do not add pages for creating, listing, retrieving, editing, deleting, rotating secrets, pinging, or querying webhook management/delivery APIs. Consumer troubleshooting belongs in the receiving guide.

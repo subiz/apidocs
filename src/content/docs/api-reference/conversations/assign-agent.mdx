@@ -1,38 +1,75 @@
 ---
-sourceHash: 8e874db86f795883cba4b6e0fb34ff02ebee25dcbb01db15e93874abc9ab633a
+sourceHash: c5a8026b0d02adf12fc073e7c9e738b351ea46eef43a876c1ccc4253fd372d1a
 title: "Assign an agent"
-description: " Assign an agent through the Subiz API."
+description: "Make a specific agent responsible for a conversation."
 section: "Conversations"
 order: 24
 status: "verified"
 endpointId: "conversations-assign-agent"
 ---
 
+Use this endpoint to set the conversation's owner, the `assignee`, to a specific agent. Use it for handoffs, for example when your CRM decides which salesperson handles a customer.
+
 ## Before you begin
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+- Get a [Bearer access token](/docs/get-started/authentication) and your account ID.
+- Get the ID of an existing agent in the account.
 
-## Set conversation ownership
+## Request body
 
-Use the conversation update endpoint to set the `assignee` to an existing agent ID.
-
-| Field | Type | Purpose |
+| Field | Type | Description |
 | --- | --- | --- |
-| `accid` (path) | string | Account associated with your token. |
+| `accid` (path) | string | Your account ID. |
 | `cid` (path) | string | Conversation to assign. |
-| `assignee` | string | Agent ID that should own the conversation. |
+| `assignee` | string | ID of the agent who should own the conversation. |
 
-`UpdateConversationInfo` updates the assignee and emits `conversation_assigned` when the value changes. It returns the conversation. Assignment does not itself promise to invite the agent; use [Invite an agent](/docs/api-reference/conversations/invite-agent) when participation is needed.
+```json
+{
+  "assignee": "agent_example"
+}
+```
 
-## Clear an assignment
+This route updates conversation information. Send only `assignee` for an assignment.
 
-Use the same route with `?x-fields=assignee` and body `{"assignee":""}`. The field selection is necessary to distinguish clearing a value from omitting it. A changed owner becoming empty produces `conversation_unassigned`.
+## Response
+
+A successful request returns HTTP `200` with the updated `Conversation`. Selected fields:
+
+```json
+{
+  "id": "conversation_example",
+  "account_id": "account_example",
+  "state": "active",
+  "assignee": "agent_example"
+}
+```
+
+When the owner changes, Subiz emits a `conversation_assigned` event. Subscribed webhooks receive it; see [Conversation assigned](/docs/webhooks/payloads#conversation-assigned).
+
+## Assignment is not participation
+
+Assigning an agent does not add them to `members`. If the agent should also participate, [invite the agent](/docs/api-reference/conversations/invite-agent) as well.
+
+## Clear the assignment
+
+Send an empty `assignee` and add `x-fields=assignee` to the query string:
+
+```http
+POST https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/conversations/YOUR_CID?x-fields=assignee
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "assignee": ""
+}
+```
+
+`x-fields` lists the fields to update. Without it, an empty value is treated as "not provided" and the owner stays unchanged. Clearing an owner emits `conversation_unassigned`.
 
 ## Automatic routing is different
 
-The `/4.1/conversations/{cid}/assign` route reruns assignment logic and does not decode a target agent ID. Do not use it to choose a specific agent.
+`POST /4.1/conversations/{cid}/assign` asks Subiz to run automatic assignment again. It does not accept an agent ID. Use the endpoint on this page to choose a specific agent.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_ACCID`, `YOUR_CID`, `YOUR_AGENT_ID`, and `YOUR_ACCESS_TOKEN` with your values.

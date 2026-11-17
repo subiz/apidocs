@@ -1,0 +1,187 @@
+---
+sourceHash: 3a36c1475cf14679613ba7a6bf2d3e1554f0d63ff3dfd4a29f77002685b5204f
+title: "Order format"
+description: "Understand the order object: items, customer, shipping, amounts, and statuses."
+section: "Orders"
+order: 40
+status: "verified"
+apiVersions: ["4.0"]
+translationPending: true
+---
+
+An `Order` records what a customer bought: the items, prices, shipping details, payment, and status. This page describes the order object and its nested objects. All IDs and values below are illustrative.
+
+To work with orders, see [Create an order](/docs/api-reference/orders/create), [List orders](/docs/api-reference/orders/list), [Get order details](/docs/api-reference/orders/retrieve), and [Update an order](/docs/api-reference/orders/update).
+
+## Order
+
+Selected fields of an `Order`:
+
+```json
+{
+  "id": "order_example",
+  "account_id": "account_example",
+  "number": "1001",
+  "status": "open",
+  "payment_status": "unpaid",
+  "currency": "VND",
+  "user": {
+    "id": "user_example"
+  },
+  "items": [
+    {
+      "id": "item_example",
+      "quantity": 2,
+      "product": {
+        "id": "product_example",
+        "name": "Ceramic mug",
+        "sku": "MUG-01",
+        "price": 120000
+      },
+      "total": 240000
+    }
+  ],
+  "shipping": {
+    "address": {
+      "fullname": "Alex Example",
+      "phone": "+84900000000",
+      "address": "12 Example Street",
+      "district": "District 1",
+      "region": "Ho Chi Minh City",
+      "country_code": "VN"
+    },
+    "nominal_fee": 30000
+  },
+  "subtotal": 240000,
+  "total": 270000,
+  "payment_made": 0,
+  "note": "Please deliver after 5 pm.",
+  "related_conversations": [
+    "conversation_example"
+  ],
+  "created": 1763107200000,
+  "updated": 1763107200000
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Subiz order ID. |
+| `number` | string | Human-readable order number. |
+| `user` | object | The customer who placed the order. See [User and attribute format](/docs/users/format). |
+| `items` | array | Products in the order. See [Order item](#order-item). |
+| `shipping` | object | Delivery address and fee. See [Shipping](#shipping). |
+| `currency` | string | Currency of all amounts in the order. Empty means the account's base currency. |
+| `status` | string | Order status. See [Statuses](#statuses). New orders default to `open`. |
+| `payment_status` | string | `unpaid` or `paid`. Computed from payments recorded on the order. |
+| `note` | string | Note visible on the order. |
+| `private_note` | string | Internal note for staff. |
+| `related_conversations` | array | IDs of conversations linked to this order. |
+| `source_id` | string | ID of the order in your source system, if any. |
+| `fields` | object | Additional fields as string key–value pairs. |
+| `is_draft` | boolean | `true` for a draft order. |
+| `created`, `updated` | integer | Unix timestamps in milliseconds. |
+
+Empty fields are omitted, and the object has more fields than shown.
+
+## Order item
+
+Each item in `items` is one order line:
+
+```json
+{
+  "id": "item_example",
+  "quantity": 2,
+  "product": {
+    "id": "product_example",
+    "name": "Ceramic mug",
+    "sku": "MUG-01",
+    "price": 120000
+  },
+  "discount_type": "percentage",
+  "discount_percentage": 1000,
+  "total": 216000
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `quantity` | integer | Number of units. |
+| `product` | object | Copy of the product at the time of the order, including `price`. |
+| `name`, `sku` | string | Item name and SKU, for items that are not linked to a product. |
+| `discount_type` | string | `amount` or `percentage`. |
+| `discount_amount` | number | Discount for this line, when `discount_type` is `amount`. |
+| `discount_percentage` | integer | Discount for this line, when `discount_type` is `percentage`. Scaled by 100: `1000` means 10%. |
+| `total` | number | Line total: quantity × price, minus the line discount. Computed by Subiz. |
+| `note` | string | Note for this line. |
+
+The product inside an item is a copy. Later changes to the product do not change existing orders. Items without a `product` are not counted in the order totals.
+
+## Shipping
+
+`shipping` holds the delivery details:
+
+```json
+{
+  "address": {
+    "fullname": "Alex Example",
+    "phone": "+84900000000",
+    "street": "12 Example Street",
+    "ward": "Ben Nghe",
+    "district": "District 1",
+    "region": "Ho Chi Minh City",
+    "country_code": "VN"
+  },
+  "nominal_fee": 30000,
+  "note": "Call before delivery.",
+  "weight": 500
+}
+```
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `address` | object | Recipient's name, phone, and address. `region` is the city or province. |
+| `nominal_fee` | number | Shipping fee charged in the order total. |
+| `note` | string | Delivery instructions. |
+| `weight` | integer | Package weight in grams. |
+| `length`, `width`, `height` | integer | Package size in centimeters. |
+| `shipping_code` | string | Tracking code from the shipping provider. |
+
+## Amounts
+
+All amounts are numbers in the order's `currency`. Subiz computes `subtotal`, `total_tax`, and `total` from the items, discounts, shipping fee, and adjustment.
+
+| Field | Description |
+| --- | --- |
+| `subtotal` | Sum of line totals, after line discounts. |
+| `total_tax` | Total tax. |
+| `discount_type`, `discount_amount`, `discount_percentage` | Order-level discount, applied after tax. Percentage is scaled by 100. |
+| `adjustment` | Extra amount added to the total. |
+| `total` | Amount the customer pays. |
+| `payment_made` | Amount paid so far. |
+
+Use line-item discounts for discounts before tax, and the order-level discount for discounts after tax.
+
+Tax rates use a different scale: a `Tax` with `percentage: 2000` means 20%.
+
+Fields that start with `fpv_`, such as `fpv_total`, are computed fixed-point copies of the amounts. Read the regular amount fields instead, and do not send `fpv_` fields.
+
+## Statuses
+
+`status` describes where the order is in your sales process:
+
+| Value | Meaning |
+| --- | --- |
+| `open` | New order. |
+| `unconfirmed` | Not yet agreed between your business and the customer. |
+| `closed` | Confirmed (won) order. |
+| `canceled` | Canceled (lost) order. `cancellation_note` and `cancellation_code` explain why. |
+
+`payment_status` and `shipping_status` are tracked separately. An order can be `closed` and still `unpaid`.
+
+## Read orders safely
+
+- **Check `currency`** before comparing or summing amounts across orders.
+- **Expect omitted defaults.** Empty strings, `0`, and `false` are omitted from JSON. A missing `payment_made` means nothing has been paid.
+- **Use `user.id`** to link the order to the customer, and `related_conversations` to find the chat.
+- **Ignore unknown fields and values.** Skip fields and status values your integration does not recognize.

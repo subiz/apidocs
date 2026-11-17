@@ -1,26 +1,60 @@
 ---
-sourceHash: 0757b52936679b7308f61d0be758a98e959ac2ba6007d39d782d729f0b2e4814
-title: "Retrieve a user"
-description: " Retrieve a user through the Subiz API."
+sourceHash: 9d1b6d7656536e61b0a75fca8c8262f66efe70f6060a632ac1be292ba69fdc72
+title: "Get customer details"
+description: "Read a customer's profile and attributes by Subiz user ID."
 section: "Users"
 order: 11
 status: "verified"
 endpointId: "users-retrieve"
 ---
 
-## Before you begin
+Use this endpoint to read a customer's current profile, for example before syncing it to your CRM.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Request
 
-## Identify the customer
+Send a `GET` request with the customer's Subiz user ID in the path. There is no request body.
 
-Replace `uid` with the customer ID. Use this request to read the customer's current profile before synchronizing changes.
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `uid` (path) | string | Subiz user ID, as returned when the customer was created. |
 
-## Result
+The ID must be a Subiz user ID. Other values, such as an email address, return an error. If you only know the customer's channel identity, use [Find or create by channel identity](/docs/api-reference/users/identity).
 
-The gateway calls the user service and returns its result as JSON. Handle missing records and permission failures before reading attributes. Related: [Update a user](/docs/api-reference/users/update).
+## Response
+
+A successful request returns HTTP `200` with the customer. Selected fields:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex@example.com"
+    }
+  ]
+}
+```
+
+| Field | Description |
+| --- | --- |
+| `id` | Subiz user ID. |
+| `attributes` | Customer data. Find each attribute by `key`, not by position. |
+| `channel`, `channel_source`, `profile_id` | Channel identity, when the customer came from a connected channel. |
+| `created`, `updated` | Unix timestamps in milliseconds. |
+
+Read the value field that matches the attribute type: `text`, `number`, `boolean`, or `datetime`. Empty fields are omitted, and the object has more fields than shown.
+
+The response includes an `ETag` header. It changes when the returned customer data changes, so you can compare it to skip unchanged records.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_UID` with the user ID and `YOUR_ACCESS_TOKEN` with your token.

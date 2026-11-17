@@ -1,0 +1,66 @@
+---
+sourceHash: 421207d2c82966056ac5d0aab8ca248419d8fb72c14dec16df2d18aeb47fc06b
+title: "Get order details"
+description: "Read one order by its Subiz order ID."
+section: "Orders"
+order: 43
+status: "verified"
+endpointId: "orders-retrieve"
+translationPending: true
+---
+
+Use this endpoint to read the current state of an order, for example before updating it or after a payment.
+
+## Request
+
+Send a `GET` request with no body.
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `accid` (path) | string | Your account ID. |
+| `oid` (path) | string | Subiz order ID. |
+
+The token's agent needs permission to read orders.
+
+## Response
+
+A successful request returns HTTP `200` with the order. Selected fields:
+
+```json
+{
+  "id": "order_example",
+  "account_id": "account_example",
+  "number": "1001",
+  "source_id": "crm-1001",
+  "status": "closed",
+  "payment_status": "paid",
+  "currency": "VND",
+  "user": {
+    "id": "user_example"
+  },
+  "items": [
+    {
+      "id": "item_example",
+      "quantity": 2,
+      "product": {
+        "name": "Ceramic mug",
+        "sku": "MUG-01",
+        "price": 120000
+      },
+      "total": 240000
+    }
+  ],
+  "total": 270000,
+  "payment_made": 270000,
+  "closed": 1763193600000,
+  "updated": 1763193600000
+}
+```
+
+See [Order format](/docs/orders/format) for every field. `closed` is set when the order becomes `closed` or `canceled`.
+
+If no order has this ID, the request returns a not-found error. See [Errors](/docs/get-started/errors).
+
+## HTTP request
+
+Replace `YOUR_ACCID`, `YOUR_OID`, and `YOUR_ACCESS_TOKEN` with your values.

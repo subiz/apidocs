@@ -1,28 +1,67 @@
 ---
-sourceHash: d0d8715f07c25c9b717ab2d0e60debb971558cf26e58e57a29389dbbf42d63e7
+sourceHash: 7ab89d7f5215ebe1c4effdd486927d5dc739cfa97ef33cc42553b46dc69ccf4f
 title: "Find or create by channel identity"
-description: " Find or create by channel identity through the Subiz API."
+description: "Get the Subiz customer for a Facebook, Zalo, or other channel profile."
 section: "Users"
 order: 13
 status: "verified"
 endpointId: "users-identity"
 ---
 
-## Before you begin
+Use this endpoint when you know a customer's identity on a channel, such as their Facebook profile on your page, but not their Subiz user ID. It returns the existing customer, or creates one if none exists.
 
-Use a [Bearer access token](/docs/get-started/authentication) for the intended account. Replace all `YOUR_…` placeholders with real identifiers. Mutation requests change real data.
+## Channel identity
 
-## Resolve an external identity
+A channel identity has three parts, all in the URL path:
 
-Use the channel, source, and external profile identifier belonging to your integration. These are channel identity values, not a Subiz user ID. The account must match your credentials.
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `accid` (path) | string | Your account ID. |
+| `channel` (path) | string | Channel, such as `facebook` or `zalo`. |
+| `source` (path) | string | Connected page or account on that channel, such as a Facebook page ID. |
+| `id` (path) | string | Customer's profile ID on that channel. |
 
-The POST route calls `ReadOrCreateUserByContactProfile`. To look up an existing record without creating one, use GET on the same path.
+Use values from your connected integration. Do not put a Subiz user ID in `id`. There is no request body.
 
-## Result
+## Find without creating
 
-The service returns a user. Keep the Subiz user ID separately from the external profile ID. Identity merging and normalization are service-controlled; do not infer a new customer from a temporary lookup failure.
+Use `GET` on the same path to look up a customer without creating one:
+
+```http
+GET https://api.subiz.com.vn/4.1/accounts/YOUR_ACCID/contact-profiles/YOUR_CHANNEL/sources/YOUR_SOURCE/YOUR_ID
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+Use `POST`, shown at the end of this page, to find the customer or create them.
+
+## Response
+
+Both methods return HTTP `200` with the customer. Selected fields:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    }
+  ]
+}
+```
+
+Store the Subiz `id` together with the channel identity. Use the `id` to [get](/docs/api-reference/users/retrieve) or [update](/docs/api-reference/users/update) the customer.
+
+Subiz may normalize or merge customer identities. If a lookup fails temporarily, retry it rather than creating a separate customer with [Create a customer](/docs/api-reference/users/create).
+
+## Send without resolving first
+
+To message a customer by channel identity, you can skip this step. [Send to a customer](/docs/api-reference/messages/send-to-user#identify-the-customer) accepts `channel`, `channel_source`, and `profile_id` directly.
 
 ## HTTP request
 
-Replace the `YOUR_…` placeholders with your values. Send the headers shown below and, when present, the JSON body. Check the HTTP status before using the response.
-
+Replace `YOUR_ACCID`, `YOUR_CHANNEL`, `YOUR_SOURCE`, `YOUR_ID`, and `YOUR_ACCESS_TOKEN` with your values.
