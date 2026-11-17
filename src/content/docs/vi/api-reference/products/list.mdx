@@ -1,0 +1,83 @@
+---
+sourceHash: 18ceb082a889328da19f2df315c73be8cb33d74c4cdb19476bc8a0995412882c
+title: "Lấy danh sách sản phẩm"
+description: "Tìm trong danh mục theo từ khóa, SKU, giá, tồn kho và nhiều tiêu chí khác."
+section: "Products"
+order: 62
+status: "verified"
+endpointId: "products-list"
+---
+
+Dùng endpoint này để tìm sản phẩm trong danh mục, ví dụ tra cứu sản phẩm theo SKU hoặc đọc toàn bộ danh mục. Bộ lọc đặt trong body JSON.
+
+## Bộ lọc
+
+Mọi bộ lọc đều tùy chọn và được kết hợp theo điều kiện AND.
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `query` | string | Tìm văn bản trong tên, ID, SKU, `source_id`, URL, mô tả, thương hiệu và ghi chú. Không phân biệt hoa thường. |
+| `sku` | string | Sản phẩm có đúng SKU này. |
+| `source_id` | string | Sản phẩm có đúng `source_id` này. |
+| `category` | string | Sản phẩm thuộc đúng danh mục này. |
+| `visibility` | string | `published` hoặc `hidden`. |
+| `availability` | string | `instock` trả sản phẩm có `stock` lớn hơn 0. `out_of_stock` trả sản phẩm có `stock` bằng 0. |
+| `price_gte`, `price_lte` | number | `price` tối thiểu và tối đa. |
+| `props` | array | Các cặp `key`/`value`. Sản phẩm phải có mọi cặp, với giá trị khớp chính xác. |
+| `grouped` | boolean | `true` trả một sản phẩm cho mỗi nhóm biến thể thay vì mọi biến thể. |
+| `variant_of` | string | Một ID sản phẩm. Trả mọi sản phẩm trong nhóm biến thể của nó, kể cả chính nó. Các bộ lọc khác bị bỏ qua. |
+
+Bộ lọc `availability` dựa vào `stock`, không dựa vào trường `availability` của sản phẩm. Lưu ý cách viết `instock`.
+
+## Phân trang
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `limit` | integer | Số sản phẩm mỗi trang. Mặc định 100, tối đa 1000. Giá trị ngoài khoảng 1–1000 sẽ dùng 100. |
+| `anchor` | string | `next_anchor` từ trang trước. Bỏ trống ở trang đầu tiên. |
+
+Sản phẩm được sắp xếp theo `id` giảm dần. Để đọc mọi trang, gửi `next_anchor` của mỗi phản hồi làm `anchor` trong yêu cầu kế tiếp. Dừng khi phản hồi không có `products`.
+
+Dùng `anchor`, không dùng `offset`. `offset` chỉ bỏ qua sản phẩm trong `limit` kết quả đầu tiên, nên không lật trang được danh mục.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200`:
+
+```json
+{
+  "products": [
+    {
+      "id": "product_example",
+      "source_id": "shop-sku-mug-01",
+      "name": "Ceramic mug",
+      "sku": "MUG-01",
+      "price": 120000,
+      "currency": "VND",
+      "stock": 25,
+      "availability": "in_stock",
+      "visibility": "published"
+    }
+  ],
+  "total": 1,
+  "next_anchor": "product_example"
+}
+```
+
+| Trường | Mô tả |
+| --- | --- |
+| `products` | Các sản phẩm trong trang này. Bị lược bỏ khi trang rỗng. |
+| `total` | Số sản phẩm khớp bộ lọc, trên mọi trang. |
+| `next_anchor` | Gửi làm `anchor` để lấy trang tiếp theo. |
+
+## Phân quyền
+
+Nhân viên sở hữu token cần quyền xem sản phẩm. Nếu không có quyền, yêu cầu không trả về danh sách: nó trả tối đa một kết quả khớp nhất với `query` trong trường `product`. Dùng token có quyền xem sản phẩm cho tích hợp.
+
+## Dùng GET
+
+`GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/products` nhận các bộ lọc tương tự dưới dạng tham số query, như `?sku=MUG-01`. Dạng POST dễ dùng hơn với `props`.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_ACCID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

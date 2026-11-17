@@ -1,0 +1,94 @@
+---
+sourceHash: f73ec863afa5ef5fa1f38227a9ee116e1d347dab9fd0bfc1779f3c6378a0dec7
+title: "Xử lý lỗi"
+description: "Đọc phản hồi lỗi API, sửa yêu cầu và quyết định khi nào thử lại."
+section: "Get Started"
+order: 4
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+Đọc **mã trạng thái HTTP và body lỗi JSON** cùng nhau. Hạn mức theo token, tài khoản và tin nhắn của nhân viên trả HTTP `429`. Dữ liệu không hợp lệ, bị từ chối truy cập và một số giới hạn riêng của từng thao tác có thể trả HTTP `400`.
+
+## Phản hồi lỗi
+
+Ví dụ sau hiển thị một số trường của lỗi vượt kích thước dữ liệu. Các kích thước chỉ mang tính minh họa:
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "code": "payload_too_large,invalid_input,internal",
+  "class": 400,
+  "error": {
+    "code": "payload_too_large,invalid_input,internal",
+    "attrs": {
+      "current_size": {
+        "type": "number",
+        "value": "2049"
+      },
+      "maximum_size": {
+        "type": "number",
+        "value": "2048"
+      }
+    }
+  }
+}
+```
+
+| Trường | Cách dùng |
+| --- | --- |
+| `error.code` | Các mã lỗi phân tách bằng dấu phẩy. Tách theo dấu phẩy và so khớp từng giá trị. |
+| `error.message` | Thông điệp dễ đọc, thường theo khóa `en_US` và `vi_VN`. Không dùng nội dung thông điệp cho logic chương trình. |
+| `error.attrs` | Chi tiết tùy chọn như tên trường, kích thước hiện tại hoặc kích thước tối đa. Mỗi giá trị có `type` và `value` dạng chuỗi; giá trị số cũng được mã hóa thành chuỗi. |
+| `error.id` | Định danh của lần lỗi, nếu có. Gửi kèm khi báo cáo hỗ trợ. |
+| `error.number` | Mã nhóm chẩn đoán, nếu có. Gửi kèm cùng ID. |
+| `code` ở cấp ngoài cùng | Lặp lại các mã lỗi trong phần bao phản hồi chuẩn. |
+| `class` ở cấp ngoài cùng | Phân loại cũ. Hãy dùng mã trạng thái HTTP thực tế và mã lỗi. |
+
+Gateway có thể thêm `internal` vào một lỗi cụ thể hơn. Chỉ riêng sự có mặt của nó **không** có nghĩa là có thể thử lại an toàn. Trong ví dụ trên, hãy giảm kích thước thuộc tính trước.
+
+## Mã lỗi thường gặp
+
+Đây là một tập con thực dụng, không phải danh sách đầy đủ. Một phản hồi có thể chứa nhiều mã trong số này.
+
+| Mã | Cần làm gì |
+| --- | --- |
+| `invalid_input` | Kiểm tra body JSON, trường bắt buộc và kiểu giá trị. |
+| `invalid_field` | Sửa trường được nêu tên, ví dụ định dạng tin nhắn không được hỗ trợ. |
+| `access_deny` | Kiểm tra tài khoản của token và quyền của nhân viên tạo token, hoặc quyền truy cập hội thoại. |
+| `access_token_expired` | Tạo token thay thế và cập nhật tích hợp. |
+| `locked_agent`, `locked_account` | Nhờ quản trị viên tài khoản kiểm tra trạng thái nhân viên hoặc tài khoản. |
+| `missing_resource` | Kiểm tra ID tài nguyên và tài khoản. Lặp lại cùng yêu cầu sẽ không tạo ra tài nguyên còn thiếu. |
+| `conversation_ended` | Kiểm tra trạng thái hội thoại trước khi gửi tin nhắn thông thường. |
+| `invalid_integration` | Kiểm tra tích hợp kênh của hội thoại vẫn còn kết nối. |
+| `payload_too_large` | Giảm dữ liệu được lỗi chỉ ra. Xem [Giới hạn sử dụng](/docs/vi/get-started/usage-limits). |
+| `limit_exceeded` | Kiểm tra số lượng hoặc dung lượng bị ảnh hưởng. Chờ đợi không khắc phục được giới hạn về cấu trúc. |
+| `rate_limit` | Giảm tốc độ. Giới hạn theo token, tài khoản và tin nhắn của nhân viên trả HTTP `429` kèm `Retry-After` tính bằng giây; hết hạn mức ngày thì phải chờ tới 00:00 UTC. |
+| `service_unavailable`, `timeout`, `retryable` | Coi là có thể tạm thời; làm theo hướng dẫn thử lại bên dưới. |
+
+Với lỗi xác thực, [kiểm tra token bằng `/4.1/me`](/docs/vi/get-started/authentication#kiểm-tra-access-token). Kiểm tra token thành công không có nghĩa là được truy cập mọi thao tác.
+
+## Mã trạng thái HTTP
+
+| Trạng thái | Cách xử lý |
+| --- | --- |
+| `400` | Xem `error.code`. Xác thực, phân quyền, kiểm tra dữ liệu và một số giới hạn dùng trạng thái này. |
+| `429` | Giới hạn sử dụng theo token hoặc tài khoản, hoặc một cơ chế điều tiết khác. Tuân theo `Retry-After` và giảm lưu lượng. Trường `class` cũ trong body vẫn có thể là `400`. |
+| `500` | Lỗi máy chủ. Gateway chuẩn dùng trạng thái này cho `service_unavailable`, cùng các lỗi khác. |
+
+Hãy xử lý cả các trạng thái không thành công khác và lỗi mạng. Proxy hoặc kết nối lỗi có thể trả body rỗng hoặc không phải JSON. Lưu lại trạng thái và một đoạn phản hồi đã lược bỏ dữ liệu nhạy cảm thay vì thất bại khi phân tích lỗi.
+
+## Khi nào thử lại
+
+- **Dữ liệu không hợp lệ hoặc bị từ chối truy cập:** sửa yêu cầu, token hoặc quyền trước.
+- **Bị giới hạn tốc độ:** đưa công việc vào hàng đợi và dùng [thử lại có độ trễ](/docs/vi/get-started/usage-limits#thử-lại-an-toàn).
+- **Lỗi tạm thời khi đọc:** dùng độ trễ tăng dần có jitter và giới hạn số lần thử cố định.
+- **Hết thời gian chờ hoặc mất phản hồi khi ghi:** thao tác có thể đã thành công. Kiểm tra trạng thái kết quả trước khi gửi lại.
+
+Với việc gửi tin nhắn, kiểm tra [lịch sử tin nhắn](/docs/vi/api-reference/conversations/history) hoặc các [sự kiện webhook](/docs/vi/webhooks/payloads) đã nhận. Nếu vẫn chưa rõ kết quả, dừng thử lại tự động và đối chiếu. Đừng giả định mọi endpoint đều hỗ trợ khóa idempotency.
+
+## Nhận hỗ trợ
+
+Gửi kèm phương thức HTTP và endpoint, thời điểm gửi yêu cầu kèm múi giờ, trạng thái và `error.code`. Thêm `error.id` và `error.number` nếu có. Chỉ chia sẻ các trường liên quan của yêu cầu đã lược bỏ dữ liệu nhạy cảm; không bao giờ gửi kèm access token.

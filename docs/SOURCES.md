@@ -171,7 +171,7 @@ Response JSON examples are selected fields with synthetic IDs. Vietnamese prose 
 Gateway (`api`) and `header` rechecked; the `user` service source was not available locally, so downstream behavior relies on the earlier `user/mgr.go`/`user/userdb.go` checks recorded above.
 
 - `api/handler.go:handleCreateUserDirectly`: forwards only channel, channel_source, profile_id, attributes; account from token; returns CreateUser2's User.
-- `api/handler.go:handleReadUser`: uid must pass `idgen.IsUserID` (or an internal record_id prefix) else EMissingId; sets an `ETag` header to the MD5 of the returned JSON.
+- `api/handler.go:handleReadUser`: uid must pass `idgen.IsUserID` (or an internal record_id prefix) else EMissingId; sets an `ETag` header to the MD5 of the returned JSON. Not documented publicly (D-0049).
 - `api/handler.go:handleUpdateUser`: forwards only attributes plus primary_id, lead_owners, channel, channel_source, profile_id; the page documents attributes only. Returns UpdateUser's User.
 - `api/handler.go:handleGetUserByContactProfile,handleGetOrCreateUserByContactProfile`: GET reads, POST read-or-creates by path channel/source/id.
 - `header/attrdef.go`: built-in attribute keys and types (fullname, display_name, emails, phones, address, city, district, gender, job_title, birthdate); created/modified/seen/total_conversations/last_message_sent are read-only.
@@ -212,7 +212,7 @@ Sources: gateway `api` and canonical `header`. The `account` service source (dow
 - `header/account.proto:Agent`: id, account_id, fullname, email, phone, gender, avatar_url(_128), lang, timezone, joined, invited_by, state (AgentState pending/active/inactive/deleted), modified, type (bot or agent, default agent), client_id (bot ID), scopes (owner, supervisor), extension. `header/account/account.pb.go`: snake_case JSON tags with omitempty. Timestamp units for joined/modified are not stated in the schema, so the page does not claim one; example values are synthetic.
 - `api/router.go`: GET `/4.0/agents` and `/4.1/agents` (WithETag) and GET `/4.0/accounts/{accid}/agents` (no WithETag) → `handleListAgents`.
 - `api/handler.go:handleListAgents`: sets AccountId from the authenticated context and returns `ListAgents(...).GetAgents()`, i.e. a bare JSON array; no pagination fields. `api/auth.go:buildCtxCore` sets the context account from the token.
-- `api/router.go:writeETagResponse,matchesETag`: weak SHA-256 ETag, `Cache-Control: private, no-cache`, `If-None-Match` match → 304 with no body. ETag/conditional-request behavior is intentionally omitted from the public page by user request (optional optimization).
+- `api/router.go:writeETagResponse,matchesETag`: weak SHA-256 ETag, `Cache-Control: private, no-cache`, `If-None-Match` match → 304 with no body. ETag/conditional-request behavior is intentionally omitted from the public page by user request (D-0049).
 
 Not published (unverified without `account`): which states/types the list includes (e.g. whether deleted agents or bots are returned), ordering, and permission requirements. The page tells readers to filter by `state`/`type` instead. A client library (`acclient.listAgentsDB`) drops deleted agents on its own side; that is not evidence of the service response. Vietnamese translation pending (D-0031).
 
@@ -235,3 +235,7 @@ Sources: gateway `api`, order/product service `proder`, canonical `header`.
 - `proder/main.go:ListProducts2,filterProducts`: PRODUCT READ, otherwise a single best match for `query` in `product`. Sorted by id descending (string). Filters documented: query (normalized contains), sku, source_id, category, visibility, availability instock/out_of_stock (by stock), price_gte/lte, props (exact key+value, all required), grouped, variant_of (early return, other filters skipped). limit ≤0 or >1000 → 100; anchor = ids lower than anchor; next_anchor = last id. `offset` is applied after truncation to `limit`, so it does not page; documented as not for paging. ids/last_modifieds, collection_ids, discount filters, include_deleted, id_only are not documented.
 
 Product deletion, imports, feeds, crawling, and product search for chat are out of scope. Vietnamese translation pending (D-0031).
+
+## Vietnamese translation pass — 2026-11-17
+
+All 34 English pages now have reviewed Vietnamese counterparts stamped with the current English source hash (D-0048). Prose only was translated; every code block is byte-identical to English (checked per page and by `tests/content.mjs`). Internal links use `/docs/vi/...` and Vietnamese heading anchors; all 563 same-site fragment links in the build resolve. Vietnamese UI labels in step-by-step instructions come from the Subiz dashboard language file (`dashboard-v4/lang/vi-VN.json`: `security_delete_token`, `setting_webhook_add`, `setting_webhook_create`, `custom_event`, `edit`, `secret`). No API behavior was re-verified in this pass; the Vietnamese pages carry the same evidence as their English sources.

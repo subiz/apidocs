@@ -1,0 +1,186 @@
+---
+sourceHash: 8692b6c3dae5d5a3064087b2b12d97d2ff24c47173066c3b912428b00df52d72
+title: "Định dạng khách hàng và thuộc tính"
+description: "Hiểu đối tượng khách hàng và cách lưu giá trị thuộc tính."
+section: "Users"
+order: 9
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+Trong API, khách hàng là một `User`. Phần lớn dữ liệu khách hàng, như tên, email và số điện thoại, được lưu trong mảng `attributes`. Trang này mô tả cả hai đối tượng. Mọi ID và giá trị bên dưới chỉ mang tính minh họa.
+
+## User
+
+Ví dụ dưới đây là một số trường của đối tượng `User`, như được trả về bởi [Lấy thông tin khách hàng](/docs/vi/api-reference/users/retrieve):
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex@example.com"
+    }
+  ],
+  "created": 1763107200000,
+  "updated": 1763193600000
+}
+```
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `id` | string | ID user Subiz. Dùng trong các endpoint khách hàng và tin nhắn. |
+| `account_id` | string | Tài khoản mà khách hàng thuộc về. |
+| `attributes` | array | Dữ liệu khách hàng. Xem [Thuộc tính](#thuộc-tính). |
+| `channel` | string | Kênh khách hàng đến từ, như `facebook` hoặc `zalo`. |
+| `channel_source` | string | Trang hoặc tài khoản đã kết nối trên kênh đó. |
+| `profile_id` | string | ID của khách hàng trên kênh đó. |
+| `labels` | array | Nhãn đã gắn cho khách hàng trong Subiz. |
+| `created`, `updated` | integer | Dấu thời gian Unix tính bằng mili giây. |
+
+`channel`, `channel_source` và `profile_id` cùng tạo thành định danh kênh của khách hàng. Không nhầm chúng với `id` của Subiz. Xem [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity).
+
+Đối tượng có nhiều trường hơn ví dụ. Bỏ qua các trường tích hợp của bạn không dùng.
+
+## Thuộc tính
+
+Mỗi phần tử trong `attributes` lưu một mẩu dữ liệu khách hàng:
+
+```json
+{
+  "key": "fullname",
+  "text": "Alex Example",
+  "modified": 1763193600000
+}
+```
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `key` | string | Khóa thuộc tính, như `fullname`. Xác định thuộc tính. |
+| `type` | string | Chỉ đọc. `text`, `number`, `boolean` hoặc `datetime`. |
+| `text` | string | Giá trị của thuộc tính `text`. |
+| `number` | number | Giá trị của thuộc tính `number`. |
+| `boolean` | boolean | Giá trị của thuộc tính `boolean`. |
+| `datetime` | string | Giá trị của thuộc tính `datetime`, theo định dạng RFC 3339. |
+| `other_values` | array of strings | Các giá trị bổ sung của thuộc tính văn bản, như thêm địa chỉ email. |
+| `modified` | integer | Thời điểm giá trị thay đổi gần nhất, tính bằng mili giây Unix. |
+
+Mỗi thuộc tính dùng đúng một trường giá trị, chọn theo kiểu của nó. Trong yêu cầu, chỉ gửi `key` và trường giá trị tương ứng.
+
+## Kiểu giá trị
+
+Dùng trường giá trị khớp với kiểu của thuộc tính.
+
+**Text** — tên, email, số điện thoại và các chuỗi khác:
+
+```json
+{
+  "key": "job_title",
+  "text": "Purchasing manager"
+}
+```
+
+**Number** — số thập phân, không phải chuỗi:
+
+```json
+{
+  "key": "loyalty_points",
+  "number": 1250
+}
+```
+
+**Boolean** — `true` hoặc `false`:
+
+```json
+{
+  "key": "newsletter_opt_in",
+  "boolean": true
+}
+```
+
+**Datetime** — chuỗi ngày giờ RFC 3339, có múi giờ:
+
+```json
+{
+  "key": "birthdate",
+  "datetime": "1990-05-20T00:00:00Z"
+}
+```
+
+`loyalty_points` và `newsletter_opt_in` là ví dụ thuộc tính tùy chỉnh. Chúng chỉ tồn tại nếu tài khoản của bạn định nghĩa.
+
+## Nhiều giá trị
+
+Một số thuộc tính văn bản, như `emails` và `phones`, có thể chứa nhiều giá trị. Giá trị chính nằm trong `text`; các giá trị khác nằm trong `other_values`:
+
+```json
+{
+  "key": "emails",
+  "text": "alex@example.com",
+  "other_values": [
+    "alex.work@example.com"
+  ]
+}
+```
+
+Khi chỉ cần một email hoặc số điện thoại, dùng `text`. Để tìm khách hàng theo bất kỳ địa chỉ nào của họ, kiểm tra cả hai trường.
+
+## Thuộc tính có sẵn
+
+Mọi tài khoản đều có các thuộc tính sau:
+
+| Khóa | Kiểu | Mô tả |
+| --- | --- | --- |
+| `fullname` | text | Họ và tên. |
+| `display_name` | text | Tên hiển thị. |
+| `emails` | text | Địa chỉ email. |
+| `phones` | text | Số điện thoại. |
+| `address`, `city`, `district` | text | Địa chỉ. |
+| `gender` | text | Giới tính. |
+| `job_title` | text | Chức danh. |
+| `birthdate` | datetime | Ngày sinh. |
+| `avatar_url` | text | URL ảnh đại diện. |
+| `timezone` | text | Múi giờ của khách hàng. |
+
+Subiz tự quản lý một số thuộc tính có sẵn và chúng là chỉ đọc, ví dụ `created`, `modified`, `seen`, `total_conversations` và `last_message_sent`. Bạn đọc được nhưng không thay đổi được chúng.
+
+## Thuộc tính tùy chỉnh
+
+Tài khoản của bạn có thể định nghĩa thêm thuộc tính riêng ngoài các thuộc tính có sẵn. Dùng đúng khóa trong tài khoản và gửi giá trị theo kiểu của thuộc tính.
+
+## Đọc thuộc tính an toàn
+
+- **Tìm thuộc tính theo `key`.** Thứ tự của mảng không cố định.
+- **Xử lý thuộc tính bị thiếu.** Thuộc tính có thể không có khi khách hàng chưa có giá trị.
+- **Lường trước giá trị mặc định bị lược bỏ.** Chuỗi rỗng, `0` và `false` bị lược khỏi JSON. Thuộc tính `boolean` không có trường `boolean` nghĩa là `false`.
+- **Đọc theo kiểu.** Đừng giả định mọi giá trị đều nằm trong `text`.
+
+## Ghi thuộc tính
+
+[Tạo khách hàng](/docs/vi/api-reference/users/create) và [Cập nhật thông tin khách hàng](/docs/vi/api-reference/users/update) nhận mảng `attributes` theo định dạng này:
+
+```json
+{
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "birthdate",
+      "datetime": "1990-05-20T00:00:00Z"
+    }
+  ]
+}
+```
+
+Chỉ gửi `key` và giá trị. Các trường chỉ đọc như `type` và `modified` do Subiz đặt. Có giới hạn kích thước; xem [Giới hạn thuộc tính khách hàng](/docs/vi/get-started/usage-limits#giới-hạn-thuộc-tính-khách-hàng).

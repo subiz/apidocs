@@ -1,5 +1,5 @@
 ---
-sourceHash: 9d1b6d7656536e61b0a75fca8c8262f66efe70f6060a632ac1be292ba69fdc72
+sourceHash: 306102ec8b2be9724fda0ae11450bf16c37db31c237e5648cc6de751c9dee764
 title: "Get customer details"
 description: "Read a customer's profile and attributes by Subiz user ID."
 section: "Users"
@@ -52,8 +52,6 @@ A successful request returns HTTP `200` with the customer. Selected fields:
 | `created`, `updated` | Unix timestamps in milliseconds. |
 
 Read the value field that matches the attribute type: `text`, `number`, `boolean`, or `datetime`. Empty fields are omitted, and the object has more fields than shown.
-
-The response includes an `ETag` header. It changes when the returned customer data changes, so you can compare it to skip unchanged records.
 
 ## HTTP request
 

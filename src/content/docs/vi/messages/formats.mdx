@@ -1,0 +1,215 @@
+---
+sourceHash: ea195ae40fc279c8b82bd690522aa5270daafca51e666ac43257ea4691c14d78
+title: "Định dạng tin nhắn"
+description: "Viết tin nhắn văn bản thuần và tin nhắn phong phú với block, liên kết và định dạng chữ."
+section: "Messages"
+order: 29
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+Nội dung tin nhắn nằm trong `data.message` bên trong một sự kiện. Dùng `format: "plaintext"` cho văn bản thuần hoặc `format: "block"` cho nội dung có cấu trúc. Thêm tệp qua [mảng attachments](/docs/vi/messages/attachments) riêng.
+
+Các ví dụ JSON bên dưới là đối tượng tin nhắn hoặc block, như đã ghi chú. Ví dụ cuối cùng là một yêu cầu HTTP đầy đủ. Mọi tên, ID và URL chỉ mang tính minh họa.
+
+## Văn bản thuần
+
+Đặt `format` là `plaintext` và đưa nội dung vào `text`:
+
+```json
+{
+  "format": "plaintext",
+  "text": "Hello Alex!\nHow can we help?"
+}
+```
+
+`\n` tạo một dấu xuống dòng. Thẻ HTML hay ký hiệu Markdown trong trường này không tạo định dạng block của Subiz. Để có chữ đậm hoặc liên kết có nhãn, hãy dùng tin nhắn block.
+
+## Tin nhắn block
+
+Đặt `format` là `block` và đưa một **đối tượng JSON** vào `block`:
+
+```json
+{
+  "format": "block",
+  "block": {
+    "type": "paragraph",
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello "
+      },
+      {
+        "type": "text",
+        "text": "Alex",
+        "bold": true
+      }
+    ]
+  }
+}
+```
+
+Nội dung hiển thị là “Hello **Alex**”. Block là một cây: `type` chọn loại nút, `content` chứa các nút con, và nút văn bản lưu nội dung trong `text`.
+
+Đừng chuyển block thành chuỗi rồi đưa vào `text`. Subiz có thể tạo văn bản thuần từ cây block, nhưng hãy giữ `block` khi bạn cần định dạng của nó.
+
+## Chữ đậm và chữ thường
+
+Áp dụng định dạng cho từng nút văn bản. Với chữ thường, bỏ `bold` hoặc đặt nó là `false`; không có cờ `light` riêng.
+
+| Trường | Tác dụng khi `true` |
+| --- | --- |
+| `bold` | Chữ đậm. |
+| `italic` | Chữ nghiêng. |
+| `underline` | Chữ gạch chân. |
+| `strike_through` | Chữ gạch ngang. |
+
+Đây là một đối tượng block để đặt vào `message.block`:
+
+```json
+{
+  "type": "paragraph",
+  "content": [
+    {
+      "type": "text",
+      "text": "Regular. "
+    },
+    {
+      "type": "text",
+      "text": "Bold. ",
+      "bold": true
+    },
+    {
+      "type": "text",
+      "text": "Italic. ",
+      "italic": true
+    },
+    {
+      "type": "text",
+      "text": "Underlined. ",
+      "underline": true
+    },
+    {
+      "type": "text",
+      "text": "Struck through.",
+      "strike_through": true
+    }
+  ]
+}
+```
+
+Mỗi nút quyết định định dạng chữ của chính nó. Nút chữ thường đứng sau nút chữ đậm sẽ trở lại chữ thường. Bạn có thể kết hợp nhiều cờ, như `bold: true` và `italic: true`, trên cùng một nút văn bản. Chữ thường không có nghĩa là màu chữ nhạt hơn.
+
+## Liên kết trong block
+
+Dùng nút `link` với `text` là nhãn hiển thị và `href` là đích đến. Đặt liên kết cạnh các nút khác trong mảng `content` của đoạn văn:
+
+```json
+{
+  "type": "paragraph",
+  "content": [
+    {
+      "type": "text",
+      "text": "Read our "
+    },
+    {
+      "type": "link",
+      "text": "delivery guide",
+      "href": "https://example.com/delivery"
+    },
+    {
+      "type": "text",
+      "text": " before ordering."
+    }
+  ]
+}
+```
+
+Kết quả là “Read our [delivery guide](https://example.com/delivery) before ordering.” Nhãn liên kết đặt trực tiếp trong `text`, không đặt trong nút con. Dùng URL HTTPS tuyệt đối cho đích đến trên web.
+
+Liên kết trong dòng khác với [tệp đính kèm xem trước liên kết](/docs/vi/messages/attachments#xem-trước-liên-kết), loại mang tiêu đề và mô tả riêng.
+
+## Đoạn văn và xuống dòng
+
+Dùng `hard_break` để xuống dòng trong một đoạn văn. Để nhóm nhiều đoạn văn, đặt chúng trong một block `div`:
+
+```json
+{
+  "type": "div",
+  "content": [
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Hello Alex,"
+        },
+        {
+          "type": "hard_break"
+        },
+        {
+          "type": "text",
+          "text": "Your order is ready."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "Thank you!"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Nội dung này hiển thị lời chào, thông báo đơn hàng ở dòng tiếp theo và một đoạn cảm ơn riêng. Khoảng cách chính xác phụ thuộc vào trình hiển thị và kênh đích.
+
+## Gửi tin nhắn block
+
+Dùng endpoint [Gửi tin nhắn vào hội thoại](/docs/vi/api-reference/messages/send). Thay ID hội thoại và access token trước khi gửi:
+
+```http
+POST https://api.subiz.com.vn/4.1/conversations/YOUR_CONVERSATION_ID/messages
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "type": "message_sent",
+  "data": {
+    "message": {
+      "format": "block",
+      "block": {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hello "
+          },
+          {
+            "type": "text",
+            "text": "Alex",
+            "bold": true
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+Với [Gửi tin nhắn cho khách hàng](/docs/vi/api-reference/messages/send-to-user), dùng cùng nội dung tin nhắn bên trong cấu trúc sự kiện của endpoint đó và cung cấp đích đến trên kênh. Body bên ngoài của yêu cầu đó khác.
+
+## Đọc tin nhắn mà không mất nội dung
+
+Khi đọc phản hồi API hoặc sự kiện webhook:
+
+- Kiểm tra `format` trước khi diễn giải nội dung. Giữ nguyên các định dạng chưa biết nếu tích hợp của bạn không hiển thị được.
+- Giữ cây block nếu định dạng quan trọng; chỉ dùng `text` sẽ mất liên kết và kiểu chữ.
+- Kiểm tra `attachments` ngay cả khi `text` rỗng.
+- Thử nghiệm trên kênh đích. Schema block dùng chung không đảm bảo mọi kênh đều hiển thị mọi loại nút hay cờ định dạng.
+
+Tiếp tục với [Tệp đính kèm](/docs/vi/messages/attachments) cho ảnh, video, âm thanh và các nội dung tin nhắn khác.

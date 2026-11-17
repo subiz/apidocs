@@ -1,60 +1,241 @@
 ---
-sourceHash: 792881122d9890373168f9ece95be459f0c5f4c3b6621c70602c0cb71e219375
-title: "Ví dụ payload sự kiện"
-description: "Hiểu sự kiện tin nhắn và phân công trong lô webhook."
+sourceHash: 182f7478843ec102aa1d0a453bee9158cc20f1d07acfa8376b5d8999e67b190d
+title: "Ví dụ dữ liệu sự kiện"
+description: "Đọc sự kiện tin nhắn, khách hàng và hội thoại trong một lần gửi webhook."
 section: "Webhooks"
 order: 41
 status: "verified"
 apiScope: "webhook"
 ---
 
-## Giá trị minh họa
+Các ví dụ dưới đây là payload rút gọn với giá trị giả lập. Chúng cho thấy các trường được hỗ trợ, không phải danh mục sự kiện đầy đủ hay cam kết rằng trường tùy chọn luôn có mặt.
 
-Các payload dưới đây là ví dụ rút gọn với dữ liệu giả lập, dựa trên cấu trúc trong mã nguồn. ID, thời gian và nội dung chỉ để minh họa; không phải dữ liệu khách hàng thực hoặc danh mục đầy đủ các sự kiện. Trường rỗng có thể bị lược bỏ; chỉ đọc trường phù hợp với loại sự kiện.
+## Chọn loại sự kiện
 
-## Tin nhắn đã gửi
+| Sự kiện | Đối tượng dữ liệu | Dùng để |
+| --- | --- | --- |
+| `message_sent` | `data.message` | Nhận tin nhắn và liên kết chúng với hội thoại. |
+| `user_created` | `data.user` | Tạo hoặc liên kết hồ sơ khách hàng trong CRM. |
+| `user_info_updated` | `data.user` | Đồng bộ thông tin khách hàng. |
+| `conversation_assigned` | `data.conversation` | Cập nhật nhân viên phụ trách. |
+| `conversation_unassigned` | `data.conversation` | Bỏ nhân viên phụ trách. |
 
-`message_sent` chứa nội dung tại `data.message`. Body webhook bọc sự kiện trong một mảng, khác với phản hồi API gửi tin nhắn.
+Chọn ba loại đầu tiên trong **Tùy chỉnh sự kiện** khi [tạo webhook](/docs/vi/webhooks/receiving#tạo-webhook-trong-subiz). Sự kiện giao việc được backend hỗ trợ nhưng chưa có trong form tạo hiện tại; các ví dụ giao việc chỉ áp dụng cho những đăng ký đã được cấu hình sẵn cho các loại đó.
+
+## Đọc phần bao của sự kiện
+
+| Trường | Ý nghĩa |
+| --- | --- |
+| `id` | ID sự kiện. Kết hợp với `account_id` để loại trùng khi xử lý. |
+| `account_id` | Tài khoản Subiz mà sự kiện thuộc về. |
+| `type` | Tên sự kiện. Dùng để chọn cách đọc `data`. |
+| `created` | Thời điểm Subiz ghi nhận sự kiện, tính bằng mili giây Unix. |
+| `event_time` | Thời điểm xảy ra gốc, nếu có, tính bằng mili giây Unix. Dùng `created` nếu không có. |
+| `by` | Ngữ cảnh tác nhân, nếu có. `by.type` là loại tác nhân; `by.id` xác định tác nhân. |
+| `data` | Dữ liệu của loại sự kiện này. |
+
+Các đường dẫn này tính từ mỗi phần tử trong `events`, ví dụ `events[0].id`. Đừng nhầm ID sự kiện với ID user, ID hội thoại hay header `X-Subiz-Delivery`.
+
+Trường có giá trị rỗng có thể bị lược bỏ. `by` có thể không có hoặc chỉ chứa ngữ cảnh như thông tin thiết bị. Kiểm tra những gì bộ xử lý của bạn cần và chấp nhận các trường bổ sung.
+
+## Tin nhắn được gửi
+
+Sự kiện `message_sent` có thể là tin nhắn của khách hàng, câu trả lời của nhân viên hoặc nội dung tự động. Bản thân nó không xác nhận tin đã tới kênh bên ngoài.
 
 ```json
 {
-  "events": [{
-    "id": "event_example_1",
-    "account_id": "account_example",
-    "type": "message_sent",
-    "created": 1794614400000,
-    "data": {
-      "message": {
-        "conversation_id": "conversation_example",
-        "text": "Hello! How can we help?",
-        "format": "plaintext"
+  "events": [
+    {
+      "id": "event_example_1",
+      "account_id": "account_example",
+      "created": 1794614400000,
+      "type": "message_sent",
+      "by": {
+        "id": "user_example",
+        "type": "user"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "plaintext",
+          "text": "Can you help with my order?"
+        }
       }
     }
-  }]
+  ]
 }
 ```
 
-## Hội thoại được phân công
+Dùng `data.message.conversation_id` để liên kết tin nhắn với hội thoại. Kiểm tra `by.type` để phân biệt khách hàng (`user`) với nhân viên (`agent`), và kiểm tra `data.message.is_internal` trước khi coi tin nhắn là hiển thị với khách hàng. Đừng tự động trả lời mọi sự kiện `message_sent`: chính câu trả lời của bạn cũng có thể kích hoạt loại sự kiện này.
 
-Thay đổi người phụ trách phát `conversation_assigned`, chứa ID hội thoại và người phụ trách. Khi bỏ người phụ trách, dịch vụ phát `conversation_unassigned`; `assignee` rỗng có thể không xuất hiện trong JSON.
+### Block trong tin nhắn phong phú
+
+Khi `format` là `block`, đọc `data.message.block` như một cây. `content` chứa các nút con; nút văn bản có thể có định dạng như `bold`.
 
 ```json
 {
-  "events": [{
-    "id": "event_example_2",
-    "account_id": "account_example",
-    "type": "conversation_assigned",
-    "created": 1794614401000,
-    "data": {
-      "conversation": {
-        "id": "conversation_example",
-        "assignee": "agent_example"
+  "events": [
+    {
+      "id": "event_example_2",
+      "account_id": "account_example",
+      "created": 1794614401000,
+      "type": "message_sent",
+      "by": {
+        "id": "agent_example",
+        "type": "agent"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "block",
+          "text": "Hello Alex",
+          "block": {
+            "type": "paragraph",
+            "content": [
+              {
+                "type": "text",
+                "text": "Hello "
+              },
+              {
+                "type": "text",
+                "text": "Alex",
+                "bold": true
+              }
+            ]
+          }
+        }
       }
     }
-  }]
+  ]
 }
 ```
 
-## Xử lý cả lô
+Nội dung này hiển thị là “Hello **Alex**”. Giữ cây block khi lưu nội dung phong phú; chỉ dùng `text` sẽ mất định dạng. Tin nhắn cũng có thể chứa `attachments`, và tin nhắn không có văn bản chưa chắc đã rỗng. Xem [Tin nhắn định dạng phong phú bằng block](/docs/vi#tin-nhắn-định-dạng-phong-phú-bằng-block).
 
-Xác minh body gốc trước khi phân tích, sau đó duyệt toàn bộ `events`. Kiểm tra `type` trước khi truy cập trường lồng nhau; chấp nhận trường thiếu hoặc bổ sung mà không giả định mọi sự kiện là tin nhắn. Xem [Nhận sự kiện webhook](/docs/vi/webhooks/receiving) để biết cách xác minh và phản hồi.
+## Khách hàng được tạo
+
+`user_created` chứa khách hàng trong `data.user`. Dùng `(account_id, data.user.id)` làm tham chiếu Subiz trong CRM của bạn. Khách hàng là user, không phải nhân viên.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_3",
+      "account_id": "account_example",
+      "created": 1794614399000,
+      "type": "user_created",
+      "data": {
+        "user": {
+          "id": "user_example",
+          "account_id": "account_example",
+          "attributes": [
+            {
+              "key": "fullname",
+              "text": "Alex Example"
+            },
+            {
+              "key": "created",
+              "datetime": "2026-11-13T23:59:59Z"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+`attributes` là một mảng, không phải đối tượng có khóa theo tên. Tìm thuộc tính có `key` là `fullname`, rồi đọc `text`. Thuộc tính ngày dùng `datetime`; thuộc tính khác có thể dùng `number` hoặc `boolean`. Đừng dùng vị trí trong mảng để xác định trường.
+
+## Thông tin khách hàng được cập nhật
+
+`user_info_updated` mang thông tin khách hàng trong `data.user`. Hãy coi đây là bản cập nhật để đồng bộ, không phải danh sách chỉ gồm các trường đã thay đổi.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_4",
+      "account_id": "account_example",
+      "created": 1794614402000,
+      "type": "user_info_updated",
+      "data": {
+        "user": {
+          "id": "user_example",
+          "account_id": "account_example",
+          "attributes": [
+            {
+              "key": "fullname",
+              "text": "Alex Example",
+              "modified": 1794614402000,
+              "by_type": "agent",
+              "by": "agent_example"
+            },
+            {
+              "key": "created",
+              "datetime": "2026-11-13T23:59:59Z"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+Ở đây, `modified` ghi thời điểm cập nhật thuộc tính, tính bằng mili giây Unix. `by` và `by_type` của nó mô tả ai đã cập nhật thuộc tính đó; chúng tách biệt với đối tượng `by` tùy chọn ở cấp sự kiện.
+
+Chỉ upsert các trường CRM của bạn dùng. Thuộc tính bị lược bỏ không phải là chỉ thị xóa giá trị trong CRM. Các cập nhật liên tiếp nhanh của cùng một khách hàng có thể được gộp trước khi gửi webhook, nên sự kiện này không phải là nhật ký đầy đủ mọi lần chỉnh sửa. Gọi [Lấy thông tin khách hàng](/docs/vi/api-reference/users/retrieve) khi bạn cần bản ghi mới nhất.
+
+## Hội thoại được giao
+
+`conversation_assigned` mang ID hội thoại và nhân viên phụ trách trong `data.conversation`. Đây là quyền phụ trách, không phải tư cách thành viên hay lời mời tham gia.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_5",
+      "account_id": "account_example",
+      "created": 1794614403000,
+      "type": "conversation_assigned",
+      "data": {
+        "conversation": {
+          "id": "conversation_example",
+          "assignee": "agent_example"
+        }
+      }
+    }
+  ]
+}
+```
+
+### Bỏ người phụ trách
+
+`conversation_unassigned` cho biết người phụ trách đã bị bỏ. Trong ví dụ này, `assignee` rỗng nên bị lược bỏ. Dùng loại sự kiện để nhận biết thay đổi; đừng coi mọi trường hợp thiếu `assignee` ở các loại sự kiện khác là chỉ thị bỏ người phụ trách.
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_6",
+      "account_id": "account_example",
+      "created": 1794614404000,
+      "type": "conversation_unassigned",
+      "data": {
+        "conversation": {
+          "id": "conversation_example"
+        }
+      }
+    }
+  ]
+}
+```
+
+Xem [Giao nhân viên phụ trách](/docs/vi/api-reference/conversations/assign-agent) cho thao tác hội thoại tương ứng.
+
+## Xử lý một lô an toàn
+
+Với mỗi sự kiện, loại trùng theo `(account_id, id)`, phân luồng theo `type` và kiểm tra đối tượng `data` tương ứng. Một lô có thể chứa nhiều khách hàng hoặc hội thoại. Bỏ qua an toàn các loại sự kiện không hỗ trợ và đừng giả định thứ tự gửi khớp với thứ tự tạo.
+
+Lưu mọi công việc được chấp nhận trước khi xác nhận lô. Xem [Xác nhận và xử lý](/docs/vi/webhooks/receiving#xác-nhận-và-xử-lý) cho luồng của máy nhận.

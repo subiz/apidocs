@@ -1,0 +1,88 @@
+---
+sourceHash: a8ff6be9ebeb5a1812d7100e2fd6d9d4904ee463b892e26aed6afd95c7f6ba5f
+title: "Tạo đơn hàng"
+description: "Tạo đơn hàng cho một khách hàng đã có."
+section: "Orders"
+order: 41
+status: "verified"
+endpointId: "orders-create"
+---
+
+Dùng endpoint này để ghi nhận một giao dịch bán trong Subiz, ví dụ khi có đơn đặt trong cửa hàng hoặc CRM của bạn. Xem [Định dạng đơn hàng](/docs/vi/orders/format) để biết mọi trường.
+
+## Trước khi bắt đầu
+
+- Lấy [Bearer access token](/docs/vi/get-started/authentication) và ID tài khoản.
+- Lấy ID user Subiz của khách hàng. Mọi đơn hàng đều cần khách hàng. Dùng [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity) hoặc [Tạo khách hàng](/docs/vi/api-reference/users/create) trước nếu cần.
+
+## Body yêu cầu
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `user.id` | string | Bắt buộc. ID của một khách hàng đã có. |
+| `items` | array | Các dòng của đơn. Mỗi dòng có `quantity` và một `product` với `name`, `sku` và `price`. |
+| `source_id` | string | Nên có. ID đơn hàng của riêng bạn. Xem [Tránh trùng lặp](#tránh-trùng-lặp). |
+| `currency` | string | Đơn vị tiền tệ của các số tiền, như `VND`. Rỗng nghĩa là tiền tệ gốc của tài khoản. |
+| `shipping` | object | Địa chỉ giao hàng và `nominal_fee`. |
+| `status` | string | Tùy chọn. `open` (mặc định), `unconfirmed`, `closed` hoặc `canceled`. |
+| `number` | string | Tùy chọn. Mã đơn hàng. Không được trùng với đơn khác. |
+| `note`, `private_note` | string | Ghi chú tùy chọn. |
+| `discount_type`, `discount_amount`, `discount_percentage` | | Chiết khấu cấp đơn tùy chọn. |
+
+Các dòng giữ nguyên dữ liệu sản phẩm bạn gửi, kể cả `price`. Hãy gửi đúng giá đã bán; Subiz không tra cứu lại giá.
+
+Nếu một dòng có `product.source_id` nhưng không có `product.id`, Subiz liên kết nó với sản phẩm trong danh mục có source ID đó và dùng dữ liệu trong danh mục. Nếu chưa có sản phẩm như vậy, Subiz tạo một sản phẩm mang tên là source ID, không có giá.
+
+## Trường do Subiz đặt
+
+Không gửi các trường sau; Subiz tự đặt hoặc tính:
+
+- `id`, `created`, `created_by`, `updated`.
+- `subtotal`, `total_tax`, `total` và `total` của từng dòng, được tính từ mặt hàng, chiết khấu, phí giao hàng và khoản điều chỉnh.
+- `payment_made` và `payment_status`, được tính từ các khoản thanh toán đã ghi nhận trên đơn. Đơn mới ở trạng thái `unpaid`.
+- `user.attributes`: nếu bạn bỏ trống `fullname` hoặc `phones` của khách hàng, Subiz sao chép từ hồ sơ khách hàng.
+- `pipeline_stage`: nếu bạn không gửi pipeline, đơn bắt đầu ở giai đoạn đầu tiên của pipeline bán hàng mặc định.
+
+## Tránh trùng lặp
+
+Đặt `source_id` là ID của đơn trong hệ thống của bạn. Nếu đã có đơn cùng `source_id`, Subiz **thay thế đơn đó** bằng các trường bạn gửi thay vì tạo đơn mới. Điều này giúp thử lại an toàn. Luôn gửi đơn hàng đầy đủ.
+
+Nếu không có `source_id`, mỗi yêu cầu tạo một đơn mới. Đừng thử lại mù quáng sau khi hết thời gian chờ; hãy kiểm tra bằng [Lấy danh sách đơn hàng](/docs/vi/api-reference/orders/list) trước.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng đơn đã lưu, gồm `id` và các tổng tiền đã tính. Một số trường:
+
+```json
+{
+  "id": "order_example",
+  "account_id": "account_example",
+  "source_id": "crm-1001",
+  "status": "open",
+  "payment_status": "unpaid",
+  "currency": "VND",
+  "user": {
+    "id": "user_example"
+  },
+  "subtotal": 240000,
+  "total": 270000,
+  "created": 1763107200000
+}
+```
+
+Lưu `id` để [đọc](/docs/vi/api-reference/orders/retrieve) hoặc [cập nhật](/docs/vi/api-reference/orders/update) đơn sau này.
+
+## Lỗi
+
+| Vấn đề | Kết quả |
+| --- | --- |
+| Thiếu `user.id` | Lỗi nêu tên `user` bị thiếu. |
+| Khách hàng không tồn tại | Lỗi không tìm thấy user. |
+| `status` không thuộc bốn giá trị ở trên | Lỗi dữ liệu không hợp lệ cho `status`. |
+| `number` đã được dùng | Yêu cầu thất bại. Dùng mã khác hoặc bỏ trống. |
+
+Xem [Xử lý lỗi](/docs/vi/get-started/errors) để biết định dạng lỗi.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_ACCID`, `YOUR_USER_ID`, `YOUR_SOURCE_ORDER_ID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

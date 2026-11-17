@@ -1,25 +1,75 @@
 ---
-sourceHash: 9162e224b7052d30e4105b32c458cdc3691f93428c53cd1a836caa0f79cf5ab5
-title: "Lấy hội thoại"
-description: "Đọc ngữ cảnh của một hội thoại."
+sourceHash: 63114b2945456f815732db9761d079d87b42a88ce7f9d5a1f5229cb5670db06c
+title: "Lấy thông tin hội thoại"
+description: "Đọc trạng thái, thành viên, người phụ trách và kênh của hội thoại."
 section: "Conversations"
 order: 21
 status: "verified"
 endpointId: "conversations-retrieve"
 ---
 
-## Trước khi bắt đầu
+Dùng endpoint này để kiểm tra một hội thoại trước khi thao tác: ai tham gia, ai phụ trách và hội thoại diễn ra trên kênh nào.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+## Yêu cầu
 
-## Ngữ cảnh hội thoại
+Gửi yêu cầu `GET` với ID hội thoại trong đường dẫn. Không có body. Subiz đọc hội thoại trong tài khoản của [access token](/docs/vi/get-started/authentication).
 
-Thay `cid` bằng ID hội thoại đã có. Gateway chuyển tài khoản đã xác thực và ID hội thoại đến `GetConversation`.
+| Tham số | Kiểu | Mô tả |
+| --- | --- | --- |
+| `cid` (đường dẫn) | string | ID hội thoại. |
 
-## Kết quả
+## Phản hồi
 
-Kiểm tra hội thoại được dịch vụ trả về trước khi chọn thao tác tiếp theo. [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) thêm người tham gia; [Phân công nhân viên](/docs/vi/api-reference/conversations/assign-agent) đặt người phụ trách.
+Yêu cầu thành công trả HTTP `200` cùng một đối tượng `Conversation`. Một số trường:
+
+```json
+{
+  "id": "conversation_example",
+  "account_id": "account_example",
+  "created": 1763107200000,
+  "state": "active",
+  "assignee": "agent_example",
+  "members": [
+    {
+      "id": "user_example",
+      "type": "user",
+      "membership": "active"
+    },
+    {
+      "id": "agent_example",
+      "type": "agent",
+      "conversation_id": "conversation_example",
+      "membership": "active"
+    }
+  ],
+  "touchpoint": {
+    "channel": "facebook",
+    "source": "page_example",
+    "id": "profile_example"
+  }
+}
+```
+
+| Trường | Mô tả |
+| --- | --- |
+| `id` | ID hội thoại. |
+| `state` | Trạng thái hiện tại, như `active` hoặc `ended`. |
+| `assignee` | Nhân viên phụ trách hội thoại. Bị lược bỏ khi chưa giao. |
+| `members` | Người tham gia. Mỗi người có `type` (`user` cho khách hàng, `agent` cho nhân viên), `id` và trạng thái `membership`. |
+| `touchpoint` | Kênh mà hội thoại diễn ra. |
+| `created`, `ended` | Dấu thời gian Unix tính bằng mili giây. `ended` bị lược bỏ khi hội thoại còn mở. |
+| `last_message_sent` | Sự kiện tin nhắn không nội bộ gần nhất, nếu có. |
+
+Trường rỗng bị lược bỏ. Đối tượng có nhiều trường hơn ví dụ; bỏ qua những trường tích hợp của bạn không dùng.
+
+## Bước tiếp theo
+
+- Đọc tin nhắn bằng [Đọc lịch sử tin nhắn](/docs/vi/api-reference/conversations/history).
+- Thêm nhân viên làm người tham gia bằng [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent).
+- Đổi người phụ trách bằng [Giao nhân viên](/docs/vi/api-reference/conversations/assign-agent).
+
+Là thành viên và là `assignee` là hai việc riêng. Nhân viên có thể phụ trách hội thoại mà không nằm trong `members`.
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_CID` bằng ID hội thoại và `YOUR_ACCESS_TOKEN` bằng token của bạn.

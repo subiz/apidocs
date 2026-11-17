@@ -1,0 +1,111 @@
+---
+sourceHash: afef8d510bad725cd25576e911c65da53fe2647ca8c8b523ca87ce8f34375d73
+title: "Định dạng sản phẩm"
+description: "Hiểu đối tượng sản phẩm: giá, tồn kho, tình trạng hàng, biến thể và hình ảnh."
+section: "Products"
+order: 60
+status: "verified"
+apiVersions: ["4.0"]
+---
+
+`Product` là một mặt hàng trong danh mục Subiz của bạn. Mặt hàng trong đơn có thể liên kết với sản phẩm trong danh mục. Trang này mô tả đối tượng sản phẩm. Mọi ID và giá trị bên dưới chỉ mang tính minh họa.
+
+Để làm việc với sản phẩm, xem [Tạo sản phẩm](/docs/vi/api-reference/products/create), [Lấy danh sách sản phẩm](/docs/vi/api-reference/products/list), [Lấy thông tin sản phẩm](/docs/vi/api-reference/products/retrieve) và [Cập nhật sản phẩm](/docs/vi/api-reference/products/update).
+
+## Sản phẩm
+
+Một số trường của `Product`:
+
+```json
+{
+  "id": "product_example",
+  "account_id": "account_example",
+  "source_id": "shop-sku-mug-01",
+  "name": "Ceramic mug",
+  "sku": "MUG-01",
+  "barcode": "8930000000001",
+  "description": "A 350 ml ceramic mug.",
+  "category": "kitchen",
+  "brand": "Example Home",
+  "url": "https://shop.example.com/products/ceramic-mug",
+  "price": 120000,
+  "market_price": 150000,
+  "currency": "VND",
+  "stock": 25,
+  "availability": "in_stock",
+  "visibility": "published",
+  "condition": "new",
+  "images": [
+    "https://example.com/images/mug.jpg"
+  ],
+  "props": [
+    {
+      "key": "color",
+      "value": "white"
+    }
+  ],
+  "product_group_id": "product_example",
+  "created": 1763107200000,
+  "updated": 1763107200000
+}
+```
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `id` | string | ID sản phẩm Subiz. Do Subiz tạo. |
+| `source_id` | string | ID của sản phẩm trong hệ thống của bạn. Dùng để tránh trùng lặp. |
+| `name` | string | Bắt buộc. Tên sản phẩm. |
+| `sku`, `barcode` | string | Mã SKU và mã vạch. |
+| `description` | string | Mô tả sản phẩm. |
+| `category` | string | Danh mục. Tối đa 255 byte. |
+| `brand` | string | Thương hiệu. |
+| `url` | string | Trang sản phẩm trên website của bạn. |
+| `price` | number | Giá bán. |
+| `market_price` | number | Giá tham chiếu trước giảm giá, như giá niêm yết. |
+| `currency` | string | Đơn vị tiền tệ của giá. |
+| `stock` | integer | Số lượng tồn kho. |
+| `availability` | string | Xem [Tình trạng hàng](#tình-trạng-hàng). |
+| `visibility` | string | `published` (mặc định) hoặc `hidden`. |
+| `condition` | string | `new`, `refurbished` hoặc `used`. |
+| `image`, `images` | string, array | URL ảnh chính và các URL ảnh bổ sung. |
+| `videos` | array | URL video. |
+| `props` | array | Thuộc tính dạng cặp `key`/`value`, như màu sắc hoặc kích cỡ. |
+| `note` | string | Ghi chú nội bộ. |
+| `weight`, `weight_unit` | number, string | Khối lượng và đơn vị, `g` hoặc `kg`. |
+| `dimension_length`, `dimension_width`, `dimension_height` | number | Kích thước kiện hàng. |
+| `product_group_id` | string | Nhóm biến thể. Xem [Biến thể](#biến-thể). |
+| `created`, `updated` | integer | Dấu thời gian Unix tính bằng mili giây. Do Subiz đặt. |
+| `created_by`, `updated_by` | string | ID nhân viên đã tạo hoặc thay đổi sản phẩm gần nhất. Do Subiz đặt. |
+
+Trường rỗng bị lược bỏ, và đối tượng có nhiều trường hơn ví dụ.
+
+## Tình trạng hàng
+
+`availability` là một trong các giá trị sau. Cho phép giá trị rỗng.
+
+| Giá trị | Ý nghĩa |
+| --- | --- |
+| `in_stock` | Còn hàng. |
+| `out_of_stock` | Hết hàng. |
+| `online_only` | Chỉ bán online. |
+| `pre_order` | Nhận đặt trước. |
+| `pre_sale` | Mở bán trước. |
+| `sold_out` | Đã bán hết. |
+
+Subiz chuyển giá trị sang chữ thường và bỏ khoảng trắng thừa. Giá trị khác bị từ chối.
+
+## Hình ảnh
+
+Khi bạn gửi URL ảnh mới trong `image` hoặc `images`, Subiz tải ảnh về, lưu một bản sao JPEG đã thay đổi kích thước và lưu URL của bản sao thay cho URL của bạn. Vì vậy URL ảnh bạn đọc lại sẽ khác URL đã gửi. Nếu không tải được ảnh, yêu cầu thất bại.
+
+## Biến thể
+
+Các biến thể của cùng một sản phẩm, như kích cỡ hoặc màu sắc, dùng chung `product_group_id`. Sản phẩm không thuộc nhóm nào sẽ lấy chính `id` của nó làm `product_group_id`.
+
+Khi bạn lưu một sản phẩm, Subiz sao chép các trường sau sang mọi sản phẩm khác trong cùng nhóm: `name`, `description`, `url`, `handle`, `category`, `brand`, `note`, `condition`, `visibility`, `images`, `videos` và `options`. Giữ các trường khác nhau theo biến thể, như `sku`, `price`, `stock` và `props`, trên từng biến thể.
+
+[Lấy thông tin sản phẩm](/docs/vi/api-reference/products/retrieve) còn trả về `num_variants` và tối đa năm `other_variants`.
+
+## Sản phẩm trong đơn hàng
+
+Mặt hàng trong đơn giữ một bản sao của sản phẩm tại thời điểm đặt đơn. Thay đổi sản phẩm không làm thay đổi các đơn đã có. Xem [Định dạng đơn hàng](/docs/vi/orders/format#mặt-hàng-trong-đơn).

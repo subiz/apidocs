@@ -1,106 +1,371 @@
 ---
-sourceHash: c40db0feb81686b9bb6a68bad9ad291ed4d5fa15faac027ae8952dccf4d46ad4
-title: "API Subiz"
-description: "Kết nối khách hàng, hội thoại và tin nhắn với hệ thống của bạn."
+sourceHash: 35b20dae62f6215860e7b44f9a743d9523a4ecac7010fe0406e1f7d708d5107d
+title: "Subiz API"
+description: "Kết nối hệ thống của bạn với khách hàng, hội thoại, tin nhắn và webhook của Subiz."
 section: "Get Started"
 order: 0
 status: "verified"
 apiVersions: ["4.0", "4.1"]
 ---
 
-## Trước khi bắt đầu
+Dùng Subiz API để đồng bộ hồ sơ khách hàng với CRM, gửi tin nhắn, điều phối nhân viên và nhận cập nhật trên máy chủ của bạn.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+Trong Subiz, **user** là khách hàng và **agent** là nhân viên. Một **hội thoại** (conversation) kết nối những người tham gia với tin nhắn và lịch sử sự kiện của họ.
 
-## Bắt đầu
+## Bắt đầu từ đây
 
-Kết nối hồ sơ khách hàng, hội thoại và tin nhắn với hệ thống của bạn. `User` là khách hàng; `agent` là nhân viên hỗ trợ. Các mô tả API đã được đối chiếu với mã nguồn Subiz.
+1. Đọc [các khái niệm cốt lõi bên dưới](#mối-quan-hệ-giữa-các-đối-tượng) để hiểu các đối tượng và ID bạn sẽ dùng.
+2. Làm theo [Xác thực](/docs/vi/get-started/authentication) để tạo access token cho tài khoản của bạn.
+3. [Kiểm tra token bằng `/4.1/me`](/docs/vi/get-started/authentication#kiểm-tra-access-token), rồi chọn một tác vụ bên dưới.
 
-1. Đọc [Xác thực](/docs/vi/get-started/authentication) để chuẩn bị access token.
-2. Làm theo [Gửi tin nhắn](/docs/vi/api-reference/messages/send) để tạo yêu cầu.
+Giữ token trên máy chủ của bạn. Yêu cầu dùng quyền của nhân viên đã tạo token. Thay ID và giá trị mẫu bằng dữ liệu của tài khoản bạn đang tích hợp.
 
-## Trước khi bắt đầu
+## Chọn tác vụ
 
-Bạn cần access token hợp lệ và ID của hội thoại mà tích hợp được phép truy cập. Giữ token trên máy chủ. Thay các giá trị mẫu trước khi gửi yêu cầu.
+| Tôi muốn… | Bắt đầu với |
+| --- | --- |
+| Đồng bộ hồ sơ khách hàng | [Tạo khách hàng](/docs/vi/api-reference/users/create) hoặc [cập nhật thông tin khách hàng](/docs/vi/api-reference/users/update). |
+| Trả lời trong một hội thoại có sẵn | [Gửi tin nhắn vào hội thoại](/docs/vi/api-reference/messages/send), dùng ID hội thoại. |
+| Gửi qua kênh của khách hàng | [Gửi tin nhắn cho khách hàng](/docs/vi/api-reference/messages/send-to-user), dùng ID khách hàng và đích đến trên kênh. |
+| Điều phối nhân viên | [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) tham gia, hoặc [giao nhân viên](/docs/vi/api-reference/conversations/assign-agent) phụ trách hội thoại. |
+| Phản ứng khi khách hàng hoặc tin nhắn thay đổi | [Thiết lập máy nhận webhook](/docs/vi/webhooks/receiving) và đọc [ví dụ dữ liệu sự kiện](/docs/vi/webhooks/payloads). |
 
-## Quy trình tích hợp
-
-1. [Tạo khách hàng](/docs/vi/api-reference/users/create) hoặc lấy hồ sơ đã có.
-2. [Lấy hội thoại](/docs/vi/api-reference/conversations/retrieve).
-3. [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) và [phân công phụ trách](/docs/vi/api-reference/conversations/assign-agent).
-4. [Gửi tin nhắn](/docs/vi/api-reference/messages/send).
-5. [Nhận sự kiện webhook](/docs/vi/webhooks/receiving) để cập nhật hệ thống.
-
-## Phạm vi
-
-Mã nguồn API gateway xác nhận cách xử lý yêu cầu và kiểu phản hồi. Quyền gửi, giới hạn của kênh và quy tắc chuyển phát do các dịch vụ phía sau thực thi; tài liệu này chưa mô tả đầy đủ mọi quy tắc. Không có tin nhắn thực tế nào được gửi khi biên soạn tài liệu.
-
-## Dùng với công cụ của bạn
-
-Sao chép trang dưới dạng Markdown, xem [mục lục tài liệu](/llms.txt) hoặc tải [toàn bộ tài liệu](/llms-full.txt).
-
-Tìm hiểu mối quan hệ giữa các đối tượng trong [Các khái niệm chính](/docs/vi#mối-quan-hệ-giữa-các-đối-tượng), bao gồm tin nhắn phong phú dạng block.
+Với nội dung phong phú, xem [Định dạng tin nhắn](/docs/vi/messages/formats) cho văn bản, block và liên kết, và [Tệp đính kèm](/docs/vi/messages/attachments) cho ảnh, video, âm thanh và tệp.
 
 ## Mối quan hệ giữa các đối tượng
 
-Subiz kết nối danh tính khách hàng, hội thoại và nhân viên. Một khách hàng có thể tham gia nhiều hội thoại; mỗi hội thoại có thành viên và lịch sử sự kiện. Tin nhắn là nội dung nằm trong một sự kiện. Webhook chuyển các lô sự kiện đến tích hợp của bạn.
+Khi Alex liên hệ với doanh nghiệp của bạn, Alex là một **user**. Sam, nhân viên trả lời, là một **agent**. Cuộc trao đổi của họ diễn ra trong một **hội thoại**. Mỗi tin nhắn được mang trong một **sự kiện** (event).
 
-| Đối tượng | Ý nghĩa | Điểm cần phân biệt |
-| --- | --- | --- |
-| User | Hồ sơ khách hàng với thuộc tính và định danh kênh. | Không phải nhân viên. |
-| Agent | Nhân viên tham gia trao đổi với khách hàng. | Mời tham gia và phân công phụ trách là hai thao tác riêng. |
-| Conversation | Ngữ cảnh tương tác, thành viên và lịch sử. | ID hội thoại khác ID khách hàng hoặc ID hồ sơ bên ngoài. |
-| Message | Văn bản hoặc nội dung có cấu trúc, thường ở `event.data.message`. | Không phải sự kiện nào cũng chứa tin nhắn. |
-| Event | Một sự việc có loại, như `message_sent` hoặc `conversation_assigned`. | Kiểm tra `type` trước khi đọc payload. |
-| Touchpoint | Đích trên kênh, gồm `channel`, `source`, `id`. | Giá trị định danh bên ngoài phụ thuộc từng kênh. |
+| Đối tượng | Đại diện cho |
+| --- | --- |
+| Account | Tài khoản doanh nghiệp mà tích hợp của bạn kết nối tới. |
+| User | Hồ sơ khách hàng, gồm thuộc tính và định danh kênh. |
+| Agent | Nhân viên phục vụ khách hàng. |
+| Conversation | Một tương tác có người tham gia, người phụ trách và lịch sử sự kiện. |
+| Event | Một việc đã xảy ra, như một tin nhắn hoặc một lần giao việc. |
+| Message | Văn bản, block phong phú hoặc tệp đính kèm bên trong một sự kiện. |
 
-## Khách hàng và định danh kênh
+Các ví dụ hiển thị một số trường được chọn từ schema đối tượng dùng chung của Subiz. Chúng dùng giá trị giả lập và ID nhất quán; đây không phải phản hồi API đầy đủ hay body của yêu cầu tạo. Mỗi endpoint quy định trường nào được nhận hoặc trả về. Trường rỗng hoặc tùy chọn có thể bị lược bỏ.
 
-Users API quản lý khách hàng. Thuộc tính mô tả khách hàng; `channel`, `channel_source` và `profile_id` có thể xác định hồ sơ trên kênh bên ngoài. Lưu riêng ID user Subiz và ID hồ sơ ngoài. Xem [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity).
+**Không nhầm lẫn các ID.** ID khách hàng, ID hội thoại và ID hồ sơ bên ngoài chỉ những thứ khác nhau. Lưu ID tài khoản cùng ID tài nguyên khi tích hợp nhiều doanh nghiệp.
 
-## Hội thoại, thành viên và người phụ trách
+## Account
 
-Hội thoại kết nối người tham gia với một tương tác. [Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) thêm thành viên, khác với đặt `assignee` qua [Phân công nhân viên](/docs/vi/api-reference/conversations/assign-agent). Phụ trách không tự đảm bảo tham gia. Đọc [lịch sử hội thoại](/docs/vi/api-reference/conversations/history) dưới dạng sự kiện và kiểm tra loại từng sự kiện.
-
-## Tin nhắn và sự kiện
-
-API gửi vào hội thoại nhận một đối tượng sự kiện. Với tin nhắn, đặt `type` là `message_sent` và nội dung tại `data.message`. Phản hồi thành công là một sự kiện, còn yêu cầu webhook bọc các sự kiện trong mảng `events`. Phản hồi gửi thành công không đảm bảo chuyển phát đến kênh ngoài.
-
-## Tin nhắn định dạng phong phú bằng block
-
-Tin nhắn hỗ trợ nội dung phong phú có cấu trúc qua `format: "block"` và đối tượng `block`. Các block tạo thành cây: `type` chọn loại nút, `content` chứa các block con, và nút văn bản dùng `text`. Nút văn bản có thể mang định dạng như `bold`, `italic`, `underline`.
-
-Schema dùng chung có các loại văn bản, đoạn, tiêu đề, danh sách, ảnh, liên kết, bảng và nhiều loại khác. Đây là khả năng của schema, không đảm bảo mọi kênh đích hiển thị mọi loại. Bắt đầu với một đoạn đơn giản và kiểm tra trên kênh cần dùng.
-
-Ví dụ sau gửi đoạn văn có chữ “Alex” in đậm qua cùng endpoint [Gửi tin nhắn](/docs/vi/api-reference/messages/send). Nội dung hiển thị là dữ liệu minh họa.
+`Account` đại diện cho một doanh nghiệp trong Subiz. Định danh của chính nó là `id`; các đối tượng khác tham chiếu tới nó qua `account_id`. `owner_id` là nhân viên sở hữu tài khoản.
 
 ```json
 {
+  "id": "account_example",
+  "name": "Example Store",
+  "owner_id": "agent_example",
+  "state": "activated"
+}
+```
+
+Dùng access token của đúng tài khoản. Xem [Xác thực](/docs/vi/get-started/authentication).
+
+## Agent
+
+`Agent` là một nhân viên trong tài khoản. Dùng `id` của agent khi mời nhân viên hoặc đặt `assignee` của hội thoại.
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "fullname": "Sam Example",
+  "email": "sam@example.com",
+  "state": "active"
+}
+```
+
+`fullname` là trường trực tiếp của agent. Tên khách hàng thì dùng thuộc tính.
+
+## Khách hàng và định danh kênh
+
+`User` là một khách hàng. Khách hàng này có định danh Facebook: `channel_source` xác định trang (page), còn `profile_id` xác định hồ sơ trên trang đó.
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    }
+  ]
+}
+```
+
+Không nhầm `id` của Subiz với `profile_id`. Dùng [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity) để tìm user Subiz từ kênh, nguồn và hồ sơ.
+
+### Thuộc tính
+
+Mỗi phần tử trong `user.attributes` là một `Attribute`. Tìm thuộc tính theo `key`, không theo vị trí trong mảng. Thuộc tính này lưu tên khách hàng:
+
+```json
+{
+  "key": "fullname",
+  "text": "Alex Example"
+}
+```
+
+Đọc trường giá trị phù hợp với thuộc tính: `text`, `number`, `boolean` hoặc `datetime`. Giá trị `datetime` là chuỗi ngày giờ. Đừng giả định mọi thuộc tính đều dùng `text`.
+
+### Touchpoint
+
+`Touchpoint` mô tả ngữ cảnh kênh của hội thoại hoặc đích đến của tin nhắn. Trong ví dụ Facebook này, `source` là trang và `id` là hồ sơ của khách hàng trên trang đó:
+
+```json
+{
+  "channel": "facebook",
+  "source": "page_example",
+  "id": "profile_example"
+}
+```
+
+Các giá trị này tương ứng với `channel`, `channel_source` và `profile_id` của user ở trên. Ý nghĩa của `id` trong touchpoint phụ thuộc vào kênh; nó cũng có thể là một bình luận hoặc đích đến khác. Dùng giá trị của tích hợp đã kết nối, không dùng ID user của Subiz thay cho đích đến.
+
+## Hội thoại, thành viên và người phụ trách
+
+`Conversation` có ID riêng, thành viên, ngữ cảnh kênh và lịch sử sự kiện. Một khách hàng có thể tham gia nhiều hội thoại. Ở đây, Sam vừa là thành viên vừa là nhân viên phụ trách:
+
+```json
+{
+  "id": "conversation_example",
+  "account_id": "account_example",
+  "state": "active",
+  "assignee": "agent_example",
+  "members": [
+    {
+      "id": "user_example",
+      "type": "user",
+      "membership": "active"
+    },
+    {
+      "id": "agent_example",
+      "type": "agent",
+      "conversation_id": "conversation_example",
+      "membership": "active"
+    }
+  ],
+  "touchpoint": {
+    "channel": "facebook",
+    "source": "page_example",
+    "id": "profile_example"
+  }
+}
+```
+
+`assignee` là nhân viên phụ trách. Trường này có thể rỗng hoặc bị lược bỏ khi hội thoại chưa được giao. `members` mô tả việc tham gia; nó không đồng nghĩa với quyền phụ trách.
+
+### Thành viên hội thoại
+
+`ConversationMember` xác định một người tham gia bằng `type` và `id`. `membership` ghi trạng thái tham gia của họ.
+
+```json
+{
+  "id": "agent_example",
+  "type": "agent",
+  "conversation_id": "conversation_example",
+  "membership": "active"
+}
+```
+
+[Mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) thêm một nhân viên có sẵn làm người tham gia. [Giao nhân viên](/docs/vi/api-reference/conversations/assign-agent) thay đổi người phụ trách. Giao việc trực tiếp không thêm nhân viên vào `members`.
+
+## Tin nhắn và sự kiện
+
+### Message
+
+`Message` chứa nội dung. Tin nhắn văn bản thuần này thuộc hội thoại ở trên:
+
+```json
+{
+  "conversation_id": "conversation_example",
+  "format": "plaintext",
+  "text": "Hello Alex"
+}
+```
+
+Đây là đối tượng tin nhắn, không phải toàn bộ body của yêu cầu gửi. [Gửi tin nhắn vào hội thoại](/docs/vi/api-reference/messages/send) đặt nó trong `data.message` và lấy ID hội thoại từ URL. [Gửi tin nhắn cho khách hàng](/docs/vi/api-reference/messages/send-to-user) dùng cấu trúc yêu cầu khác và cần ngữ cảnh đích đến trên kênh.
+
+### Dữ liệu sự kiện
+
+`Data` chứa đối tượng liên quan tới sự kiện. Với `message_sent`, nó chứa `message`:
+
+```json
+{
+  "message": {
+    "conversation_id": "conversation_example",
+    "format": "plaintext",
+    "text": "Hello Alex"
+  }
+}
+```
+
+Các loại sự kiện khác có thể mang `user` hoặc `conversation`. Kiểm tra `type` của sự kiện trước khi truy cập trường lồng nhau.
+
+### Tác nhân
+
+Đối tượng `By` (tùy chọn) xác định ai gây ra sự kiện. Nó xuất hiện dưới dạng `event.by`:
+
+```json
+{
+  "id": "agent_example",
+  "type": "agent"
+}
+```
+
+`type` có thể là user, agent hoặc bot. Tác nhân không nhất thiết là người phụ trách hội thoại. Một số sự kiện không có `by` hoặc chỉ có ngữ cảnh thiết bị mà không có ID tác nhân.
+
+### Event
+
+`Event` kết hợp định danh, loại, thời gian, tác nhân và dữ liệu. Đây là ví dụ đầy đủ bao quanh tin nhắn ở trên:
+
+```json
+{
+  "id": "event_example_1",
+  "account_id": "account_example",
+  "created": 1794614400000,
   "type": "message_sent",
+  "by": {
+    "id": "agent_example",
+    "type": "agent"
+  },
   "data": {
     "message": {
-      "format": "block",
-      "block": {
-        "type": "paragraph",
-        "content": [
-          {
-            "type": "text",
-            "text": "Hello "
-          },
-          {
-            "type": "text",
-            "text": "Alex",
-            "bold": true
-          }
-        ]
-      }
+      "conversation_id": "conversation_example",
+      "format": "plaintext",
+      "text": "Hello Alex"
     }
   }
 }
 ```
 
-Tài liệu định dạng phong phú nằm trong `data.message.block`, không phải chuỗi JSON trong `text`. Dịch vụ tin nhắn có thể suy ra văn bản từ block. Khi lưu tin nhắn, giữ cây và định dạng; chuyển thành văn bản thuần sẽ mất cấu trúc. Không coi HTML và cây block là tương đương.
+`created` là thời điểm Subiz ghi nhận, tính bằng mili giây Unix. `event_time`, nếu có, là thời điểm xảy ra gốc. `id` của event định danh sự kiện; đừng thay bằng ID tin nhắn hay ID hội thoại lồng bên trong.
+
+[Lịch sử hội thoại](/docs/vi/api-reference/conversations/history) chứa sự kiện, không chỉ tin nhắn. Một sự kiện `message_sent` hoặc một phản hồi gửi thành công không tự nó xác nhận tin đã tới kênh bên ngoài.
+
+## Tin nhắn định dạng phong phú bằng block
+
+Hướng dẫn đầy đủ về văn bản thuần, liên kết và kiểu chữ có trong [Định dạng tin nhắn](/docs/vi/messages/formats).
+
+### Block
+
+`Block` là một nút trong cây nội dung phong phú. `type` chọn loại nút, `content` chứa các nút con, và nút văn bản dùng `text`. Nút văn bản có thể có `bold`, `italic` hoặc `underline`.
+
+```json
+{
+  "type": "paragraph",
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello "
+    },
+    {
+      "type": "text",
+      "text": "Alex",
+      "bold": true
+    }
+  ]
+}
+```
+
+Nội dung này hiển thị là “Hello **Alex**”. Block là một đối tượng JSON, không phải chuỗi HTML.
+
+### Tin nhắn phong phú
+
+Đặt block vào `message.block` và đặt `format` là `block`:
+
+```json
+{
+  "conversation_id": "conversation_example",
+  "format": "block",
+  "block": {
+    "type": "paragraph",
+    "content": [
+      {
+        "type": "text",
+        "text": "Hello "
+      },
+      {
+        "type": "text",
+        "text": "Alex",
+        "bold": true
+      }
+    ]
+  }
+}
+```
+
+Subiz có thể tạo văn bản thuần từ block mà vẫn giữ cây block. Lưu cây block nếu bạn cần định dạng. Mô hình này cũng hỗ trợ ảnh, liên kết, danh sách và bảng; cách hiển thị phụ thuộc vào kênh đích.
+
+### Tệp đính kèm
+
+Xem [Tệp đính kèm](/docs/vi/messages/attachments) để có ví dụ về ảnh, video, âm thanh, tệp và nội dung tương tác.
+
+Mỗi phần tử trong `message.attachments` là một `Attachment`. Ví dụ tệp này dùng URL giả lập; `size` tính bằng byte:
+
+```json
+{
+  "type": "file",
+  "mimetype": "application/pdf",
+  "url": "https://example.com/guide.pdf",
+  "name": "guide.pdf",
+  "size": 2048
+}
+```
+
+Đặt đối tượng đính kèm trong mảng `attachments`, không đặt trong `block.content`. Tin nhắn có thể có tệp đính kèm ngay cả khi `text` rỗng.
 
 ## Webhook kết nối hệ thống của bạn
 
-Dùng [sự kiện webhook](/docs/vi/webhooks/receiving) để đồng bộ thay đổi. Xác minh chữ ký body gốc, xử lý từng sự kiện trong lô và chống trùng bằng ID tài khoản cùng ID sự kiện. [Ví dụ payload](/docs/vi/webhooks/payloads) mô tả sự kiện tin nhắn và phân công, không cung cấp API quản lý webhook.
+Lời gọi API yêu cầu thực hiện hành động; webhook thông báo sự kiện cho tích hợp của bạn. Một lần gửi webhook bọc các sự kiện trong mảng `events`. Cùng sự kiện ví dụ ở trên sẽ có dạng:
+
+```json
+{
+  "events": [
+    {
+      "id": "event_example_1",
+      "account_id": "account_example",
+      "created": 1794614400000,
+      "type": "message_sent",
+      "by": {
+        "id": "agent_example",
+        "type": "agent"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "plaintext",
+          "text": "Hello Alex"
+        }
+      }
+    }
+  ]
+}
+```
+
+Một lần gửi có thể chứa nhiều sự kiện. Xác minh chữ ký, sau đó xử lý từng sự kiện theo `type` và loại trùng theo `(account_id, id)`.
+
+Xem [Nhận sự kiện webhook](/docs/vi/webhooks/receiving) để thiết lập và [Ví dụ dữ liệu sự kiện](/docs/vi/webhooks/payloads) cho các loại sự kiện khác. Phần bao của lần gửi không phải là đối tượng cấu hình Webhook.
+
+## Yêu cầu API và phiên bản
+
+Gửi yêu cầu tới `https://api.subiz.com.vn`. Mỗi trang endpoint hiển thị URL đầy đủ, phương thức HTTP, header và body JSON khi cần.
+
+Tài liệu này bao gồm API **4.0** và **4.1**. Dùng đúng phiên bản trong URL của từng endpoint như đã ghi; các thao tác khác nhau có thể dùng phiên bản khác nhau. Xem [Nhật ký thay đổi](/docs/vi/changelog) để biết cập nhật tài liệu và thông báo thay đổi API.
+
+## Trước khi chạy thật
+
+- Đọc [Giới hạn sử dụng](/docs/vi/get-started/usage-limits) để biết hạn mức theo token, tài khoản và tin nhắn của nhân viên. Xếp hàng yêu cầu và tuân theo `Retry-After` khi bị giới hạn.
+- Làm theo [Xử lý lỗi](/docs/vi/get-started/errors) để xử lý thất bại. Sau khi gửi tin nhắn bị hết thời gian chờ, kiểm tra kết quả trước khi thử lại để tránh trùng lặp.
+- Khi nhận webhook, [xác minh chữ ký và xử lý sự kiện trùng lặp](/docs/vi/webhooks/receiving).
+
+## Dùng với công cụ của bạn
+
+Đọc [trang này dưới dạng Markdown](/docs/vi/index.md). Với công cụ AI, dùng [mục lục tài liệu](/llms.txt) hoặc [toàn bộ tài liệu](/llms-full.txt).

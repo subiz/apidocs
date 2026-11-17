@@ -1,27 +1,67 @@
 ---
-sourceHash: d0d8715f07c25c9b717ab2d0e60debb971558cf26e58e57a29389dbbf42d63e7
+sourceHash: 7ab89d7f5215ebe1c4effdd486927d5dc739cfa97ef33cc42553b46dc69ccf4f
 title: "Tìm hoặc tạo theo định danh kênh"
-description: "Ánh xạ hồ sơ bên ngoài sang khách hàng Subiz."
+description: "Lấy khách hàng Subiz tương ứng với hồ sơ Facebook, Zalo hoặc kênh khác."
 section: "Users"
 order: 13
 status: "verified"
 endpointId: "users-identity"
 ---
 
-## Trước khi bắt đầu
+Dùng endpoint này khi bạn biết định danh của khách hàng trên một kênh, như hồ sơ Facebook của họ trên trang của bạn, nhưng chưa biết ID user Subiz. Endpoint trả về khách hàng đã có, hoặc tạo mới nếu chưa có.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+## Định danh kênh
 
-## Tra cứu định danh bên ngoài
+Định danh kênh gồm ba phần, đều nằm trong đường dẫn URL:
 
-Dùng kênh, nguồn và ID hồ sơ bên ngoài của tích hợp. Đây là các giá trị định danh kênh, không phải ID user Subiz. Tài khoản phải phù hợp với thông tin xác thực.
+| Tham số | Kiểu | Mô tả |
+| --- | --- | --- |
+| `accid` (đường dẫn) | string | ID tài khoản của bạn. |
+| `channel` (đường dẫn) | string | Kênh, như `facebook` hoặc `zalo`. |
+| `source` (đường dẫn) | string | Trang hoặc tài khoản đã kết nối trên kênh đó, như ID trang Facebook. |
+| `id` (đường dẫn) | string | ID hồ sơ của khách hàng trên kênh đó. |
 
-POST gọi `ReadOrCreateUserByContactProfile`. Để chỉ tìm hồ sơ có sẵn mà không tạo mới, dùng GET trên cùng đường dẫn.
+Dùng giá trị từ tích hợp đã kết nối. Không đặt ID user Subiz vào `id`. Không có body.
 
-## Kết quả
+## Tìm mà không tạo
 
-Dịch vụ trả một user. Lưu riêng ID user Subiz và ID hồ sơ bên ngoài. Việc gộp và chuẩn hóa định danh do dịch vụ xử lý; không kết luận đây là khách hàng mới chỉ vì một lần tra cứu tạm thời thất bại.
+Dùng `GET` trên cùng đường dẫn để tìm khách hàng mà không tạo mới:
+
+```http
+GET https://api.subiz.com.vn/4.1/accounts/YOUR_ACCID/contact-profiles/YOUR_CHANNEL/sources/YOUR_SOURCE/YOUR_ID
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+Dùng `POST`, ở cuối trang này, để tìm hoặc tạo khách hàng.
+
+## Phản hồi
+
+Cả hai phương thức đều trả HTTP `200` cùng khách hàng. Một số trường:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    }
+  ]
+}
+```
+
+Lưu `id` của Subiz cùng với định danh kênh. Dùng `id` để [lấy thông tin](/docs/vi/api-reference/users/retrieve) hoặc [cập nhật](/docs/vi/api-reference/users/update) khách hàng.
+
+Subiz có thể chuẩn hóa hoặc gộp định danh khách hàng. Nếu việc tìm kiếm tạm thời thất bại, hãy thử lại thay vì tạo một khách hàng riêng bằng [Tạo khách hàng](/docs/vi/api-reference/users/create).
+
+## Gửi tin mà không cần tìm trước
+
+Để nhắn tin cho khách hàng theo định danh kênh, bạn có thể bỏ qua bước này. [Gửi tin nhắn cho khách hàng](/docs/vi/api-reference/messages/send-to-user#xác-định-khách-hàng) nhận trực tiếp `channel`, `channel_source` và `profile_id`.
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_ACCID`, `YOUR_CHANNEL`, `YOUR_SOURCE`, `YOUR_ID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

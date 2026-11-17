@@ -1,57 +1,91 @@
 ---
-sourceHash: 8e0f7634fe0edfbdd5aedb79c4f0cd833536575da857510596bca44dd9c943c5
-title: "Gửi tin nhắn"
-description: "Gửi tin nhắn văn bản vào hội thoại đã có."
+sourceHash: 49641cd8359a8e1a60a3825e64dbbf6b3a30c30c17dd78042649fe4e88d76aaa
+title: "Gửi tin nhắn vào hội thoại"
+description: "Gửi tin nhắn vào một hội thoại có sẵn."
 section: "Messages"
 order: 30
 status: "verified"
 endpointId: "messages-send"
 ---
 
+Dùng endpoint này khi bạn đã có ID hội thoại. Để liên hệ khách hàng qua định danh kênh, hãy dùng [Gửi tin nhắn cho khách hàng](/docs/vi/api-reference/messages/send-to-user).
+
 ## Trước khi gửi
 
-Chuẩn bị [Bearer access token](/docs/vi/get-started/authentication) hợp lệ và ID hội thoại mà tích hợp được phép truy cập. Chạy yêu cầu sẽ gửi tin nhắn thật; hãy dùng hội thoại thử nghiệm phù hợp.
+- Lấy [Bearer access token](/docs/vi/get-started/authentication).
+- Tìm ID hội thoại, ví dụ từ [sự kiện webhook](/docs/vi/webhooks/payloads) hoặc [Lấy thông tin hội thoại](/docs/vi/api-reference/conversations/retrieve).
+- Dùng một hội thoại thử nghiệm khi phát triển. Mỗi yêu cầu thành công đều gửi một tin nhắn thật.
 
-## Nội dung yêu cầu
+## Body yêu cầu
 
-API nhận một đối tượng sự kiện, với tin nhắn bên trong `data.message`.
+Body là một sự kiện. Tin nhắn đặt trong `data.message`.
 
-| Trường | Kiểu | Hành vi |
+| Trường | Kiểu | Mô tả |
 | --- | --- | --- |
-| `cid` trong đường dẫn | string | Hội thoại đích. |
-| `type` | string | Không bắt buộc; mặc định `message_sent` nếu bỏ qua. |
-| `data.message` | object | Nội dung tin nhắn văn bản. |
-| `data.message.text` | string | Văn bản cần gửi. |
-| `data.message.format` | string | Dùng `plaintext` trong ví dụ. |
+| `cid` (đường dẫn) | string | Hội thoại cần gửi tới. |
+| `type` | string | Tùy chọn. Mặc định là `message_sent`. |
+| `data.message.format` | string | `plaintext` hoặc `block`. Xem [Định dạng tin nhắn](/docs/vi/messages/formats). |
+| `data.message.text` | string | Nội dung văn bản cho `plaintext`. |
+| `data.message.block` | object | Cây block cho tin nhắn `block`. |
+| `data.message.attachments` | array | Tùy chọn: tệp, nút bấm hoặc thẻ. Xem [Tệp đính kèm](/docs/vi/messages/attachments). |
+
+Một tin nhắn văn bản thuần:
 
 ```json
 {
   "type": "message_sent",
   "data": {
     "message": {
-      "text": "Hello! How can we help?",
-      "format": "plaintext"
+      "format": "plaintext",
+      "text": "Hello! How can we help?"
     }
   }
 }
 ```
 
-## Trường do máy chủ đặt
+## Trường do Subiz đặt
 
-Gateway đặt thời gian `created` và `account_id` của sự kiện. ID hội thoại trong đường dẫn được chép vào `data.message.conversation_id` và `data.conversation.id`. Bạn không cần gửi các trường này cho route này.
+Bạn không cần gửi các trường này. Subiz đặt chúng cho mọi yêu cầu:
+
+- `created`: thời điểm hiện tại, tính bằng mili giây Unix.
+- `account_id`: tài khoản của access token.
+- `data.message.conversation_id` và `data.conversation.id`: giá trị `cid` trong URL. Giá trị trong body sẽ bị thay thế.
 
 ## Phản hồi
 
-Khi thành công, gateway trả HTTP `200` với sự kiện từ dịch vụ hội thoại, chuyển trực tiếp sang JSON. Gateway không thêm lớp bọc `data` bên ngoài. Schema sự kiện có `id`, `type`, `created` và `data.message`; trường rỗng có thể bị lược bỏ.
+Yêu cầu thành công trả HTTP `200` cùng sự kiện đã gửi dưới dạng JSON, không có lớp bọc thêm. Một số trường:
 
-API thành công không đảm bảo chuyển phát đến kênh bên ngoài. Kho mã nguồn gateway không quy định đầy đủ mọi quy tắc theo kênh và kiểm tra của dịch vụ phía sau.
+```json
+{
+  "id": "event_example",
+  "account_id": "account_example",
+  "type": "message_sent",
+  "created": 1763107200000,
+  "data": {
+    "message": {
+      "conversation_id": "conversation_example",
+      "format": "plaintext",
+      "text": "Hello! How can we help?"
+    }
+  }
+}
+```
 
-## Xử lý lỗi
+Trường rỗng bị lược bỏ. Lưu `id` của sự kiện nếu bạn cần đối chiếu tin nhắn sau này trong [lịch sử tin nhắn](/docs/vi/api-reference/conversations/history) hoặc sự kiện webhook.
 
-Kiểm tra mã HTTP trước khi xử lý phản hồi. Gateway có thể từ chối JSON sai, xác thực không hợp lệ hoặc người gửi bị chặn; dịch vụ phía sau cũng có thể từ chối thao tác. Tránh gửi lại mù quáng sau timeout vì tin có thể đã được chấp nhận. Handler đã kiểm tra không xác lập bảo đảm idempotency cho route này.
+Phản hồi `200` nghĩa là Subiz đã nhận tin nhắn. Nó không xác nhận tin đã tới kênh bên ngoài như Facebook hoặc Zalo.
+
+## Giới hạn
+
+- Tin nhắn gửi bằng token của nhân viên được tính vào hạn mức của nhân viên đó: 5 tin mỗi giây, 60 tin mỗi phút và 5.000 tin mỗi ngày UTC. Xem [Giới hạn gửi tin nhắn](/docs/vi/get-started/usage-limits#giới-hạn-gửi-tin-nhắn).
+- Kích thước văn bản, tệp đính kèm và trường bị giới hạn. Xem [Giới hạn tin nhắn](/docs/vi/get-started/usage-limits#giới-hạn-tin-nhắn).
+
+## Lỗi và thử lại
+
+Kiểm tra mã trạng thái HTTP trước khi đọc body. Yêu cầu có thể thất bại do JSON không hợp lệ, lỗi xác thực, người gửi bị chặn, giới hạn tốc độ (`429`) hoặc kiểm tra dữ liệu ở dịch vụ hội thoại. Xem [Xử lý lỗi](/docs/vi/get-started/errors).
+
+Đừng thử lại mù quáng sau khi hết thời gian chờ. Tin nhắn có thể đã được gửi, và endpoint này không có khóa idempotency. Hãy kiểm tra lịch sử tin nhắn trước.
 
 ## Yêu cầu HTTP
 
-Thay `YOUR_CID` bằng ID hội thoại và `YOUR_ACCESS_TOKEN` bằng access token của bạn. Gửi các header và body JSON bên dưới.
-
-Tìm hiểu mối quan hệ giữa các đối tượng trong [Các khái niệm chính](/docs/vi#mối-quan-hệ-giữa-các-đối-tượng), bao gồm tin nhắn phong phú dạng block.
+Thay `YOUR_CID` bằng ID hội thoại và `YOUR_ACCESS_TOKEN` bằng token của bạn.

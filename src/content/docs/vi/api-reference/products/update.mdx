@@ -1,0 +1,94 @@
+---
+sourceHash: 18161514fe52e7ab25a3bf3c370cf9d74cb96df44725b15df104a48e2dd30501
+title: "Cập nhật sản phẩm"
+description: "Thay đổi giá, tồn kho, tình trạng hàng hoặc các trường khác của sản phẩm."
+section: "Products"
+order: 64
+status: "verified"
+endpointId: "products-update"
+---
+
+Dùng endpoint này để thay đổi sản phẩm, ví dụ cập nhật giá hoặc tồn kho sau khi cửa hàng của bạn thay đổi.
+
+## Luôn liệt kê các trường cần thay đổi
+
+Thêm `x-fields` vào query string với danh sách các trường bạn gửi, phân tách bằng dấu phẩy:
+
+```http
+POST https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/products/YOUR_PID?x-fields=price,stock
+```
+
+Chỉ các trường được liệt kê mới thay đổi.
+
+**Nếu không có `x-fields`, body sẽ thay thế toàn bộ sản phẩm.** Mọi trường bạn bỏ trống sẽ bị xóa, kể cả ảnh và mô tả. Nếu buộc phải gửi sản phẩm đầy đủ, hãy [đọc sản phẩm](/docs/vi/api-reference/products/retrieve) trước rồi gửi lại kèm thay đổi.
+
+## Luôn gửi `name`
+
+Mọi body yêu cầu phải có `name` không rỗng, kể cả khi bạn không đổi tên. Thiếu `name`, yêu cầu sẽ thất bại. Nếu `name` không có trong `x-fields`, tên bạn gửi chỉ được kiểm tra chứ không được lưu.
+
+## Body yêu cầu
+
+Gửi `name` và giá trị mới của các trường đã liệt kê trong `x-fields`:
+
+```json
+{
+  "name": "Ceramic mug",
+  "price": 99000,
+  "stock": 40
+}
+```
+
+Các thay đổi thường gặp:
+
+| Trường | Ghi chú |
+| --- | --- |
+| `price`, `market_price` | Giá. |
+| `stock` | Số lượng tồn kho. |
+| `availability` | `in_stock`, `out_of_stock`, `online_only`, `pre_order`, `pre_sale` hoặc `sold_out`. Được kiểm tra kể cả khi không có trong `x-fields`. |
+| `visibility` | `published` hoặc `hidden`. |
+| `images` | Thay thế mọi ảnh. Subiz lưu bản sao riêng. Xem [Hình ảnh](/docs/vi/products/format#hình-ảnh). |
+| `props` | Thay thế mọi thuộc tính. |
+
+Subiz đặt `updated` và `updated_by`. Subiz giữ nguyên `created` và `created_by`. Giá trị bạn gửi cho các trường này bị bỏ qua.
+
+## Thay đổi lan sang biến thể
+
+Một số trường dùng chung cho mọi biến thể trong nhóm. Khi bạn đổi `name`, `description`, `url`, `handle`, `category`, `brand`, `note`, `condition`, `visibility`, `images`, `videos` hoặc `options`, Subiz áp dụng thay đổi cho mọi sản phẩm khác có cùng `product_group_id`. Xem [Biến thể](/docs/vi/products/format#biến-thể).
+
+## Dùng ID sản phẩm đã có
+
+Nếu không có sản phẩm nào mang ID trong đường dẫn, Subiz không trả lỗi không tìm thấy. Subiz tìm sản phẩm theo `source_id` (hoặc theo `sku` nếu không có `source_id`) trong body và cập nhật sản phẩm đó. Nếu không khớp sản phẩm nào, Subiz **tạo một sản phẩm mới với ID mới**.
+
+Kiểm tra `id` trong phản hồi. Để chắc chắn sản phẩm tồn tại, hãy [đọc sản phẩm](/docs/vi/api-reference/products/retrieve) trước.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng toàn bộ sản phẩm đã cập nhật. Một số trường:
+
+```json
+{
+  "id": "product_example",
+  "name": "Ceramic mug",
+  "sku": "MUG-01",
+  "price": 99000,
+  "stock": 40,
+  "availability": "in_stock",
+  "updated": 1763193600000
+}
+```
+
+## Lỗi
+
+| Vấn đề | Kết quả |
+| --- | --- |
+| Thiếu hoặc rỗng `name` | Lỗi dữ liệu không hợp lệ nêu tên `name`. |
+| `category` dài hơn 255 byte | Lỗi dữ liệu không hợp lệ nêu tên `category`. |
+| `availability`, `visibility` hoặc `condition` có giá trị khác | Lỗi trường không hợp lệ nêu tên trường. |
+| Không tải được URL ảnh | Yêu cầu thất bại. |
+| Thiếu quyền cập nhật sản phẩm | Lỗi phân quyền. |
+
+Xem [Xử lý lỗi](/docs/vi/get-started/errors).
+
+## Yêu cầu HTTP
+
+Thay `YOUR_ACCID`, `YOUR_PID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

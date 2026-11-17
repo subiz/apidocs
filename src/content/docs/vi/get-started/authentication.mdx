@@ -1,7 +1,7 @@
 ---
-sourceHash: f8bc403f39f09ddecc53ede5450180fa71a00c9736cb9d4902fe20cf3713ce87
+sourceHash: a040214577de9e90348b26f70675691976ce098d711298092183ab9763d8fb0f
 title: "Xác thực"
-description: "Xác thực yêu cầu API bằng Bearer access token."
+description: "Ủy quyền yêu cầu API bằng Bearer access token."
 section: "Get Started"
 order: 1
 status: "verified"
@@ -18,6 +18,8 @@ apiVersions: ["4.0", "4.1"]
 
 **Token chỉ hiển thị một lần.** Nếu làm mất, hãy tạo token mới. Mỗi token thuộc tài khoản đã chọn khi tạo.
 
+Yêu cầu gửi bằng token này hoạt động với tư cách nhân viên của bạn trong tài khoản đó. Quyền của nhân viên vẫn được áp dụng; tạo token không cấp thêm quyền.
+
 ## Kiểm tra access token
 
 Trong công cụ gọi API, gửi yêu cầu sau. Thay `YOUR_ACCESS_TOKEN` bằng token vừa sao chép. Không cần body.
@@ -27,7 +29,25 @@ GET https://api.subiz.com.vn/4.1/me
 Authorization: Bearer YOUR_ACCESS_TOKEN
 ```
 
-**Kết quả mong đợi:** `200 OK` cùng thông tin nhân viên của bạn dưới dạng JSON. Token hợp lệ cho yêu cầu này; các thao tác khác có thể cần thêm quyền.
+**Kết quả mong đợi:** `200 OK` cùng hồ sơ nhân viên của bạn dưới dạng JSON. Ví dụ dưới đây hiển thị một số trường với giá trị mẫu:
+
+```json
+{
+  "id": "YOUR_AGENT_ID",
+  "account_id": "YOUR_ACCOUNT_ID",
+  "fullname": "Example Agent"
+}
+```
+
+Kiểm tra `account_id` trùng với tài khoản bạn muốn kết nối. `id` là nhân viên đang gửi yêu cầu. Kiểm tra thành công chỉ xác nhận quyền truy cập `/me`, không phải mọi thao tác API.
+
+Yêu cầu kiểm tra token cũng được tính vào [giới hạn sử dụng](/docs/vi/get-started/usage-limits). Nếu `/me` trả `429`, hãy chờ hết khoảng `Retry-After` rồi mới thử lại.
+
+## Thay thế hoặc thu hồi token
+
+Để thay token hết hạn hoặc bị mất, tạo token mới và cập nhật tích hợp. Kiểm tra token mới bằng `/me`, sau đó xóa token cũ nếu nó vẫn còn trong danh sách.
+
+Để thu hồi token, mở [Mã truy cập cá nhân](https://app.subiz.com.vn/apikey), mở menu **…** của token, chọn **Xóa mã truy cập** và xác nhận. Không thể hoàn tác thao tác xóa. Nếu token bị lộ, hãy thu hồi trước khi tạo token thay thế.
 
 Lưu token phía máy chủ, chẳng hạn trong biến môi trường. Không đặt token trong mã trình duyệt, kho mã nguồn công khai hoặc URL.
 
@@ -35,7 +55,7 @@ Lưu token phía máy chủ, chẳng hạn trong biến môi trường. Không �
 
 Kiểm tra token có đúng, còn hạn, chưa bị xóa và thuộc tài khoản đang truy cập. Giữ nguyên tiền tố `Bearer `, gồm cả dấu cách.
 
-Lỗi xác thực có thể trả HTTP `400`. Đọc nội dung lỗi JSON trước khi thử lại.
+Lỗi xác thực có thể trả HTTP `400`. Đọc [phản hồi lỗi JSON](/docs/vi/get-started/errors) trước khi thử lại.
 
 ## Bước tiếp theo
 

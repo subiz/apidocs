@@ -1,0 +1,125 @@
+---
+sourceHash: 8204745864951a01a4135b82b6eaa8061a7df8f51b22a60184c70144fb447ccf
+title: "Giới hạn sử dụng"
+description: "Hiểu giới hạn yêu cầu theo token và tài khoản, kích thước dữ liệu và thời điểm thử lại."
+section: "Get Started"
+order: 3
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+Kiểm tra hai điều trước khi gửi yêu cầu: **bạn gọi API thường xuyên tới mức nào** và **mỗi yêu cầu chứa bao nhiêu dữ liệu**. Gọi chậm hơn không khắc phục được dữ liệu quá lớn.
+
+## Giới hạn tốc độ
+
+Yêu cầu đã xác thực của nhân viên có hai lớp giới hạn:
+
+| Phạm vi | Yêu cầu mỗi giây | Yêu cầu mỗi ngày |
+| --- | --- | --- |
+| Mỗi access token của nhân viên | 100 | 144.000 |
+| Tất cả API key trong một tài khoản, cộng chung | 100 | 864.000 |
+
+**Mã truy cập cá nhân tạo trong Subiz chịu cả hai giới hạn.** Giới hạn theo token được kiểm tra trước, sau đó tới giới hạn chung của tài khoản. Ví dụ, hai API key cùng gửi 60 yêu cầu trong cùng một giây sẽ vượt giới hạn chung 100 yêu cầu của tài khoản.
+
+Hạn mức theo token gắn với đúng token đó trên mọi endpoint và tài khoản. Các token khác nhau có hạn mức token riêng; các API key của cùng tài khoản vẫn dùng chung hạn mức tài khoản. Token đăng nhập và OAuth của nhân viên chịu giới hạn theo token nhưng không tiêu hao hạn mức API key của tài khoản.
+
+### Cách đếm và đặt lại
+
+- Giới hạn mỗi giây dùng giây lịch cố định.
+- Giới hạn ngày được đặt lại lúc **00:00 UTC** (07:00 giờ Việt Nam), không phải 24 giờ sau yêu cầu đầu tiên.
+- Yêu cầu đã tới thao tác vẫn được tính ngay cả khi thao tác đó thất bại sau đó. Điều này gồm cả yêu cầu kiểm tra token bằng `/4.1/me`.
+
+Bộ đếm hiện áp dụng riêng cho từng instance gateway và được đặt lại khi instance khởi động lại. Đây không phải hạn mức đồng bộ toàn cục. Hãy giữ tích hợp trong giới hạn đã nêu thay vì trông chờ lưu lượng được chia sang các instance khác nhau.
+
+Dùng hàng đợi, giới hạn số yêu cầu đồng thời và tăng lưu lượng từ từ. Dùng [webhook](/docs/vi/webhooks/receiving) để nhận cập nhật thay vì liên tục lấy lại cùng một bản ghi.
+
+### Giới hạn gửi tin nhắn
+
+Gửi tin với tư cách nhân viên còn dùng một hạn mức chung cho **nhân viên đó trong tài khoản đó**:
+
+| Mỗi giây | Mỗi phút | Mỗi ngày |
+| --- | --- | --- |
+| 5 tin nhắn | 60 tin nhắn | 5.000 tin nhắn |
+
+Mọi token và thiết bị của nhân viên dùng chung hạn mức này, trên mọi hội thoại và cả hai cách [gửi vào hội thoại](/docs/vi/api-reference/messages/send) và [gửi cho khách hàng](/docs/vi/api-reference/messages/send-to-user). Đổi người gửi trong body yêu cầu không làm thay đổi hạn mức của ai được sử dụng.
+
+Tin nhắn nội bộ cũng được tính; sự kiện đang gõ, đã xem và các sự kiện không phải tin nhắn khác thì không. Cửa sổ giây và phút là cửa sổ lịch cố định; ngày được đặt lại lúc 00:00 UTC. Các bộ đếm này cũng áp dụng riêng cho từng instance gateway.
+
+Với yêu cầu gửi cho khách hàng, mỗi ứng viên trong `messages` đều được tính, dù dịch vụ dừng lại sau lần gửi thành công đầu tiên. **Chỉ đưa tối đa năm ứng viên vào mỗi yêu cầu.** Đây không phải thao tác gửi hàng loạt; dùng một ứng viên khi nhắm tới một đích đến.
+
+Bộ giới hạn kiểm tra toàn bộ mảng ứng viên trước khi gửi; nếu yêu cầu bị từ chối thì không ứng viên nào được chuyển tiếp. Đây là giới hạn theo lượt thử: hạn mức đã giữ chỗ không được hoàn lại sau một yêu cầu bị từ chối hoặc lỗi phía backend.
+
+### Nhận biết khi bị điều tiết
+
+Vượt hạn mức theo token, tài khoản hoặc tin nhắn của nhân viên sẽ trả **HTTP `429 Too Many Requests`** trước khi thao tác được thực hiện. Phản hồi có `rate_limit` trong `error.code` và các header sau:
+
+| Header | Giá trị |
+| --- | --- |
+| `Retry-After` | Số giây cần chờ: `1` với giới hạn mỗi giây, số giây tới phút tiếp theo với giới hạn tin nhắn mỗi phút, hoặc số giây tới 00:00 UTC với giới hạn ngày. |
+| `Cache-Control` | `no-store` |
+| `Content-Type` | `application/json` |
+
+Ví dụ một lần bị từ chối do giới hạn mỗi giây, hiển thị một số trường của phản hồi:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+Cache-Control: no-store
+Content-Type: application/json
+
+{
+  "code": "rate_limit,limit_exceeded,invalid_input",
+  "class": 400,
+  "error": {
+    "code": "rate_limit,limit_exceeded,invalid_input"
+  }
+}
+```
+
+Trường cũ `class: 400` trong body không thay đổi trạng thái HTTP `429`. Xem [Xử lý lỗi](/docs/vi/get-started/errors#phản-hồi-lỗi).
+
+Bộ giới hạn không trả `ratelimit-limit`, `ratelimit-remaining` hay `ratelimit-reset`. Các cơ chế điều tiết riêng của từng thao tác vẫn có thể trả HTTP `400` với `rate_limit` và không có `Retry-After`; hãy xử lý cả những phản hồi đó.
+
+### Thử lại an toàn
+
+1. Tạm dừng công việc bị ảnh hưởng và giảm số yêu cầu đồng thời.
+2. Nếu phản hồi có `Retry-After`, chờ ít nhất khoảng thời gian đó.
+3. Nếu không, dùng độ trễ tăng dần kèm một khoảng ngẫu nhiên nhỏ. Đặt số lần thử tối đa.
+4. Trước khi gửi lại tin nhắn sau khi hết thời gian chờ hoặc mất phản hồi, kiểm tra xem tin nhắn đã được tạo chưa. Gửi lại có thể tạo tin trùng.
+
+Đọc phản hồi của mỗi lần thử lại: chờ đợi không đảm bảo được chấp nhận nếu một giới hạn khác đã bị chạm hoặc nơi gọi khác đang dùng hạn mức chung. Xem [Xử lý lỗi](/docs/vi/get-started/errors#khi-nào-thử-lại) cho các loại lỗi khác.
+
+## Giới hạn tin nhắn
+
+Bộ kiểm tra tin nhắn hội thoại áp dụng các giới hạn sau cho tin nhắn gửi qua API:
+
+| Trường | Tối đa | Khi vượt |
+| --- | --- | --- |
+| `data.message.text` | 1.524.288 byte UTF-8 | `payload_too_large` |
+| `data.message.attachments` | 50 phần tử | `limit_exceeded` |
+| `data.message.fields` | 540 phần tử | `limit_exceeded` |
+| Mỗi `fields[].key` | 42.428 byte UTF-8 | `limit_exceeded` |
+| Mỗi `fields[].value` | 1.524.288 byte UTF-8 | `limit_exceeded` |
+
+Độ dài văn bản được tính bằng **byte**, không phải số ký tự hiển thị. Emoji và ký tự có dấu có thể dùng nhiều hơn một byte. Giới hạn văn bản áp dụng cho trường `text` của tin nhắn khi kiểm tra, không phải tổng kích thước yêu cầu JSON.
+
+Đây là ngưỡng kiểm tra của Subiz, không phải kích thước tin nhắn khuyến nghị hay cam kết gửi được trên mọi kênh. Hãy giữ tin nhắn ngắn. Các kênh đã kết nối có thể có thêm hạn chế về nội dung và media. Số lượng tệp đính kèm không phải hạn mức dung lượng tệp; xem [Tệp đính kèm](/docs/vi/messages/attachments).
+
+## Giới hạn thuộc tính khách hàng
+
+Việc tạo khách hàng và cập nhật thuộc tính kiểm tra kích thước dữ liệu thuộc tính đầu vào. Luồng cập nhật thuộc tính thông thường kiểm tra giá trị đã chuẩn hóa:
+
+| Dữ liệu | Tối đa |
+| --- | --- |
+| Số thuộc tính trong dữ liệu được kiểm tra | 1.000 phần tử |
+| Tổng `text`, `datetime` và mọi `other_values` của mỗi thuộc tính | 2.048 byte UTF-8 |
+
+Vượt một trong hai giới hạn sẽ trả `payload_too_large`. Giảm dữ liệu bị ảnh hưởng trước khi thử lại. Tách một giá trị dài vào `other_values` không vượt qua được giới hạn tổng kích thước.
+
+Xem [Tạo khách hàng](/docs/vi/api-reference/users/create) và [Cập nhật thông tin khách hàng](/docs/vi/api-reference/users/update) để biết các trường được hỗ trợ.
+
+## Hạn mức theo gói và kênh
+
+Điều tiết yêu cầu, kiểm tra dữ liệu và hạn mức của tài khoản hoặc kênh là các ràng buộc khác nhau. Trang này không định nghĩa hạn mức tin nhắn hằng tháng, hạn mức khách hàng hay giới hạn dung lượng tệp chung. Kiểm tra gói tài khoản và yêu cầu của kênh liên quan trước khi nhập dữ liệu lớn hoặc gửi tin hàng loạt.
+
+Nếu lỗi vẫn tiếp diễn, gửi cho bộ phận hỗ trợ Subiz endpoint, thời điểm gửi yêu cầu, tốc độ lưu lượng và chi tiết lỗi. Xóa access token và dữ liệu khách hàng trước khi gửi.

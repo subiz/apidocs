@@ -1,32 +1,72 @@
 ---
-sourceHash: ccce05833bcb984aad6466f40b93e42b9a6599c494e90694460c539375975c73
-title: "Cập nhật khách hàng"
-description: "Cập nhật thuộc tính của khách hàng qua API."
+sourceHash: 9a0901b213140cccbad1ae77287050de210d2d6adfa1408d16f42452174a6925
+title: "Cập nhật thông tin khách hàng"
+description: "Thay đổi thuộc tính của khách hàng, như tên, email hoặc số điện thoại."
 section: "Users"
 order: 12
 status: "verified"
 endpointId: "users-update"
 ---
 
-## Trước khi bắt đầu
+Dùng endpoint này để giữ khách hàng đồng bộ với hệ thống của bạn, ví dụ sau khi khách hàng đổi email trong CRM.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+## Body yêu cầu
 
-## Cập nhật thuộc tính
+Chỉ gửi các thuộc tính bạn muốn thay đổi.
 
-Gửi mảng `attributes` gồm tên thuộc tính và giá trị đúng kiểu. Ví dụ cập nhật thuộc tính văn bản `fullname`. Không gửi toàn bộ bản sao hồ sơ đã lưu: gateway chọn các trường được hỗ trợ trước khi chuyển tiếp.
-
-| Trường | Kiểu | Mục đích |
+| Trường | Kiểu | Mô tả |
 | --- | --- | --- |
-| `uid` trong đường dẫn | string | Khách hàng cần cập nhật. |
-| `attributes` | array | Tên thuộc tính và giá trị. |
+| `uid` (đường dẫn) | string | ID user Subiz. |
+| `attributes` | array | Các thuộc tính cần thay đổi. Mỗi phần tử có `key` và một giá trị. |
+| `attributes[].key` | string | Khóa thuộc tính, như `fullname`. Xem [Thuộc tính thường dùng](/docs/vi/api-reference/users/create#thuộc-tính-thường-dùng). |
+| `attributes[].text` | string | Giá trị mới cho thuộc tính văn bản. Dùng `number`, `boolean` hoặc `datetime` cho kiểu khác; xem [Kiểu giá trị](/docs/vi/users/format#kiểu-giá-trị). |
 
-Handler cũng hỗ trợ các trường định danh và phụ trách; ví dụ này chỉ cập nhật một thuộc tính khách hàng. Thông tin xác thực loại user bị giới hạn trong danh tính của chính user đó.
+```json
+{
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex.new@example.com"
+    }
+  ]
+}
+```
 
-## Kiểm tra thay đổi
+Subiz chỉ đọc một vài trường từ body, chủ yếu là `attributes`. Các trường khác, như `id`, `created` hoặc `labels`, bị bỏ qua nên bạn không thể thay đổi chúng ở đây. Đừng gửi lại toàn bộ đối tượng khách hàng đã đọc trước đó.
 
-[Lấy thông tin khách hàng](/docs/vi/api-reference/users/retrieve) và so sánh thuộc tính đã cập nhật. Không giả định mọi trường trong schema User đều có thể ghi.
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng khách hàng đã cập nhật. Một số trường:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex.new@example.com"
+    }
+  ]
+}
+```
+
+Khi dữ liệu khách hàng thay đổi, webhook đã đăng ký nhận sự kiện `user_info_updated`. Các cập nhật liên tiếp nhanh có thể được gộp thành một sự kiện. Xem [Thông tin khách hàng được cập nhật](/docs/vi/webhooks/payloads#thông-tin-khách-hàng-được-cập-nhật).
+
+## Giới hạn và lỗi
+
+Một yêu cầu có thể chứa tối đa 1.000 thuộc tính, và mỗi giá trị tối đa 2.048 byte. Xem [Giới hạn thuộc tính khách hàng](/docs/vi/get-started/usage-limits#giới-hạn-thuộc-tính-khách-hàng).
+
+`uid` không hợp lệ sẽ trả lỗi. Nếu chỉ có định danh kênh của khách hàng, trước tiên lấy ID user bằng [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity). Xem [Xử lý lỗi](/docs/vi/get-started/errors) để biết định dạng lỗi.
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_UID` bằng ID user và `YOUR_ACCESS_TOKEN` bằng token của bạn.

@@ -1,0 +1,186 @@
+---
+sourceHash: dc8d8d8d6575a483c5d8f63b208f14a252c4ed81c3c69116aeaa827e46553bf2
+title: "Định dạng đơn hàng"
+description: "Hiểu đối tượng đơn hàng: mặt hàng, khách hàng, giao hàng, số tiền và trạng thái."
+section: "Orders"
+order: 40
+status: "verified"
+apiVersions: ["4.0"]
+---
+
+`Order` ghi lại những gì khách hàng đã mua: mặt hàng, giá, thông tin giao hàng, thanh toán và trạng thái. Trang này mô tả đối tượng đơn hàng và các đối tượng lồng bên trong. Mọi ID và giá trị bên dưới chỉ mang tính minh họa.
+
+Để làm việc với đơn hàng, xem [Tạo đơn hàng](/docs/vi/api-reference/orders/create), [Lấy danh sách đơn hàng](/docs/vi/api-reference/orders/list), [Lấy thông tin đơn hàng](/docs/vi/api-reference/orders/retrieve) và [Cập nhật đơn hàng](/docs/vi/api-reference/orders/update).
+
+## Đơn hàng
+
+Một số trường của `Order`:
+
+```json
+{
+  "id": "order_example",
+  "account_id": "account_example",
+  "number": "1001",
+  "status": "open",
+  "payment_status": "unpaid",
+  "currency": "VND",
+  "user": {
+    "id": "user_example"
+  },
+  "items": [
+    {
+      "id": "item_example",
+      "quantity": 2,
+      "product": {
+        "id": "product_example",
+        "name": "Ceramic mug",
+        "sku": "MUG-01",
+        "price": 120000
+      },
+      "total": 240000
+    }
+  ],
+  "shipping": {
+    "address": {
+      "fullname": "Alex Example",
+      "phone": "+84900000000",
+      "address": "12 Example Street",
+      "district": "District 1",
+      "region": "Ho Chi Minh City",
+      "country_code": "VN"
+    },
+    "nominal_fee": 30000
+  },
+  "subtotal": 240000,
+  "total": 270000,
+  "payment_made": 0,
+  "note": "Please deliver after 5 pm.",
+  "related_conversations": [
+    "conversation_example"
+  ],
+  "created": 1763107200000,
+  "updated": 1763107200000
+}
+```
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `id` | string | ID đơn hàng Subiz. |
+| `number` | string | Mã đơn hàng dễ đọc. |
+| `user` | object | Khách hàng đặt đơn. Xem [Định dạng khách hàng và thuộc tính](/docs/vi/users/format). |
+| `items` | array | Sản phẩm trong đơn. Xem [Mặt hàng trong đơn](#mặt-hàng-trong-đơn). |
+| `shipping` | object | Địa chỉ và phí giao hàng. Xem [Giao hàng](#giao-hàng). |
+| `currency` | string | Đơn vị tiền tệ của mọi số tiền trong đơn. Rỗng nghĩa là tiền tệ gốc của tài khoản. |
+| `status` | string | Trạng thái đơn. Xem [Trạng thái](#trạng-thái). Đơn mới mặc định là `open`. |
+| `payment_status` | string | `unpaid` hoặc `paid`. Được tính từ các khoản thanh toán đã ghi nhận trên đơn. |
+| `note` | string | Ghi chú hiển thị trên đơn. |
+| `private_note` | string | Ghi chú nội bộ cho nhân viên. |
+| `related_conversations` | array | ID các hội thoại liên kết với đơn này. |
+| `source_id` | string | ID của đơn trong hệ thống nguồn của bạn, nếu có. |
+| `fields` | object | Trường bổ sung dạng cặp khóa–giá trị kiểu chuỗi. |
+| `is_draft` | boolean | `true` với đơn nháp. |
+| `created`, `updated` | integer | Dấu thời gian Unix tính bằng mili giây. |
+
+Trường rỗng bị lược bỏ, và đối tượng có nhiều trường hơn ví dụ.
+
+## Mặt hàng trong đơn
+
+Mỗi phần tử trong `items` là một dòng của đơn:
+
+```json
+{
+  "id": "item_example",
+  "quantity": 2,
+  "product": {
+    "id": "product_example",
+    "name": "Ceramic mug",
+    "sku": "MUG-01",
+    "price": 120000
+  },
+  "discount_type": "percentage",
+  "discount_percentage": 1000,
+  "total": 216000
+}
+```
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `quantity` | integer | Số lượng. |
+| `product` | object | Bản sao sản phẩm tại thời điểm đặt đơn, gồm cả `price`. |
+| `name`, `sku` | string | Tên và SKU của mặt hàng, với mặt hàng không liên kết sản phẩm. |
+| `discount_type` | string | `amount` hoặc `percentage`. |
+| `discount_amount` | number | Chiết khấu cho dòng này, khi `discount_type` là `amount`. |
+| `discount_percentage` | integer | Chiết khấu cho dòng này, khi `discount_type` là `percentage`. Nhân 100: `1000` nghĩa là 10%. |
+| `total` | number | Thành tiền của dòng: số lượng × giá, trừ chiết khấu dòng. Do Subiz tính. |
+| `note` | string | Ghi chú cho dòng này. |
+
+Sản phẩm bên trong mặt hàng là một bản sao. Thay đổi sản phẩm sau đó không làm thay đổi các đơn đã có. Mặt hàng không có `product` không được tính vào tổng tiền của đơn.
+
+## Giao hàng
+
+`shipping` chứa thông tin giao hàng:
+
+```json
+{
+  "address": {
+    "fullname": "Alex Example",
+    "phone": "+84900000000",
+    "street": "12 Example Street",
+    "ward": "Ben Nghe",
+    "district": "District 1",
+    "region": "Ho Chi Minh City",
+    "country_code": "VN"
+  },
+  "nominal_fee": 30000,
+  "note": "Call before delivery.",
+  "weight": 500
+}
+```
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `address` | object | Tên, số điện thoại và địa chỉ người nhận. `region` là tỉnh hoặc thành phố. |
+| `nominal_fee` | number | Phí giao hàng tính vào tổng tiền của đơn. |
+| `note` | string | Hướng dẫn giao hàng. |
+| `weight` | integer | Khối lượng kiện hàng tính bằng gam. |
+| `length`, `width`, `height` | integer | Kích thước kiện hàng tính bằng centimet. |
+| `shipping_code` | string | Mã vận đơn của đơn vị vận chuyển. |
+
+## Số tiền
+
+Mọi số tiền là số theo `currency` của đơn. Subiz tính `subtotal`, `total_tax` và `total` từ mặt hàng, chiết khấu, phí giao hàng và khoản điều chỉnh.
+
+| Trường | Mô tả |
+| --- | --- |
+| `subtotal` | Tổng thành tiền các dòng, sau chiết khấu dòng. |
+| `total_tax` | Tổng thuế. |
+| `discount_type`, `discount_amount`, `discount_percentage` | Chiết khấu cấp đơn, áp dụng sau thuế. Phần trăm được nhân 100. |
+| `adjustment` | Khoản cộng thêm vào tổng tiền. |
+| `total` | Số tiền khách hàng phải trả. |
+| `payment_made` | Số tiền đã thanh toán đến hiện tại. |
+
+Dùng chiết khấu dòng cho chiết khấu trước thuế, và chiết khấu cấp đơn cho chiết khấu sau thuế.
+
+Thuế suất dùng thang khác: `Tax` với `percentage: 2000` nghĩa là 20%.
+
+Các trường bắt đầu bằng `fpv_`, như `fpv_total`, là bản sao số tiền dạng số dấu phẩy cố định do Subiz tính. Hãy đọc các trường số tiền thông thường, và không gửi trường `fpv_`.
+
+## Trạng thái
+
+`status` mô tả vị trí của đơn trong quy trình bán hàng:
+
+| Giá trị | Ý nghĩa |
+| --- | --- |
+| `open` | Đơn mới. |
+| `unconfirmed` | Chưa được doanh nghiệp và khách hàng thống nhất. |
+| `closed` | Đơn đã chốt (thành công). |
+| `canceled` | Đơn đã hủy (thất bại). `cancellation_note` và `cancellation_code` giải thích lý do. |
+
+`payment_status` và `shipping_status` được theo dõi riêng. Đơn có thể `closed` mà vẫn `unpaid`.
+
+## Đọc đơn hàng an toàn
+
+- **Kiểm tra `currency`** trước khi so sánh hoặc cộng số tiền giữa các đơn.
+- **Lường trước giá trị mặc định bị lược bỏ.** Chuỗi rỗng, `0` và `false` bị lược khỏi JSON. Thiếu `payment_made` nghĩa là chưa thanh toán gì.
+- **Dùng `user.id`** để liên kết đơn với khách hàng, và `related_conversations` để tìm hội thoại.
+- **Bỏ qua trường và giá trị chưa biết.** Bỏ qua các trường và giá trị trạng thái mà tích hợp của bạn không nhận ra.

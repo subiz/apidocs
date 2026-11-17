@@ -1,0 +1,236 @@
+---
+sourceHash: af01e342eeacd593a42b641bca891d83561477e6d65b75d39f74d93c3781940e
+title: "Tệp đính kèm"
+description: "Thêm ảnh, video, âm thanh, tệp và nội dung tương tác vào tin nhắn."
+section: "Messages"
+order: 30
+status: "verified"
+apiVersions: ["4.0", "4.1"]
+---
+
+Tệp đính kèm nằm trong mảng `attachments` của tin nhắn, cạnh `text` hoặc `block`. Mỗi phần tử là một đối tượng `Attachment`.
+
+## Chọn loại đính kèm
+
+Với media và tài liệu, dùng **`type: "file"`**. `mimetype` phân biệt ảnh, video, đoạn âm thanh hay tài liệu; không dùng `type: "image"` hoặc `type: "video"` cho các ví dụ tệp này.
+
+| Nội dung | `type` của đính kèm | Trường nội dung |
+| --- | --- | --- |
+| Ảnh | `file` | `mimetype: "image/jpeg"` hoặc kiểu MIME ảnh khác. |
+| Video | `file` | Ví dụ `mimetype: "video/mp4"`. |
+| Âm thanh | `file` | Ví dụ `mimetype: "audio/mpeg"`. |
+| Tài liệu | `file` | Ví dụ `mimetype: "application/pdf"`. |
+| Xem trước liên kết | `link` | `url`, `title` và `description`. |
+| Nút bấm | `button` | Mảng `buttons`. |
+| Trả lời nhanh | `quick_replies` | Mảng `quick_replies`. |
+| Thẻ | `generic` | Mảng `elements`. |
+
+Đây là các dạng đính kèm phổ biến được mô hình và trình hiển thị của Subiz hỗ trợ. Kênh đích có thể hạn chế định dạng, hành động và media. Các ví dụ dùng metadata giả lập và URL mẫu; hãy thay bằng tài nguyên thật trước khi gửi.
+
+## Trường của tệp
+
+| Trường | Ý nghĩa |
+| --- | --- |
+| `url` | URL nguồn của tệp. Dùng URL mà Subiz tải trực tiếp được. |
+| `mimetype` | Kiểu MIME, như `image/jpeg`. Phải khớp với nội dung thực của tệp. |
+| `name` | Tên tệp, kèm phần mở rộng nếu có. |
+| `size` | Dung lượng tệp tính bằng byte. |
+| `thumbnail_url` | URL ảnh thu nhỏ, nếu có. |
+| `width`, `height` | Kích thước ảnh tính bằng pixel, nếu có. |
+| `duration` | Thời lượng âm thanh hoặc video tính bằng giây, nếu có. |
+
+Có thể bỏ metadata tùy chọn khi không biết. Subiz xử lý tệp đính kèm và có thể thay URL nguồn cùng metadata bằng thông tin tệp đã lưu. Hãy giữ các giá trị được trả về thay vì giả định phản hồi giống hệt yêu cầu.
+
+## Ảnh
+
+Một tệp đính kèm ảnh JPEG:
+
+```json
+{
+  "type": "file",
+  "mimetype": "image/jpeg",
+  "url": "https://example.com/photo.jpg",
+  "name": "photo.jpg",
+  "size": 245760,
+  "width": 1200,
+  "height": 800
+}
+```
+
+Tệp PNG hoặc GIF dùng đúng kiểu MIME của chúng, như `image/png` hoặc `image/gif`. Việc hiển thị và hỗ trợ ảnh động phụ thuộc vào kênh đích.
+
+## Video
+
+Một tệp đính kèm video MP4 có ảnh xem trước:
+
+```json
+{
+  "type": "file",
+  "mimetype": "video/mp4",
+  "url": "https://example.com/demo.mp4",
+  "name": "demo.mp4",
+  "thumbnail_url": "https://example.com/demo-preview.jpg",
+  "size": 5242880,
+  "duration": 30
+}
+```
+
+`thumbnail_url` là ảnh xem trước, không phải nguồn video. Bản thân video đặt trong `url`. Hỗ trợ định dạng và codec phụ thuộc vào kênh và trình phát.
+
+## Âm thanh
+
+Một tệp đính kèm âm thanh MP3:
+
+```json
+{
+  "type": "file",
+  "mimetype": "audio/mpeg",
+  "url": "https://example.com/voice.mp3",
+  "name": "voice.mp3",
+  "size": 262144,
+  "duration": 12
+}
+```
+
+`duration` tính bằng giây, khác với dấu thời gian mili giây của sự kiện. Các tệp âm thanh khác phải dùng đúng kiểu MIME.
+
+## Tài liệu và tệp khác
+
+Một tệp đính kèm PDF có thể tải xuống:
+
+```json
+{
+  "type": "file",
+  "mimetype": "application/pdf",
+  "url": "https://example.com/guide.pdf",
+  "name": "guide.pdf",
+  "size": 2048
+}
+```
+
+Với tài liệu khác, giữ `type: "file"` và dùng kiểu MIME cùng tên tệp tương ứng. Tài liệu đính kèm không phải là một nút block.
+
+## Xem trước liên kết
+
+Dùng `link` cho một khung xem trước riêng thay vì liên kết nằm trong văn bản có định dạng:
+
+```json
+{
+  "type": "link",
+  "url": "https://example.com/delivery",
+  "title": "Delivery guide",
+  "description": "Delivery options and estimated timelines."
+}
+```
+
+Với liên kết có nhãn nằm trong câu, hãy dùng [liên kết trong block](/docs/vi/messages/formats#liên-kết-trong-block).
+
+## Nút bấm
+
+Đính kèm `button` chứa mảng `buttons`. Ví dụ này dùng một `MessageButton` với `type: "url_button"`:
+
+```json
+{
+  "type": "button",
+  "buttons": [
+    {
+      "type": "url_button",
+      "title": "View delivery guide",
+      "url": "https://example.com/delivery"
+    }
+  ]
+}
+```
+
+Nhãn hiển thị của nút là `title`, và đích đến là `url`. Việc hỗ trợ hành động của nút phụ thuộc vào kênh.
+
+## Trả lời nhanh
+
+Đính kèm `quick_replies` đưa ra các câu trả lời gợi ý. Mỗi `QuickReply` có `title` hiển thị; `payload` mang giá trị riêng của ứng dụng bạn:
+
+```json
+{
+  "type": "quick_replies",
+  "quick_replies": [
+    {
+      "content_type": "text",
+      "title": "Track my order",
+      "payload": "track_order"
+    },
+    {
+      "content_type": "text",
+      "title": "Talk to support",
+      "payload": "contact_support"
+    }
+  ]
+}
+```
+
+Các chuỗi payload này là giá trị ví dụ cho tích hợp của bạn, không phải lệnh có sẵn của Subiz. Việc nhận và xử lý lựa chọn phụ thuộc vào kênh; đừng giả định nó tới dưới dạng một tin nhắn văn bản thông thường.
+
+## Thẻ
+
+Đính kèm `generic` chứa mảng `elements`. Mỗi `GenericElementTemplate` có thể có tiêu đề, phụ đề, ảnh và nút bấm:
+
+```json
+{
+  "type": "generic",
+  "elements": [
+    {
+      "title": "Delivery options",
+      "subtitle": "Choose the delivery service for your order.",
+      "image_url": "https://example.com/delivery.jpg",
+      "buttons": [
+        {
+          "type": "url_button",
+          "title": "See options",
+          "url": "https://example.com/delivery"
+        }
+      ]
+    }
+  ]
+}
+```
+
+Schema hỗ trợ nhiều phần tử, nhưng kênh đích quyết định nhận bao nhiêu và hiển thị ra sao. Trang này không định nghĩa giới hạn chung về số thẻ hay số nút.
+
+## Gửi tệp đính kèm
+
+Đặt đính kèm trong `data.message.attachments` và gửi vào một hội thoại có sẵn. Văn bản và ảnh thuộc cùng một tin nhắn:
+
+```http
+POST https://api.subiz.com.vn/4.1/conversations/YOUR_CONVERSATION_ID/messages
+Authorization: Bearer YOUR_ACCESS_TOKEN
+Content-Type: application/json
+
+{
+  "type": "message_sent",
+  "data": {
+    "message": {
+      "format": "plaintext",
+      "text": "Here is the product photo.",
+      "attachments": [
+        {
+          "type": "file",
+          "mimetype": "image/jpeg",
+          "url": "https://example.com/photo.jpg",
+          "name": "photo.jpg",
+          "size": 245760,
+          "width": 1200,
+          "height": 800
+        }
+      ]
+    }
+  }
+}
+```
+
+URL trong ví dụ là URL mẫu. Dùng URL HTTPS tải được, không dùng đường dẫn cục bộ, URL `blob:` của trình duyệt hoặc trang cần đăng nhập trên trình duyệt của bạn. Kiểm tra tệp thực sự có sẵn trước khi gửi.
+
+Xem [Gửi tin nhắn vào hội thoại](/docs/vi/api-reference/messages/send) cho endpoint và [Định dạng tin nhắn](/docs/vi/messages/formats) để kết hợp đính kèm với văn bản hoặc block.
+
+## Đọc dữ liệu đính kèm
+
+Xử lý mọi phần tử trong `attachments`. Với tệp, xem `mimetype`; với đính kèm có cấu trúc, xem `type` trước khi đọc trường lồng nhau. Tin nhắn không có văn bản vẫn có thể chứa ảnh, âm thanh hoặc tài liệu.
+
+Schema đầy đủ còn có các loại đính kèm riêng theo kênh và theo ứng dụng. Hãy giữ nguyên các loại mà tích hợp của bạn không nhận ra thay vì coi mọi đính kèm là tệp. Tham khảo [dữ liệu webhook](/docs/vi/webhooks/payloads) khi xử lý sự kiện tin nhắn.

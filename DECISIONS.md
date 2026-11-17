@@ -174,3 +174,11 @@ By user request, add an Agents / Nhân viên group after Customers (Users) with 
 ## D-0047 Publish the Products pages like Orders
 
 By user request, replace the Products outline with five English pages: Product format (`products/format`), Create a product, List products, Get product details, and Update a product, verified against `api`, `proder`, and `header`. Deletion, imports, feeds, and crawling stay out of scope. Vietnamese translation pending (D-0031). This supersedes D-0025 for Products.
+
+## D-0048 Publish Vietnamese for every page
+
+By user request, every English page has a reviewed Vietnamese counterpart. This ends the English-only iteration in D-0031 and the D-0026 webhook exception, and restores D-0015. Vietnamese pages translate prose and keep code, JSON, field names, and API semantics identical; links point to `/docs/vi/...` with Vietnamese heading anchors. UI labels in steps use the Subiz app's Vietnamese strings. Future English changes must update the Vietnamese page in the same change, or the translation check reports it stale.
+
+## D-0049 Do not document ETag behavior
+
+By user request, public pages do not mention `ETag`, `If-None-Match`, or `304 Not Modified` responses, in either language. These are optional optimizations, not required for integration. Evidence stays in SOURCES.md only.

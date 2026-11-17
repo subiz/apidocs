@@ -1,0 +1,61 @@
+---
+sourceHash: 5504c671c64b920f9b126a2e83cd9644670bc8d4faa83de5dba9c73b7119bd4c
+title: "Lấy thông tin nhân viên"
+description: "Lấy một nhân viên trong tài khoản theo ID nhân viên."
+section: "Agents"
+order: 32
+status: "verified"
+endpointId: "agents-retrieve"
+---
+
+Dùng endpoint này để lấy một nhân viên theo ID, ví dụ để hiển thị tên của `assignee` trong hội thoại.
+
+Đặt ID nhân viên trong đường dẫn. Tài khoản được lấy từ access token. Không có body.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng một đối tượng `Agent`:
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "type": "agent",
+  "state": "active",
+  "fullname": "Sam Example",
+  "email": "sam@example.com",
+  "avatar_url": "https://example.com/avatars/sam.png",
+  "scopes": [
+    "supervisor"
+  ]
+}
+```
+
+Ví dụ này hiển thị một số trường. Xem [Định dạng nhân viên](/docs/vi/agents/format) để biết mọi trường.
+
+## Trường trả về phụ thuộc vào quyền
+
+Nếu nhân viên sở hữu token có quyền xem nhân viên trong tài khoản, phản hồi chứa đầy đủ đối tượng nhân viên.
+
+Nếu không, phản hồi chỉ chứa các trường sau:
+
+```json
+{
+  "id": "agent_example",
+  "account_id": "account_example",
+  "fullname": "Sam Example",
+  "avatar_url": "https://example.com/avatars/sam.png"
+}
+```
+
+Dùng token có quyền xem nhân viên nếu tích hợp của bạn cần `state`, `email` hoặc các trường khác.
+
+Nếu không có nhân viên nào có ID này, yêu cầu trả lỗi. Xem [Xử lý lỗi](/docs/vi/get-started/errors).
+
+## Đường dẫn khác
+
+`GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/agents/YOUR_AGID` hoạt động giống hệt.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_AGID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

@@ -1,33 +1,64 @@
 ---
-sourceHash: b4dcceff8b5697adc3aabb00423781006e4e9f487330fcbcbca66efe3a71b213
-title: "Mời nhân viên"
-description: "Mời nhân viên hiện có vào hội thoại."
+sourceHash: 794cf39b018788ad2251016628e5d0ddfab1b5e8d0252d7a0bf0fa3cb63bf43a
+title: "Mời nhân viên tham gia"
+description: "Thêm một nhân viên có sẵn vào hội thoại với vai trò người tham gia."
 section: "Conversations"
 order: 23
 status: "verified"
 endpointId: "conversations-invite-agent"
 ---
 
-## Trước khi bắt đầu
+Dùng endpoint này để đưa một nhân viên khác vào hội thoại, ví dụ một chuyên viên cần hỗ trợ. Nhân viên đó phải đã có tài khoản Subiz.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+## Mời, giao hay tự động phân bổ?
 
-## Thêm nhân viên vào hội thoại
+| Bạn muốn | Dùng |
+| --- | --- |
+| Thêm nhân viên làm người tham gia | Endpoint này. |
+| Giao cho nhân viên phụ trách hội thoại | [Giao nhân viên](/docs/vi/api-reference/conversations/assign-agent). |
+| Thêm nhân viên mới vào tài khoản | Ứng dụng Subiz. Endpoint này không tạo nhân viên hay gửi lời mời tham gia tài khoản. |
+| Để Subiz tự chọn nhân viên | Phân bổ tự động. Endpoint này luôn dùng đúng nhân viên bạn chỉ định. |
 
-Thao tác này mời nhân viên đã có vào hội thoại. Nó không tạo tài khoản nhân viên hay gửi lời mời tham gia tài khoản.
+Mời nhân viên không thay đổi `assignee` của hội thoại.
 
-| Trường | Kiểu | Mục đích |
+## Body yêu cầu
+
+Body là một thành viên hội thoại.
+
+| Trường | Kiểu | Mô tả |
 | --- | --- | --- |
-| `cid` trong đường dẫn | string | Hội thoại đích. |
+| `cid` (đường dẫn) | string | ID hội thoại. |
 | `type` | string | Đặt là `agent`. |
-| `id` | string | ID nhân viên Subiz đã có. |
+| `id` | string | ID của nhân viên có sẵn cần mời. |
 
-Gateway đặt ngữ cảnh tài khoản và hội thoại. `JoinConversation` gửi sự kiện `conversation_invited` với thành viên được yêu cầu.
+```json
+{
+  "type": "agent",
+  "id": "agent_example"
+}
+```
 
-## Kết quả
+Subiz lấy tài khoản từ [access token](/docs/vi/get-started/authentication) và hội thoại từ đường dẫn.
 
-Dịch vụ trả đối tượng rỗng khi thành công. Đọc lại hội thoại để kiểm tra thành viên. Mời tham gia và đặt trường `assignee` là hai thao tác riêng; xem [Phân công nhân viên](/docs/vi/api-reference/conversations/assign-agent).
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng một đối tượng rỗng:
+
+```json
+{}
+```
+
+Subiz ghi một sự kiện `conversation_invited` vào hội thoại. Để xác nhận kết quả, [lấy thông tin hội thoại](/docs/vi/api-reference/conversations/retrieve) và kiểm tra nhân viên đã có trong `members`:
+
+```json
+{
+  "id": "agent_example",
+  "type": "agent",
+  "conversation_id": "conversation_example",
+  "membership": "active"
+}
+```
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_CID` bằng ID hội thoại, `YOUR_AGENT_ID` bằng ID nhân viên và `YOUR_ACCESS_TOKEN` bằng token của bạn.

@@ -1,34 +1,96 @@
 ---
-sourceHash: 088282baebd4a9dbd2a8e58bed1595f0d1d56de9c15c70730c2bdb4145d28ec1
+sourceHash: 7fc6803d36791d842e645db273fce2d090a51b7e349b79c331874c98d541b623
 title: "Tạo khách hàng"
-description: "Tạo hồ sơ khách hàng qua API Subiz."
+description: "Tạo hồ sơ khách hàng với thuộc tính và định danh kênh tùy chọn."
 section: "Users"
 order: 10
 status: "verified"
 endpointId: "users-create"
 ---
 
+Trong API, khách hàng là một **user**. Agent là nhân viên của bạn và không được tạo ở đây.
+
+Dùng endpoint này để thêm khách hàng từ hệ thống của bạn, như một liên hệ trong CRM hoặc người mới đăng ký. Nếu khách hàng đến từ kênh đã kết nối như Facebook hoặc Zalo, hãy dùng [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity) để tránh trùng lặp.
+
 ## Trước khi bắt đầu
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+- Lấy [Bearer access token](/docs/vi/get-started/authentication). Khách hàng được tạo trong tài khoản của token.
+- Dùng khóa thuộc tính đã định nghĩa trong tài khoản, với giá trị đúng kiểu.
 
-## Hồ sơ khách hàng
+## Body yêu cầu
 
-User đại diện cho khách hàng, không phải nhân viên. Gateway nhận các thuộc tính khách hàng và các trường định danh kênh tùy chọn.
-
-| Trường | Kiểu | Mục đích |
+| Trường | Kiểu | Mô tả |
 | --- | --- | --- |
-| `attributes` | array | Các thuộc tính, ví dụ `{"key":"fullname","text":"Alex Example"}`. |
-| `channel` | string | Ngữ cảnh kênh, không bắt buộc. |
-| `channel_source` | string | Nguồn trong kênh, không bắt buộc. |
-| `profile_id` | string | ID hồ sơ bên ngoài, không bắt buộc. |
+| `attributes` | array | Dữ liệu khách hàng, mỗi phần tử là một thuộc tính. |
+| `attributes[].key` | string | Khóa thuộc tính, như `fullname`. |
+| `attributes[].text` | string | Giá trị cho thuộc tính văn bản. Dùng `number`, `boolean` hoặc `datetime` cho các kiểu khác. |
+| `channel` | string | Tùy chọn. Kênh của định danh bên ngoài, như `facebook`. |
+| `channel_source` | string | Tùy chọn. Trang hoặc tài khoản đã kết nối trên kênh đó. |
+| `profile_id` | string | Tùy chọn. ID của khách hàng trên kênh đó. |
 
-Dùng tên thuộc tính đã cấu hình và đúng kiểu giá trị. Gateway xác định tài khoản qua xác thực và chỉ chuyển các trường này đến dịch vụ khách hàng.
+Các trường khác, như `id` hoặc `account_id`, bị bỏ qua.
 
-## Kết quả
+```json
+{
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex@example.com"
+    },
+    {
+      "key": "phones",
+      "text": "+84900000000"
+    }
+  ]
+}
+```
 
-Gateway trả khách hàng được tạo bởi `CreateUser2`. Lưu `id` để dùng trong các yêu cầu sau. Để sửa khách hàng đã có, dùng [Cập nhật khách hàng](/docs/vi/api-reference/users/update), không tạo hồ sơ lặp lại.
+## Thuộc tính thường dùng
+
+Các khóa có sẵn này tồn tại trong mọi tài khoản. Xem [Định dạng khách hàng và thuộc tính](/docs/vi/users/format) để biết kiểu giá trị và cách lưu nhiều giá trị.
+
+| Khóa | Kiểu | Mô tả |
+| --- | --- | --- |
+| `fullname` | text | Họ và tên. |
+| `display_name` | text | Tên hiển thị. |
+| `emails` | text | Địa chỉ email. |
+| `phones` | text | Số điện thoại. |
+| `address`, `city`, `district` | text | Địa chỉ. |
+| `gender` | text | Giới tính. |
+| `job_title` | text | Chức danh. |
+| `birthdate` | datetime | Ngày sinh. |
+
+Một số thuộc tính có sẵn, như `created` hoặc `last_message_sent`, do Subiz đặt và là chỉ đọc.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng khách hàng mới. Một số trường:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    }
+  ]
+}
+```
+
+Lưu lại `id`. Bạn cần nó để [đọc](/docs/vi/api-reference/users/retrieve), [cập nhật](/docs/vi/api-reference/users/update) hoặc [nhắn tin](/docs/vi/api-reference/messages/send-to-user) cho khách hàng này.
+
+Mỗi yêu cầu tạo một bản ghi mới. Để thay đổi khách hàng đã có, dùng [Cập nhật thông tin khách hàng](/docs/vi/api-reference/users/update) thay vì tạo lại.
+
+## Giới hạn và lỗi
+
+Một yêu cầu có thể chứa tối đa 1.000 thuộc tính, và mỗi giá trị tối đa 2.048 byte. Xem [Giới hạn thuộc tính khách hàng](/docs/vi/get-started/usage-limits#giới-hạn-thuộc-tính-khách-hàng) và [Xử lý lỗi](/docs/vi/get-started/errors).
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_ACCESS_TOKEN` bằng token của bạn.

@@ -1,0 +1,81 @@
+---
+sourceHash: 05370c8c99076f592ffb3a32d699e834d7d181104fa20b9df67d1f17c2e6e21f
+title: "Lấy danh sách đơn hàng"
+description: "Tìm đơn hàng theo khách hàng, trạng thái, ngày và nhiều tiêu chí khác."
+section: "Orders"
+order: 42
+status: "verified"
+endpointId: "orders-list"
+---
+
+Dùng endpoint này để tìm đơn hàng, ví dụ mọi đơn đang mở của một khách hàng. Bộ lọc đặt trong body JSON.
+
+## Bộ lọc
+
+Mọi bộ lọc đều tùy chọn và được kết hợp theo điều kiện AND.
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `user_id` | string | Đơn của khách hàng này. |
+| `status` | string | Đơn có trạng thái này. |
+| `statuses`, `not_statuses` | array | Đơn có, hoặc không có, một trong các trạng thái này. |
+| `payment_status` | string | `paid` hoặc `unpaid`. |
+| `shipping_statuses`, `not_shipping_statuses` | array | Lọc theo trạng thái giao hàng. |
+| `query` | string | Tìm văn bản trong ID, mã đơn, ghi chú, mặt hàng, và tên, email, số điện thoại của khách hàng. |
+| `created_hour_from`, `created_hour_to` | integer | Khoảng thời gian tạo, tính bằng **giờ** kể từ Unix epoch (số giây Unix ÷ 3600). Bao gồm cả hai đầu. |
+| `is_draft` | boolean | `true` chỉ trả đơn nháp. |
+| `tags` | array | Đơn có một trong các ID thẻ này. `["no"]` trả các đơn không có thẻ. |
+| `salesperson` | array | Đơn có nhân viên bán hàng là một trong các ID nhân viên này. `["no"]` trả các đơn chưa có nhân viên bán hàng. |
+| `include_deleted` | boolean | Bao gồm đơn đã xóa. Mặc định `false`. |
+
+## Sắp xếp và phân trang
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `order_by` | string | Trường và chiều sắp xếp, như `created desc`. Trường: `created`, `issue_date`, `due_date`, `assigned`, `total`. Chiều: `asc` hoặc `desc` (mặc định). |
+| `limit` | integer | Số đơn mỗi trang. Mặc định và tối đa: 200. |
+| `offset` | integer | Số đơn cần bỏ qua. |
+
+Để lật trang, tăng `offset` thêm `limit` cho tới khi đã đọc đủ `total` đơn. Đơn đã hủy và đã xóa luôn được xếp sau các đơn khác.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200`:
+
+```json
+{
+  "orders": [
+    {
+      "id": "order_example",
+      "status": "open",
+      "payment_status": "unpaid",
+      "currency": "VND",
+      "user": {
+        "id": "user_example"
+      },
+      "total": 270000,
+      "created": 1763107200000
+    }
+  ],
+  "total": 1,
+  "total_value": 270000
+}
+```
+
+| Trường | Mô tả |
+| --- | --- |
+| `orders` | Các đơn trong trang này. Bị lược bỏ khi trang rỗng. |
+| `total` | Số đơn khớp bộ lọc, trên mọi trang. |
+| `total_value` | Tổng `total` của mọi đơn khớp bộ lọc. Các loại tiền tệ khác nhau được cộng như số thông thường. |
+
+## Ai thấy những đơn nào
+
+Kết quả phụ thuộc vào nhân viên sở hữu token. Nhân viên có quyền xem mọi đơn sẽ nhận mọi kết quả khớp. Nhân viên khác chỉ nhận các đơn mà họ là `salesperson` hoặc được giao ở một giai đoạn pipeline. Dùng token có quyền xem toàn bộ đơn hàng cho tích hợp.
+
+## Dùng GET
+
+`GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/orders` nhận các bộ lọc tương tự dưới dạng tham số query, như `?user_id=YOUR_USER_ID&limit=50`. Dạng POST dễ dùng hơn với bộ lọc kiểu mảng.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_ACCID`, `YOUR_USER_ID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

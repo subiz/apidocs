@@ -1,0 +1,53 @@
+---
+sourceHash: e9d369bc8f1298a19ddb0c5147e6286a2a1a23f6e59c2ea67ecc213533afabe7
+title: "Lấy danh sách nhân viên"
+description: "Lấy các nhân viên trong tài khoản, ví dụ để tìm ID nhân viên."
+section: "Agents"
+order: 31
+status: "verified"
+endpointId: "agents-list"
+---
+
+Dùng endpoint này để lấy các nhân viên trong tài khoản, ví dụ để tìm ID nhân viên dùng khi [mời nhân viên](/docs/vi/api-reference/conversations/invite-agent) hoặc [giao nhân viên](/docs/vi/api-reference/conversations/assign-agent).
+
+Tài khoản được lấy từ access token. Không có tham số và không có body.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng một **mảng** JSON các nhân viên, không phải một đối tượng:
+
+```json
+[
+  {
+    "id": "agent_example",
+    "account_id": "account_example",
+    "type": "agent",
+    "state": "active",
+    "fullname": "Sam Example",
+    "email": "sam@example.com",
+    "scopes": [
+      "supervisor"
+    ]
+  },
+  {
+    "id": "agent_second_example",
+    "account_id": "account_example",
+    "type": "agent",
+    "state": "pending",
+    "fullname": "Jamie Example",
+    "email": "jamie@example.com"
+  }
+]
+```
+
+Ví dụ này hiển thị một số trường. Xem [Định dạng nhân viên](/docs/vi/agents/format) để biết mọi trường và giá trị `state`. Danh sách không phân trang.
+
+Lọc mảng trong code của bạn. Ví dụ, chỉ giữ nhân viên có `state` là `active` trước khi hiển thị làm lựa chọn để giao việc.
+
+## Đường dẫn khác
+
+`GET https://api.subiz.com.vn/4.0/agents` và `GET https://api.subiz.com.vn/4.0/accounts/YOUR_ACCID/agents` trả về cùng danh sách.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_ACCESS_TOKEN` bằng token của bạn.

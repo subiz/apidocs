@@ -1,48 +1,157 @@
 ---
-sourceHash: 5fee832c3bafaebeba4f0a8021a6733a44eb244d35cb535177091e632cbe5ca7
+sourceHash: 9005a3a9a164be26c2ceb99e6289f270b2cb2676d78133c8f8ccf67cd1a2d34f
 title: "Nhận sự kiện webhook"
-description: "Nhận, xác minh và xử lý sự kiện Subiz trong ứng dụng."
+description: "Tạo webhook trong Subiz, xác minh các lần gửi và xử lý sự kiện an toàn."
 section: "Webhooks"
 order: 40
 status: "verified"
 apiScope: "webhook"
 ---
 
-## Chuẩn bị
+Webhook gửi các thay đổi trong tài khoản Subiz tới máy chủ của bạn. Dùng webhook để đồng bộ khách hàng với CRM hoặc phản ứng với tin nhắn mới mà không cần liên tục gọi API.
 
-Dùng đăng ký webhook đã được cấu hình cho tích hợp và khóa bí mật dùng chung. Hướng dẫn này chỉ mô tả nhận sự kiện, không cung cấp API cấu hình hay quản lý webhook.
+## Tạo webhook trong Subiz
 
-## Định dạng chuyển phát
+Trước tiên, chuẩn bị một endpoint HTTPS công khai nhận `POST`, như `https://example.com/webhooks/subiz`. URL này thuộc ứng dụng của bạn.
 
-Subiz gửi HTTP POST với `Content-Type: application/json`. Body chứa mảng `events`. Xử lý mọi sự kiện trong lô; không giả định mỗi yêu cầu chỉ có một sự kiện.
+1. Đăng nhập đúng tài khoản Subiz và mở [cài đặt Webhook](https://app.subiz.com.vn/settings/webhooks).
+2. Nhấn **Tạo webhook**.
+3. Nhập URL nhận vào ô URL.
+4. Chọn **Tùy chỉnh sự kiện** và chọn các sự kiện bạn cần. Để đồng bộ khách hàng, chọn `user_created` và `user_info_updated`. Thêm `message_sent` để nhận tin nhắn. Bỏ chọn những sự kiện không cần.
+5. Giữ nguyên trạng thái bật gửi và nhấn **Tạo webhook**.
+6. Trong danh sách, nhấn **Chỉnh sửa** ở webhook vừa lưu. Sao chép **Mật khẩu** (secret) vào cấu hình máy chủ của bạn. Subiz tạo giá trị này khi tạo webhook; hãy dùng giá trị đã lưu, kể cả khi bạn đã nhập giá trị khác trong form tạo.
 
-| Header | Ý nghĩa |
+Giữ secret trên máy chủ của bạn. Nó tách biệt với API access token. Nếu không truy cập được phần cài đặt này, hãy nhờ quản trị viên Subiz cấp quyền webhook.
+
+Danh sách hiển thị webhook đã lưu. Khi máy nhận đã sẵn sàng, hãy cập nhật một khách hàng hoặc gửi một tin nhắn trong tài khoản đó và kiểm tra kết quả gửi. Chỉ các sự kiện đã chọn mới được gửi; tin nhắn sẽ không kích hoạt webhook chỉ đăng ký cập nhật khách hàng.
+
+## Nhận yêu cầu HTTP
+
+Subiz gửi một đối tượng JSON chứa mảng `events`. Hãy xử lý mọi phần tử: một yêu cầu có thể mang nhiều sự kiện.
+
+Yêu cầu này dùng giá trị giả lập. `SIGNATURE_HEX` là giá trị mẫu, không phải chữ ký hợp lệ.
+
+```http
+POST https://example.com/webhooks/subiz
+Content-Type: application/json
+User-Agent: Subiz-Hook/WEBHOOK_ID
+X-Subiz-Delivery: 42
+X-Hub-Signature-256: sha256=SIGNATURE_HEX
+
+{
+  "events": [
+    {
+      "id": "event_example_1",
+      "account_id": "account_example",
+      "created": 1794614400000,
+      "type": "message_sent",
+      "by": {
+        "id": "user_example",
+        "type": "user"
+      },
+      "data": {
+        "message": {
+          "conversation_id": "conversation_example",
+          "format": "plaintext",
+          "text": "Can you help with my order?"
+        }
+      }
+    }
+  ]
+}
+```
+
+| Header | Mục đích |
 | --- | --- |
-| `X-Hub-Signature-256` | Chữ ký HMAC-SHA256 của đúng các byte body gốc. |
-| `X-Subiz-Delivery` | ID lần chuyển phát, dùng để chẩn đoán. |
-| `User-Agent` | Bắt đầu bằng `Subiz-Hook/`; không dùng header này để xác thực. |
+| `Content-Type` | `application/json`. |
+| `User-Agent` | `Subiz-Hook/` theo sau là ID webhook. Không chứng minh được tính xác thực. |
+| `X-Subiz-Delivery` | Xác định một lần gửi trong webhook đó. Dùng để tra lỗi, không dùng để loại trùng sự kiện. |
+| `X-Hub-Signature-256` | Chữ ký HMAC-SHA256 của body thô. |
 
-Xem [Ví dụ payload sự kiện](/docs/vi/webhooks/payloads) để hiểu cấu trúc qua dữ liệu minh họa.
+Yêu cầu webhook dùng secret chung để xác minh, không dùng Bearer token để gọi Subiz API.
 
 ## Xác minh chữ ký
 
-Giữ nguyên các byte body trước khi phân tích JSON. Tính HMAC-SHA256 với khóa bí mật dùng chung. Header có dạng `sha256=<hex>`; trong giai đoạn chuyển đổi khóa, có thể có nhiều chuỗi hex phân cách bằng dấu phẩy sau một tiền tố duy nhất. So sánh với khóa tin cậy bằng phép so sánh thời gian hằng.
+**Xác minh trước khi phân tích hoặc xử lý sự kiện.** Subiz ký đúng các byte của body bằng HMAC-SHA256 và secret của bạn. Chuỗi băm là hệ thập lục phân chữ thường, không phải Base64.
 
-1. Từ chối yêu cầu nếu thiếu khóa bí mật hoặc header không bắt đầu bằng `sha256=`.
-2. Tính HMAC-SHA256 trên đúng các byte body gốc bằng khóa bí mật tin cậy.
-3. Bỏ tiền tố `sha256=`, rồi tách các chữ ký theo dấu phẩy. Mỗi chữ ký phải gồm 64 ký tự hex viết thường.
-4. Giải mã từng chữ ký thành byte và so sánh với kết quả đã tính bằng phép so sánh thời gian hằng. Chỉ chấp nhận khi có ít nhất một chữ ký khớp.
+1. Giữ nguyên body thô. Đừng phân tích rồi tuần tự hóa lại JSON trước.
+2. Yêu cầu `X-Hub-Signature-256` bắt đầu bằng `sha256=`. Tách phần còn lại theo dấu phẩy để lấy các chuỗi băm ứng viên.
+3. Kiểm tra từng ứng viên: 64 ký tự thập lục phân. Từ chối chữ ký bị thiếu hoặc sai định dạng.
+4. Tính HMAC-SHA256 với secret tin cậy của bạn làm khóa và body thô làm thông điệp.
+5. Giải mã các chuỗi băm ứng viên thành byte và so sánh bằng phép so sánh thời gian hằng định. Chấp nhận nếu một chuỗi khớp; nếu không, từ chối yêu cầu.
 
-Mã hóa lại JSON đã phân tích có thể đổi khoảng trắng và làm chữ ký sai. Không tin sự kiện trước khi xác minh. Chữ ký xác thực nội dung body, không phải cơ chế chống phát lại dựa trên dấu thời gian.
+Đừng để trống **Mật khẩu**. Chữ ký tạo bằng khóa rỗng không xác thực được người gửi. Không bao giờ ghi log secret hoặc chọn secret dựa trên dữ liệu chưa được xác minh trong payload.
+
+### Khi secret thay đổi
+
+Trong 24 giờ sau khi đổi secret, các lần gửi có thể chứa chữ ký cho cả secret hiện tại và secret trước đó:
+
+```http
+X-Hub-Signature-256: sha256=NEW_SECRET_DIGEST,PREVIOUS_SECRET_DIGEST
+```
+
+Chỉ có một tiền tố `sha256=`. Chuỗi băm nào cũng có thể khớp với secret tin cậy của bạn. Hãy cập nhật secret của máy nhận trong khoảng thời gian này; chữ ký cũ sẽ không còn được gửi kèm sau khi hết hạn.
+
+### Kiểm tra bộ xác minh ở máy cục bộ
+
+Dùng bộ dữ liệu kiểm thử công khai này, không dùng secret thật. Body là UTF-8 và **không có ký tự xuống dòng ở cuối**:
+
+| Đầu vào | Giá trị |
+| --- | --- |
+| Secret | `docs-example-secret` |
+| Body thô | `{"events":[]}` |
+
+Header mong đợi là:
+
+```http
+X-Hub-Signature-256: sha256=145cedf7d7a150f4634f5fec31aef38195afc099c596a0f274fc5ef9c2136835
+```
+
+Đây chỉ là bài kiểm tra chữ ký. Thêm một dấu cách hoặc dấu xuống dòng vào body phải làm chữ ký này thất bại.
 
 ## Xác nhận và xử lý
 
-Sau khi xác minh, phân tích JSON và kiểm tra `events` là mảng. Lưu công việc bền vững vào hàng đợi, rồi nhanh chóng trả HTTP `200`. Bên gửi đặt timeout 30 giây; không chạy nghiệp vụ chậm ngay trong handler nhận webhook.
+**Nhận → Xác minh → Lưu → Phản hồi → Xử lý**
 
-Nếu lưu bền vững thất bại, không xác nhận công việc đã bị mất. Thiết kế xử lý idempotent: lưu `account_id` và `id` của sự kiện cùng kết quả, bỏ qua sự kiện đã xử lý. Không chỉ dùng ID lần chuyển phát làm định danh sự kiện vì một yêu cầu có thể chứa nhiều sự kiện.
+1. Xác minh chữ ký, sau đó phân tích JSON. Kiểm tra tài khoản và các trường tích hợp của bạn cần.
+2. Lưu mọi sự kiện được chấp nhận vào bộ lưu trữ bền vững hoặc hàng đợi. Xử lý trùng lặp bằng `(account_id, id)` làm khóa sự kiện.
+3. Trả `200 OK` sau khi lưu thành công. Làm các việc chậm, như cập nhật CRM, trong worker chạy nền.
 
-## Xử lý chuyển phát
+```http
+HTTP/1.1 200 OK
+Content-Length: 0
+```
 
-Chuẩn bị cho sự kiện lặp lại và không phụ thuộc thứ tự đến. Dùng ID và thời gian sự kiện khi đối soát, lấy lại trạng thái tài nguyên hiện tại nếu cần. Hướng dẫn này không hứa hẹn exactly-once hay lịch thử lại cố định. Ghi ID lần chuyển phát và nguyên nhân lỗi mà không ghi khóa bí mật hoặc dữ liệu khách hàng không cần thiết.
+Bên gửi có **thời gian chờ 30 giây cho mỗi lần thử HTTP** và không đi theo chuyển hướng. Hãy phản hồi ngay khi sự kiện đã được lưu an toàn. Phản hồi thành công xác nhận cả lô, không chỉ sự kiện đầu tiên.
 
-Bỏ qua an toàn loại sự kiện chưa hỗ trợ, đồng thời xác nhận lô đã lưu thành công. Bộ lọc đăng ký quyết định sự kiện mà tích hợp nhận được.
+Nếu lưu thất bại, hãy trả lỗi để lần gửi có thể được thử lại. Khi đã trả thành công, worker của bạn phải tự thử lại khi gặp lỗi. Lưu sự kiện cùng công việc chờ xử lý của nó trong một lần, để sự cố không khiến sự kiện bị đánh dấu đã xử lý mà công việc chưa được lên lịch.
+
+## Gửi lại và sự kiện trùng lặp
+
+Một yêu cầu thất bại có thể được gửi lại. Điều này gồm cả trường hợp máy chủ của bạn đã lưu sự kiện nhưng Subiz không nhận được phản hồi.
+
+- Loại trùng theo ID sự kiện và ID tài khoản, không theo `X-Subiz-Delivery`: lần gửi lại có thể có ID gửi mới.
+- Trả thành công cho các sự kiện bạn đã chấp nhận an toàn. Đừng lặp lại tác động của chúng.
+- Bỏ qua an toàn các loại sự kiện không hỗ trợ; đừng làm hỏng cả lô chỉ vì xuất hiện loại mới.
+- Đừng phụ thuộc vào thứ tự tới hay việc gửi đúng một lần. Đối chiếu với bản ghi hiện tại khi cần.
+
+Ở đây không cam kết khoảng thời gian thử lại hay số lần thử cố định. Lỗi kéo dài có thể làm dừng việc gửi, và các sự kiện cũ trong hàng đợi có thể bị hủy. Hãy khắc phục sớm; đừng coi hàng đợi webhook là kho lưu trữ sự kiện lâu dài.
+
+## Kiểm thử và xử lý sự cố
+
+Sau khi tạo webhook, kích hoạt một sự kiện đã chọn trong tài khoản thử nghiệm. Kiểm tra máy nhận đã xác minh, lưu, trả `200` và thực hiện cập nhật mong muốn **đúng một lần**. Phát lại cùng sự kiện ở máy cục bộ để kiểm tra loại trùng, và đổi một byte trong body để kiểm tra việc từ chối.
+
+Mở webhook trong Subiz để xem các lần gửi gần đây và phản hồi HTTP của chúng. So sánh với log của máy nhận và worker.
+
+| Vấn đề | Kiểm tra |
+| --- | --- |
+| Không có lần gửi nào | Đúng tài khoản Subiz, đã bật gửi và đã chọn sự kiện trong webhook. |
+| Yêu cầu không tới được máy nhận | URL, DNS, chứng chỉ HTTPS, tường lửa, và mọi bước đăng nhập hay chuyển hướng phía trước endpoint. |
+| Chữ ký không khớp | Cùng secret ở hai phía, đúng các byte body thô, giải mã hex và xử lý nhiều chuỗi băm. |
+| Hết thời gian chờ hoặc lỗi máy chủ | Lưu lô trước khi phản hồi; chuyển việc chậm sang worker. Kiểm tra hàng đợi và cơ sở dữ liệu. |
+| Trả `200` nhưng CRM không thay đổi | Lỗi worker, loại sự kiện không hỗ trợ, ánh xạ trường và trạng thái loại trùng. |
+| Việc gửi dừng sau sự cố | Sửa máy nhận, nhờ quản trị viên Subiz kiểm tra trạng thái webhook và đối chiếu dữ liệu còn thiếu. |
+
+Ghi log ID lần gửi, ID sự kiện và kết quả xử lý. Tránh ghi log secret và dữ liệu khách hàng không cần thiết.
+
+Tiếp theo: [Ví dụ dữ liệu sự kiện](/docs/vi/webhooks/payloads).

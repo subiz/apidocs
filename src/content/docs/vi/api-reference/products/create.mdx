@@ -1,0 +1,87 @@
+---
+sourceHash: c3d75dbee529bd7d89f67eafbe7ceae29bfada9abdd652097828fd4363d51c91
+title: "Tạo sản phẩm"
+description: "Thêm sản phẩm vào danh mục, hoặc cập nhật theo ID sản phẩm của bạn."
+section: "Products"
+order: 61
+status: "verified"
+endpointId: "products-create"
+---
+
+Dùng endpoint này để thêm sản phẩm vào danh mục Subiz, ví dụ khi đồng bộ sản phẩm từ cửa hàng của bạn. Xem [Định dạng sản phẩm](/docs/vi/products/format) để biết mọi trường.
+
+## Trước khi bắt đầu
+
+- Lấy [Bearer access token](/docs/vi/get-started/authentication) và ID tài khoản.
+- Nhân viên sở hữu token cần quyền tạo **và** cập nhật sản phẩm.
+
+## Body yêu cầu
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `name` | string | Bắt buộc. Tên sản phẩm. |
+| `source_id` | string | Nên có. ID sản phẩm của riêng bạn. Xem [Tránh trùng lặp](#tránh-trùng-lặp). |
+| `sku` | string | Mã SKU. |
+| `price`, `market_price` | number | Giá bán và giá tham chiếu. |
+| `currency` | string | Đơn vị tiền tệ của giá, như `VND`. |
+| `stock` | integer | Số lượng tồn kho. |
+| `availability` | string | `in_stock`, `out_of_stock`, `online_only`, `pre_order`, `pre_sale` hoặc `sold_out`. |
+| `visibility` | string | `published` (mặc định) hoặc `hidden`. |
+| `condition` | string | `new`, `refurbished` hoặc `used`. |
+| `description`, `category`, `brand`, `url` | string | Thông tin tùy chọn. `category` tối đa 255 byte. |
+| `image`, `images` | string, array | URL ảnh. Subiz lưu bản sao riêng. Xem [Hình ảnh](/docs/vi/products/format#hình-ảnh). |
+| `props` | array | Thuộc tính dạng cặp `key`/`value`. |
+| `product_group_id` | string | Tùy chọn. Đưa sản phẩm vào một nhóm biến thể có sẵn. Xem [Biến thể](/docs/vi/products/format#biến-thể). |
+
+Đừng gửi `id`. Subiz bỏ qua và tự tạo ID. Subiz cũng tự đặt `created`, `created_by`, `updated` và `updated_by`.
+
+## Tránh trùng lặp
+
+Trước khi tạo sản phẩm, Subiz tìm sản phẩm đã có:
+
+1. Nếu bạn gửi `source_id`, Subiz tìm sản phẩm có cùng `source_id`.
+2. Nếu bạn không gửi `source_id`, Subiz tìm sản phẩm có cùng `sku`.
+
+Nếu tìm thấy, Subiz **thay thế sản phẩm đó** bằng các trường bạn gửi thay vì tạo sản phẩm mới. Các trường bạn bỏ trống sẽ bị xóa. Luôn gửi sản phẩm đầy đủ.
+
+Đặt `source_id` là ID của sản phẩm trong hệ thống của bạn. Điều này giúp thử lại an toàn. Nếu không có cả `source_id` lẫn `sku`, mỗi yêu cầu tạo một sản phẩm mới.
+
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng sản phẩm đã lưu. Một số trường:
+
+```json
+{
+  "id": "product_example",
+  "account_id": "account_example",
+  "source_id": "shop-sku-mug-01",
+  "name": "Ceramic mug",
+  "sku": "MUG-01",
+  "price": 120000,
+  "currency": "VND",
+  "stock": 25,
+  "availability": "in_stock",
+  "visibility": "published",
+  "product_group_id": "product_example",
+  "created": 1763107200000,
+  "updated": 1763107200000
+}
+```
+
+Lưu `id` để [đọc](/docs/vi/api-reference/products/retrieve) hoặc [cập nhật](/docs/vi/api-reference/products/update) sản phẩm sau này.
+
+## Lỗi
+
+| Vấn đề | Kết quả |
+| --- | --- |
+| Thiếu `name` | Lỗi dữ liệu không hợp lệ nêu tên `name`. |
+| `category` dài hơn 255 byte | Lỗi dữ liệu không hợp lệ nêu tên `category`. |
+| `availability`, `visibility` hoặc `condition` có giá trị khác | Lỗi trường không hợp lệ nêu tên trường. |
+| Không tải được URL ảnh | Yêu cầu thất bại. |
+| Thiếu quyền | Lỗi phân quyền. |
+
+Xem [Xử lý lỗi](/docs/vi/get-started/errors) để biết định dạng lỗi.
+
+## Yêu cầu HTTP
+
+Thay `YOUR_ACCID` và `YOUR_ACCESS_TOKEN` bằng giá trị của bạn.

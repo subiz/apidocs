@@ -1,27 +1,64 @@
 ---
-sourceHash: 85fd2845865de397044fe5ac39214d1aa969e4509582cf4319f9d1d3ee03ac38
+sourceHash: bd0e95b9476a67b4d87af02d800af2600ec6ade0520b527f85e3ac453de3935b
 title: "Đọc lịch sử tin nhắn"
-description: "Lấy các sự kiện trong hội thoại."
+description: "Liệt kê tin nhắn và các sự kiện khác trong một hội thoại."
 section: "Conversations"
 order: 22
 status: "verified"
 endpointId: "conversations-history"
 ---
 
-## Trước khi bắt đầu
+Dùng endpoint này để đọc những gì đã diễn ra trong hội thoại: tin nhắn của khách hàng và nhân viên, cùng các sự kiện hội thoại khác.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+## Yêu cầu
 
-## Đọc sự kiện hội thoại
+Gửi yêu cầu `GET` với ID hội thoại trong đường dẫn. Không có body.
 
-Endpoint trả các sự kiện từ `ListEvents`, không thêm lớp bọc messages giả định. Sự kiện có nhiều loại; kiểm tra `type` trước khi đọc `data.message`.
+| Tham số | Kiểu | Mô tả |
+| --- | --- | --- |
+| `cid` (đường dẫn) | string | ID hội thoại. |
+| `start_id` (query) | string | Tùy chọn. ID sự kiện để bắt đầu trang. |
+| `limit` (query) | integer | Tùy chọn. Số sự kiện cần lấy. |
 
-Schema yêu cầu hỗ trợ tham số truy vấn `limit` và `start_id`. Xác định mốc tiếp theo từ các sự kiện đã nhận; không giả định offset hoặc trường `next_cursor`. Người gọi phải có quyền truy cập hội thoại.
+Để đọc tiếp, truyền một ID sự kiện từ kết quả trước làm `start_id`. Phản hồi không có `next_cursor` hay tổng số; đừng phân trang bằng offset.
 
-## Kết quả
+## Phản hồi
 
-Gateway lấy mảng sự kiện từ phản hồi dịch vụ và trả trực tiếp. Lưu ID sự kiện khi đồng bộ lịch sử để tránh trùng lặp.
+Yêu cầu thành công trả HTTP `200` cùng một **mảng** JSON các sự kiện. Không có đối tượng bọc ngoài. Một số trường:
+
+```json
+[
+  {
+    "id": "event_example",
+    "account_id": "account_example",
+    "type": "message_sent",
+    "created": 1763107200000,
+    "by": {
+      "id": "user_example",
+      "type": "user"
+    },
+    "data": {
+      "message": {
+        "conversation_id": "conversation_example",
+        "format": "plaintext",
+        "text": "Hi, is my order ready?"
+      }
+    }
+  }
+]
+```
+
+Coi kết quả rỗng hoặc `null` là không có sự kiện nào.
+
+## Đọc sự kiện đúng cách
+
+- **Kiểm tra `type` trước.** Không phải sự kiện nào cũng là tin nhắn. Chỉ đọc `data.message` với sự kiện tin nhắn như `message_sent`.
+- **Kiểm tra người gửi.** `by.type` cho biết khách hàng (`user`) hay nhân viên (`agent`) đã thực hiện, và `by.id` xác định người đó.
+- **Kiểm tra định dạng.** Tin nhắn có thể là văn bản thuần, cây block hoặc chỉ có tệp đính kèm. Xem [Định dạng tin nhắn](/docs/vi/messages/formats) và [Tệp đính kèm](/docs/vi/messages/attachments).
+- **Loại trùng theo `id`.** Khi đồng bộ lịch sử với [sự kiện webhook](/docs/vi/webhooks/payloads), dùng `id` của sự kiện để tránh lưu một tin nhắn hai lần.
+
+`created` tính bằng mili giây Unix.
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_CID` bằng ID hội thoại và `YOUR_ACCESS_TOKEN` bằng token của bạn. Thêm `start_id` hoặc `limit` vào query string khi cần.

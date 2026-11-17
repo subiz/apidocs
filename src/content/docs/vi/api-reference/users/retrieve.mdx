@@ -1,25 +1,58 @@
 ---
-sourceHash: 0757b52936679b7308f61d0be758a98e959ac2ba6007d39d782d729f0b2e4814
+sourceHash: 306102ec8b2be9724fda0ae11450bf16c37db31c237e5648cc6de751c9dee764
 title: "Lấy thông tin khách hàng"
-description: "Đọc hồ sơ hiện tại của một khách hàng."
+description: "Đọc hồ sơ và thuộc tính của khách hàng theo ID user Subiz."
 section: "Users"
 order: 11
 status: "verified"
 endpointId: "users-retrieve"
 ---
 
-## Trước khi bắt đầu
+Dùng endpoint này để đọc hồ sơ hiện tại của khách hàng, ví dụ trước khi đồng bộ sang CRM.
 
-Dùng [Bearer access token](/docs/vi/get-started/authentication) của đúng tài khoản. Thay toàn bộ chỗ điền `YOUR_…` bằng ID thực. Yêu cầu thay đổi dữ liệu sẽ tác động lên dữ liệu thật.
+## Yêu cầu
 
-## Xác định khách hàng
+Gửi yêu cầu `GET` với ID user Subiz của khách hàng trong đường dẫn. Không có body.
 
-Thay `uid` bằng ID khách hàng. Dùng yêu cầu này để đọc hồ sơ hiện tại trước khi đồng bộ thay đổi.
+| Tham số | Kiểu | Mô tả |
+| --- | --- | --- |
+| `uid` (đường dẫn) | string | ID user Subiz, như được trả về khi tạo khách hàng. |
 
-## Kết quả
+ID phải là ID user Subiz. Giá trị khác, như địa chỉ email, sẽ trả lỗi. Nếu chỉ biết định danh kênh của khách hàng, dùng [Tìm hoặc tạo theo định danh kênh](/docs/vi/api-reference/users/identity).
 
-Gateway gọi dịch vụ khách hàng và trả kết quả dưới dạng JSON. Xử lý trường hợp không tìm thấy hoặc không có quyền trước khi đọc thuộc tính. Xem [Cập nhật khách hàng](/docs/vi/api-reference/users/update).
+## Phản hồi
+
+Yêu cầu thành công trả HTTP `200` cùng khách hàng. Một số trường:
+
+```json
+{
+  "id": "user_example",
+  "account_id": "account_example",
+  "channel": "facebook",
+  "channel_source": "page_example",
+  "profile_id": "profile_example",
+  "attributes": [
+    {
+      "key": "fullname",
+      "text": "Alex Example"
+    },
+    {
+      "key": "emails",
+      "text": "alex@example.com"
+    }
+  ]
+}
+```
+
+| Trường | Mô tả |
+| --- | --- |
+| `id` | ID user Subiz. |
+| `attributes` | Dữ liệu khách hàng. Tìm từng thuộc tính theo `key`, không theo vị trí. |
+| `channel`, `channel_source`, `profile_id` | Định danh kênh, khi khách hàng đến từ kênh đã kết nối. |
+| `created`, `updated` | Dấu thời gian Unix tính bằng mili giây. |
+
+Đọc trường giá trị khớp với kiểu thuộc tính: `text`, `number`, `boolean` hoặc `datetime`. Trường rỗng bị lược bỏ, và đối tượng có nhiều trường hơn ví dụ.
 
 ## Yêu cầu HTTP
 
-Thay các giá trị `YOUR_…` bằng thông tin của bạn. Gửi các header bên dưới và body JSON nếu có. Kiểm tra mã trạng thái HTTP trước khi sử dụng phản hồi.
+Thay `YOUR_UID` bằng ID user và `YOUR_ACCESS_TOKEN` bằng token của bạn.
