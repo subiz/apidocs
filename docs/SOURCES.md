@@ -239,3 +239,14 @@ Product deletion, imports, feeds, crawling, and product search for chat are out 
 ## Vietnamese translation pass — 2026-11-17
 
 All 34 English pages now have reviewed Vietnamese counterparts stamped with the current English source hash (D-0048). Prose only was translated; every code block is byte-identical to English (checked per page and by `tests/content.mjs`). Internal links use `/docs/vi/...` and Vietnamese heading anchors; all 563 same-site fragment links in the build resolve. Vietnamese UI labels in step-by-step instructions come from the Subiz dashboard language file (`dashboard-v4/lang/vi-VN.json`: `security_delete_token`, `setting_webhook_add`, `setting_webhook_create`, `custom_event`, `edit`, `secret`). No API behavior was re-verified in this pass; the Vietnamese pages carry the same evidence as their English sources.
+
+## Send a ZBS message (send-zbs) — English only, 2026-11-18
+
+Documents only POST `/4.0/accounts/{accid}/messages` with `touchpoint.channel=zns` (D-0051). No live ZNS was sent.
+
+- `api/router.go`, `handler.go:handleSendEvent`: type defaults to message_sent; Event forwarded to conversation SendMessage; agent message rate limit applies.
+- `conversation/conversation.go:SendMessage,sendMessage2`: zns branch calls zalokon.SendZNS with account, `data.message.zns_phone`, `zns_template_id`, `zns_template_data`, and top-level `source_event_id` as tracking ID; returns zalokon's event. No conversation event is stored. A background goroutine pongs (PongMessage zns branch only notifies campaigns) and creates a `zns_sent` customer event via GetOrCreateUserByProfile(accid, "call", "call", phone) + CreateEvent, regardless of Zalo's ack result.
+- `zalokon/main.go:SendZNS`: INTEGRATION read permission; missing account/phone/template errors; template must belong to the account; OA taken from the template; DATE params via `sbutil.go:ValidateZnsTime`; `acclient.TrySpend` credit check before sending; `header.PhoneNumber` normalization; Zalo rejection returned as ack pong with `ack_error` (raw Zalo body) and `error` (`zlutil.go:translateZNSError`), not a gRPC error; `acclient.Spend` only on Zalo "Success"; 30-second Zalo timeout. Error codes -108, -118, -133 from source comments.
+- Clients using the same path: `subiz/src/activities/zns_template_modal.js`, `automation/action.go` (reads ack pongs).
+- The development phone-number shortcut in SendZNS (`SendDevZNS`) is intentionally not published.
+- Template parameter types (user decision): the page lists STRING, NUMBER, DATE as common `listParams.type` values, observed in an owner-supplied `/4.1/zns-templates` listing (not a complete Zalo catalog). `api/hparam.go:Decode2` decodes `zns_template_data` as map<string,string>, so JSON numbers are rejected. `zalokon/sbutil.go:ValidateZnsTime` leaves `dd/MM/yyyy` and `HH:mm dd/MM/yyyy` unchanged; NUMBER values are not transformed. NUMBER/DATE formats follow the owner's guidance.

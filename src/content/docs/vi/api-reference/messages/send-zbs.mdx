@@ -1,0 +1,159 @@
+---
+sourceHash: dea4519a9c17b803bbf24328df3513ef7a71fb190b72de2b6265ee8d56d4034a
+title: "Gửi tin ZBS"
+description: "Gửi tin nhắn ZBS theo mẫu Zalo đã được duyệt tới một số điện thoại."
+section: "Messages"
+order: 32
+status: "verified"
+endpointId: "messages-send-zbs"
+---
+
+Gửi tin ZBS từ một mẫu tin (template) Zalo đã được duyệt tới một số điện thoại. Bạn gửi qua endpoint tin nhắn với kênh `zns`. Tên các trường trong API vẫn giữ tiền tố cũ `zns`.
+
+## Trước khi gửi
+
+- Lấy [Bearer access token](/docs/vi/get-started/authentication). Agent sở hữu token cần có quyền sử dụng tích hợp.
+- Kết nối một Zalo Official Account (OA) và có ít nhất một template ZBS đã được Zalo duyệt.
+- Đảm bảo tài khoản còn đủ credit. Mỗi tin được Zalo chấp nhận đều bị tính phí.
+- Dùng số điện thoại thử nghiệm khi phát triển. Mỗi request được chấp nhận sẽ gửi tin thật.
+
+## Tìm template
+
+Dùng ID template hiển thị trong ứng dụng Subiz, hoặc lấy danh sách template:
+
+```http
+GET https://api.subiz.com.vn/4.1/zns-templates
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+Một số trường của một phần tử trong `zns_templates`:
+
+```json
+{
+  "id": "123456",
+  "oa_id": "oa_example",
+  "name": "Order confirmation",
+  "template": {
+    "templateId": 123456,
+    "status": "ENABLE",
+    "listParams": [
+      {"name": "customer_name", "require": true, "maxLength": 30},
+      {"name": "order_code", "require": true, "maxLength": 30}
+    ]
+  }
+}
+```
+
+- `id` là ID template.
+- Chỉ dùng template có `status` là `ENABLE`.
+- `listParams` liệt kê các tham số cần điền.
+
+## Nội dung request
+
+| Trường | Kiểu | Mô tả |
+| --- | --- | --- |
+| `accid` (path) | string | ID tài khoản của bạn. |
+| `type` | string | `message_sent`. Đây là giá trị mặc định. |
+| `touchpoint.channel` | string | `zns`. |
+| `source_event_id` | string | Không bắt buộc. Mã tham chiếu của riêng bạn cho lần gửi này. Giá trị được trả lại trong response. |
+| `data.message.zns_phone` | string | Số điện thoại người nhận. |
+| `data.message.zns_template_id` | string | ID template. |
+| `data.message.zns_template_data` | object | Tham số của template. Khóa là `name` trong `listParams`; mọi giá trị đều là chuỗi. |
+
+Bạn không chọn OA gửi. Subiz gửi từ OA sở hữu template.
+
+### Tham số template
+
+Template ZBS là một tin nhắn cố định có các tham số: những chỗ trống bạn điền cho mỗi lần gửi. `zns_template_data` chứa giá trị của từng tham số.
+
+Trong các ví dụ ở trang này, `customer_name` và `order_code` là tham số của một template mẫu "Order confirmation":
+
+```json
+"zns_template_data": {
+  "customer_name": "Jane Doe",
+  "order_code": "ORD-1001"
+}
+```
+
+Các tên này chỉ là ví dụ. Tên tham số thực tế lấy từ template của bạn: dùng `name` của từng phần tử trong `listParams`, viết chính xác như vậy.
+
+- Điền đủ mọi tham số có `"require": true`.
+- Giữ mỗi giá trị không vượt quá `maxLength` của tham số.
+- Định dạng từng giá trị theo `type` của tham số.
+
+Kiểu do template quy định, không phụ thuộc vào tên tham số: tham số `price` không phải lúc nào cũng là `NUMBER`. Các kiểu thường gặp:
+
+| `type` | Giá trị |
+| --- | --- |
+| `STRING` | Văn bản, như tên, mã đơn hàng hoặc địa chỉ. |
+| `NUMBER` | Chỉ gồm chữ số, không có dấu phân cách hàng nghìn hay đơn vị tiền. Với 1.000.000, gửi `"1000000"`. |
+| `DATE` | `dd/MM/yyyy`, như `"20/11/2026"`, hoặc `HH:mm dd/MM/yyyy`, như `"14:30 20/11/2026"`. |
+
+Mọi giá trị đều là chuỗi JSON, kể cả số và ngày. Số JSON như `1000000` sẽ bị từ chối.
+
+```json
+"zns_template_data": {
+  "customer_name": "Jane Doe",
+  "price": "1000000",
+  "order_date": "14:30 20/11/2026"
+}
+```
+
+**Số điện thoại.** Subiz chỉ giữ lại chữ số và thay số `0` ở đầu bằng `84`. `0912 345 678` và `84912345678` là cùng một số.
+
+## Response
+
+Request trả về HTTP `200` khi Subiz đã chuyển tin sang Zalo. Đọc phần tử `ack` trong `data.message.pongs` để biết Zalo có chấp nhận tin hay không.
+
+Được chấp nhận:
+
+```json
+{
+  "account_id": "account_example",
+  "touchpoint": {
+    "channel": "zns",
+    "source": "oa_example",
+    "id": "84912345678"
+  },
+  "data": {
+    "message": {
+      "source_event_id": "order-1001",
+      "pongs": [
+        {"type": "ack", "source_message_id": "zalo_message_example"}
+      ]
+    }
+  }
+}
+```
+
+- `touchpoint.source` là OA đã gửi tin; `touchpoint.id` là số điện thoại sau khi chuẩn hóa.
+- `source_message_id` là ID tin nhắn phía Zalo.
+
+Bị Zalo từ chối: response vẫn là `200`, nhưng phần tử `ack` có `ack_error` (lỗi gốc từ Zalo) và `error` (cùng lỗi đó theo [định dạng Subiz](/docs/vi/get-started/errors)). Bạn không bị tính phí. Một số trường:
+
+```json
+{
+  "type": "ack",
+  "ack_error": "{\"error\":-108,\"message\":\"Phone number invalid\"}"
+}
+```
+
+Các lỗi từ chối thường gặp của Zalo:
+
+- `-108`: số điện thoại không hợp lệ.
+- `-118`: số điện thoại không có tài khoản Zalo.
+- `-133`: template không được gửi vào ban đêm (22h–6h).
+
+## Hoạt động của khách hàng
+
+Subiz cũng thêm một event `zns_sent` vào lịch sử hoạt động của khách hàng có số điện thoại này, và tạo khách hàng nếu chưa có. Việc này chạy nền, kể cả khi Zalo từ chối tin. Tin ZBS không được thêm vào hội thoại nào.
+
+## Lỗi và gửi lại
+
+Subiz trả lỗi HTTP và không gửi tin khi, ví dụ, thiếu số điện thoại hoặc ID template, template không thuộc tài khoản của bạn, OA đã ngắt kết nối, hoặc không đủ credit. Xem [Xử lý lỗi](/docs/vi/get-started/errors).
+
+Đừng tự động gửi lại sau khi timeout; tin có thể đã được gửi và tính phí.
+
+## HTTP request
+
+Thay các giá trị `YOUR_…` và tham số template.

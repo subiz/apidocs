@@ -18,6 +18,7 @@ export const navigation: Record<Section, readonly NavigationItem[]> = {
   {id:'messages/attachments',en:'Attachments',vi:'Tệp và nội dung đính kèm'},
   {id:'api-reference/messages/send',en:'Send to a conversation',vi:'Gửi tin nhắn vào hội thoại'},
   {id:'api-reference/messages/send-to-user',en:'Send to a customer',vi:'Gửi tin nhắn cho khách hàng'},
+  {id:'api-reference/messages/send-zbs',en:'Send a ZBS message',vi:'Gửi tin ZBS'},
   {id:'api-reference/conversations/retrieve',en:'Get conversation details',vi:'Lấy thông tin hội thoại'},
   {id:'api-reference/conversations/history',en:'Read message history',vi:'Đọc lịch sử tin nhắn'},
   {id:'api-reference/conversations/invite-agent',en:'Invite an agent',vi:'Mời agent tham gia'},

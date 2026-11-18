@@ -1,0 +1,159 @@
+---
+sourceHash: dea4519a9c17b803bbf24328df3513ef7a71fb190b72de2b6265ee8d56d4034a
+title: "Send a ZBS message"
+description: "Send an approved Zalo ZBS template message to a phone number."
+section: "Messages"
+order: 32
+status: "verified"
+endpointId: "messages-send-zbs"
+---
+
+Send a ZBS template message from one of your approved Zalo templates to a phone number. You send it through the messages endpoint with the `zns` channel. API field names keep the older `zns` prefix.
+
+## Before you send
+
+- Get a [Bearer access token](/docs/get-started/authentication). The token's agent needs permission to use integrations.
+- Connect a Zalo Official Account and have a ZBS template approved by Zalo.
+- Make sure your account has enough credit. Each message that Zalo accepts is charged.
+- Use a test phone number while developing. Each accepted request sends a real message.
+
+## Find your template
+
+Use the template ID shown in the Subiz app, or list your templates:
+
+```http
+GET https://api.subiz.com.vn/4.1/zns-templates
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+Selected fields of one item in `zns_templates`:
+
+```json
+{
+  "id": "123456",
+  "oa_id": "oa_example",
+  "name": "Order confirmation",
+  "template": {
+    "templateId": 123456,
+    "status": "ENABLE",
+    "listParams": [
+      {"name": "customer_name", "require": true, "maxLength": 30},
+      {"name": "order_code", "require": true, "maxLength": 30}
+    ]
+  }
+}
+```
+
+- `id` is the template ID.
+- Use templates whose `status` is `ENABLE`.
+- `listParams` lists the parameters to fill in.
+
+## Request body
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `accid` (path) | string | Your account ID. |
+| `type` | string | `message_sent`. This is the default. |
+| `touchpoint.channel` | string | `zns`. |
+| `source_event_id` | string | Optional. Your own reference for this send. It is returned in the response. |
+| `data.message.zns_phone` | string | Recipient phone number. |
+| `data.message.zns_template_id` | string | Template ID. |
+| `data.message.zns_template_data` | object | Template parameters. Keys are the `listParams` names; every value is a string. |
+
+You do not choose the Official Account. Subiz sends from the Official Account that owns the template.
+
+### Template parameters
+
+A ZBS template is a fixed message with parameters: placeholders that you fill in for each send. `zns_template_data` holds the value for each parameter.
+
+In the examples on this page, `customer_name` and `order_code` are the parameters of a sample "Order confirmation" template:
+
+```json
+"zns_template_data": {
+  "customer_name": "Jane Doe",
+  "order_code": "ORD-1001"
+}
+```
+
+These names are only examples. Your parameter names come from your own template: use the `name` of each item in its `listParams`, spelled exactly the same.
+
+- Fill in every parameter with `"require": true`.
+- Keep each value within the parameter's `maxLength`.
+- Format each value according to the parameter's `type`.
+
+The type is set by the template, not by the parameter name: a `price` parameter is not always a `NUMBER`. Common types:
+
+| `type` | Value |
+| --- | --- |
+| `STRING` | Text, such as a name, an order code, or an address. |
+| `NUMBER` | Digits only, without thousands separators or a currency. For 1,000,000, send `"1000000"`. |
+| `DATE` | `dd/MM/yyyy`, such as `"20/11/2026"`, or `HH:mm dd/MM/yyyy`, such as `"14:30 20/11/2026"`. |
+
+Every value is a JSON string, including numbers and dates. A JSON number such as `1000000` is rejected.
+
+```json
+"zns_template_data": {
+  "customer_name": "Jane Doe",
+  "price": "1000000",
+  "order_date": "14:30 20/11/2026"
+}
+```
+
+**Phone numbers.** Subiz keeps only the digits and replaces a leading `0` with `84`. `0912 345 678` and `84912345678` reach the same number.
+
+## Response
+
+The request returns HTTP `200` when Subiz has passed the message to Zalo. Read the `ack` item in `data.message.pongs` to see whether Zalo accepted it.
+
+Accepted:
+
+```json
+{
+  "account_id": "account_example",
+  "touchpoint": {
+    "channel": "zns",
+    "source": "oa_example",
+    "id": "84912345678"
+  },
+  "data": {
+    "message": {
+      "source_event_id": "order-1001",
+      "pongs": [
+        {"type": "ack", "source_message_id": "zalo_message_example"}
+      ]
+    }
+  }
+}
+```
+
+- `touchpoint.source` is the Official Account that sent the message; `touchpoint.id` is the normalized phone number.
+- `source_message_id` is Zalo's message ID.
+
+Rejected by Zalo: the response is still `200`, but the `ack` item has `ack_error`, Zalo's original error, and `error`, the same error in [Subiz format](/docs/get-started/errors). You are not charged. Selected fields:
+
+```json
+{
+  "type": "ack",
+  "ack_error": "{\"error\":-108,\"message\":\"Phone number invalid\"}"
+}
+```
+
+Common Zalo rejections:
+
+- `-108`: the phone number is invalid.
+- `-118`: the phone number has no Zalo account.
+- `-133`: the template cannot be sent at night (10 PM–6 AM).
+
+## Customer activity
+
+Subiz also adds a `zns_sent` event to the activity history of the customer with this phone number, creating the customer if needed. This happens in the background, also when Zalo rejects the message. A ZBS message is not added to any conversation.
+
+## Errors and retries
+
+Subiz returns an HTTP error and sends nothing when, for example, the phone or template ID is missing, the template does not belong to your account, the Official Account is disconnected, or your credit is too low. See [Errors](/docs/get-started/errors).
+
+Do not retry blindly after a timeout; the message may already have been sent and charged.
+
+## HTTP request
+
+Replace the `YOUR_…` placeholders and the template parameters.

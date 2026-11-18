@@ -186,3 +186,11 @@ By user request, public pages do not mention `ETag`, `If-None-Match`, or `304 No
 ## D-0050 Keep "agent" as the Vietnamese term
 
 By user request, Vietnamese pages and navigation use "agent" (lowercase mid-sentence, "Agent" at the start), matching the Subiz app, instead of "nhân viên". Definitions may still explain that an agent is a staff member ("nhân viên"), and the salesperson role keeps the app label "nhân viên bán hàng". The Agents sidebar group is "Agent".
+
+## D-0051 Send ZBS through the messages endpoint only
+
+By user request, the ZBS guide (`api-reference/messages/send-zbs`, English and reviewed Vietnamese "Gửi tin ZBS") documents only POST `/4.0/accounts/{accid}/messages` with `touchpoint.channel` `zns` and `data.message.zns_*` fields. Do not document POST `/4.1/zns-templates/{id}/send` or `/4.1/test-zns`. The user chose this path to keep a record of the send; source review (`conversation.go:sendMessage2`) shows the record is a `zns_sent` event on the customer's activity history, not a conversation timeline message, and the page says so. Verified against `api`, `conversation`, and `zalokon`.
+
+## D-0052 Use the term ZBS instead of ZNS
+
+By user request, documentation prose, titles, and navigation say "ZBS" instead of "ZNS". API paths, field names, channel values, and event types keep their actual `zns` spelling (for example `zns_phone`, `channel: "zns"`, `/4.1/zns-templates`, `zns_sent`).

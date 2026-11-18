@@ -27,6 +27,7 @@ endpoints["conversations-assign-agent"]=requestEndpoint({"id": "conversations-as
 endpoints["conversations-list"]=requestEndpoint({"id": "conversations-list", "method": "GET", "path": "/4.1/conversations?user_id=YOUR_USER_ID&limit=20", "summary": "List conversations", "status": "verified", "body": null});
 
 endpoints["messages-send-to-user"]=requestEndpoint({"id": "messages-send-to-user", "method": "POST", "path": "/4.0/accounts/{accid}/users/{uid}/messages", "summary": "Send a message to a user", "status": "verified", "body": {"messages": [{"type": "message_sent", "touchpoint": {"channel": "YOUR_CHANNEL", "source": "YOUR_SOURCE", "id": "YOUR_PROFILE_ID"}, "data": {"message": {"text": "Hello! How can we help?", "format": "plaintext"}}}]}});
+endpoints["messages-send-zbs"]=requestEndpoint({"id": "messages-send-zbs", "method": "POST", "path": "/4.0/accounts/{accid}/messages", "summary": "Send a ZBS message", "status": "verified", "body": {"type": "message_sent", "touchpoint": {"channel": "zns"}, "source_event_id": "order-1001", "data": {"message": {"zns_phone": "84912345678", "zns_template_id": "YOUR_TEMPLATE_ID", "zns_template_data": {"customer_name": "Jane Doe", "order_code": "ORD-1001"}}}}});
 
 endpoints["messages-send"]=requestEndpoint({id:"messages-send",method:"POST",path:"/4.1/conversations/{cid}/messages",summary:"Send a text message",status:"verified",body:{type:"message_sent",data:{message:{text:"Hello! How can we help?",format:"plaintext"}}}});
 
