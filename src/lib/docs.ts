@@ -18,11 +18,14 @@ export async function docs(locale?:Locale){
    throw new Error('Missing translation for '+p.id);
   }
   if(JSON.stringify(apiVersions(p.data))!==JSON.stringify(apiVersions(counterpart.data)))throw new Error('API version translation mismatch: '+p.id);
-  for(const field of ['section','order','status','endpointId'] as const)if(p.data[field]!==counterpart.data[field])throw new Error('Translation metadata mismatch: '+p.id+' '+field);
+  for(const field of ['section','order','status','endpointId','requestPosition'] as const)if(p.data[field]!==counterpart.data[field])throw new Error('Translation metadata mismatch: '+p.id+' '+field);
  }
  return locale?all.filter(p=>localeOf(p.id)===locale):all;
 }
 export function markdown(p:Awaited<ReturnType<typeof docs>>[number]){
  const e=p.data.endpointId?endpoints[p.data.endpointId]:null;
- return '# '+p.data.title+'\n\n'+p.data.description+'\n\n'+apiVersionLabel(p.data,localeOf(p.id))+'\n\n'+(p.data.status==='example'?(localeOf(p.id)==='vi'?'> API minh họa — chưa xác minh\n\n':'> Example API — not verified\n\n'):'')+publicMarkdown(p.body||'')+(e?'\n\n```http\n'+e.request+'\n```':'');
+ const request=e?'```http\n'+e.request+'\n```':'';
+ const body=publicMarkdown(p.body||'');
+ const content=p.data.requestPosition==='start'?[request,body]:[body,request];
+ return '# '+p.data.title+'\n\n'+p.data.description+'\n\n'+apiVersionLabel(p.data,localeOf(p.id))+'\n\n'+(p.data.status==='example'?(localeOf(p.id)==='vi'?'> API minh họa — chưa xác minh\n\n':'> Example API — not verified\n\n'):'')+content.filter(Boolean).join('\n\n');
 }

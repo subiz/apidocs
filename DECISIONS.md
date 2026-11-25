@@ -194,3 +194,7 @@ By user request, the ZBS guide (`api-reference/messages/send-zbs`, English and r
 ## D-0052 Use the term ZBS instead of ZNS
 
 By user request, documentation prose, titles, and navigation say "ZBS" instead of "ZNS". API paths, field names, channel values, and event types keep their actual `zns` spelling (for example `zns_phone`, `channel: "zns"`, `/4.1/zns-templates`, `zns_sent`).
+
+## D-0053 Lead the ZBS guide with a complete request
+
+By user request, both English and Vietnamese ZBS guides show the send request immediately after the page introduction, before parameter explanations and error handling. Remove the template-listing API walkthrough. Follow the same order in HTML, Markdown, and LLM exports; keep the request generated from shared endpoint metadata.

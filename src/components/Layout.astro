@@ -22,7 +22,11 @@ const languages=(['en','vi'] as const).filter(language=>allPages.some(p=>p.id===
 <div class="shell"><aside id="sidebar"><div id="sidebar-search"></div><DocsSidebar pages={pages} activeId={page.id} config={config}/></aside>
 <main id="main" data-pagefind-body><div class="eyebrow">{sectionLabel(pages.find(p=>p.id===page.id)?.data.section||page.data.section,locale)}</div><p class="api-version">{apiVersionLabel(page.data,locale)}</p><h1 data-pagefind-meta="title">{page.data.title}</h1><p class="description">{page.data.description}</p>
 {endpoint&&<div class="endpoint"><strong>{endpoint.method}</strong><code>{"https://api.subiz.com.vn"+endpoint.path.split('?')[0]}</code></div>}
-<article><slot/>{endpoint&&<div class="request-code"><div set:html={requestHtml}/></div>}</article>
+<article>
+{endpoint&&page.data.requestPosition==='start'&&<div class="request-code"><div set:html={requestHtml}/></div>}
+<slot/>
+{endpoint&&page.data.requestPosition!=='start'&&<div class="request-code"><div set:html={requestHtml}/></div>}
+</article>
 <nav class="pagination" aria-label={t('Previous and next','Trang trước và trang sau')}>{index>0&&<a href={link(pages[index-1].id)}>← {t('Previous','Trang trước')}<br/><strong>{pages[index-1].data.title}</strong></a>}{index>=0&&index<pages.length-1&&<a href={link(pages[index+1].id)}>{t('Next','Trang sau')} →<br/><strong>{pages[index+1].data.title}</strong></a>}</nav></main>
 <aside class="toc"><strong>{t('On this page','Trong trang này')}</strong>{headings.filter((h:any)=>h.depth===2||h.depth===3).map((h:any)=><a class:list={{nested:h.depth===3}} href={'#'+h.slug}>{h.text}</a>)}<a href={md}>{t('View Markdown','Xem Markdown')} ↗</a></aside></div>
 <DocsFooter locale={locale} logo={logo.src} overview={link(localizedId('introduction',locale))} changelog={link(localizedId('changelog',locale))} markdown={md}/>

@@ -24,10 +24,14 @@ for (const path of ['/developers', '/developers/webhooks/receiving', '/developer
   }
   assert(!html.includes('href="/docs'));
 }
-for (const path of ['/developers/webhooks/receiving.md', '/developers/index.md', '/developers/llms.txt', '/developers/llms-full.txt', '/developers/pagefind/pagefind.js']) {
+for (const path of ['/developers/webhooks/receiving.md', '/developers/index.md', '/developers/vi/index.md', '/developers/vi/get-started/concepts.md', '/developers/vi/api-reference/messages/send-zbs.md', '/developers/llms.txt', '/developers/llms-full.txt', '/developers/pagefind/pagefind.js']) {
   const response = await request(path);
   assert.equal(response.status, 200, path);
+  if (path.endsWith('.md') || path.endsWith('.txt')) {
+    assert.match(response.headers.get('content-type'), /\bcharset=utf-8\b/i, `${path}: missing UTF-8 charset`);
+  }
   const body = await response.text();
+  if (path.endsWith('/vi/api-reference/messages/send-zbs.md')) assert(body.startsWith('# Gửi tin ZBS\n'), path);
   assert(!body.includes('](/docs/'), path);
   assert(!body.startsWith('<!DOCTYPE'), path);
 }

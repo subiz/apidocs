@@ -17,6 +17,16 @@ assert.deepEqual(html.filter(f=>!f.startsWith('dist/releases/')).sort(),expected
 for(const f of html){const body=await readFile(f,'utf8');assert(!body.includes('data-markdown='),f+' has a copy button');for(const [,href] of body.matchAll(/href="([^"#]+)(?:#[^"]*)?"/g)){if(!href.startsWith('/')||href.startsWith('//'))continue;assert(href.startsWith('/developers'),`${f}: unscoped ${href}`);const path=href.split('?')[0].replace(/^\/developers(?=\/|$)/,'');assert(all.includes('dist'+path)||all.includes('dist'+path+'/index.html')||all.includes('dist'+path+'index.html'),`${f}: broken ${href}`)}}
 const full=await readFile('dist/llms-full.txt','utf8');for(const title of ['Invite an agent','Assign an agent','Receive webhook events','Event payload examples'])assert(full.includes('# '+title));assert(!full.includes('api.example.com'));assert(!/^# Create a webhook$/m.test(full));assert(!full.includes('# List Contacts'));
 assert(!/```(?:javascript|python|java|go|bash)/.test(full));
+for(const locale of ['', 'vi/']){
+ const path='dist/'+locale+'api-reference/messages/send-zbs';
+ const page=await readFile(path+'/index.html','utf8');
+ const md=await readFile(path+'.md','utf8');
+ assert.match(page, /<article>\s*<div class="request-code">/, path+' must lead with the request');
+ assert.equal((page.match(/class="request-code"/g)||[]).length,1,path+' duplicates the request');
+ assert(md.indexOf('```http\nPOST ')>=0&&md.indexOf('```http\nPOST ')<md.indexOf('\n## '),path+' Markdown must lead with the request');
+ assert(!md.includes('/zns-templates'),path+' still lists templates');
+ assert(full.includes(md.trim()),path+' LLM export differs from Markdown');
+}
 for(const file of await files('src/content/docs')){const text=await readFile(file,'utf8');for(const [,json] of text.matchAll(/```json\n([\s\S]*?)\n```/g))JSON.parse(json)}
 console.log(`PASS: ${html.length} pages; internal links, exports, JSON examples`);
 
