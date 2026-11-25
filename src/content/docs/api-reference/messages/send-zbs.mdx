@@ -1,5 +1,5 @@
 ---
-sourceHash: dea4519a9c17b803bbf24328df3513ef7a71fb190b72de2b6265ee8d56d4034a
+sourceHash: 45bf0fd25e22763bc036321df0afc03175f46bc57094b857c414011e8b6b4ee4
 title: "Send a ZBS message"
 description: "Send an approved Zalo ZBS template message to a phone number."
 section: "Messages"
@@ -69,9 +69,11 @@ A ZBS template is a fixed message with parameters: placeholders that you fill in
 In the examples on this page, `customer_name` and `order_code` are the parameters of a sample "Order confirmation" template:
 
 ```json
-"zns_template_data": {
-  "customer_name": "Jane Doe",
-  "order_code": "ORD-1001"
+{
+  "zns_template_data": {
+    "customer_name": "Jane Doe",
+    "order_code": "ORD-1001"
+  }
 }
 ```
 
@@ -92,10 +94,12 @@ The type is set by the template, not by the parameter name: a `price` parameter 
 Every value is a JSON string, including numbers and dates. A JSON number such as `1000000` is rejected.
 
 ```json
-"zns_template_data": {
-  "customer_name": "Jane Doe",
-  "price": "1000000",
-  "order_date": "14:30 20/11/2026"
+{
+  "zns_template_data": {
+    "customer_name": "Jane Doe",
+    "price": "1000000",
+    "order_date": "14:30 20/11/2026"
+  }
 }
 ```
 

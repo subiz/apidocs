@@ -1,5 +1,5 @@
 ---
-sourceHash: dea4519a9c17b803bbf24328df3513ef7a71fb190b72de2b6265ee8d56d4034a
+sourceHash: 45bf0fd25e22763bc036321df0afc03175f46bc57094b857c414011e8b6b4ee4
 title: "Gửi tin ZBS"
 description: "Gửi tin nhắn ZBS theo mẫu Zalo đã được duyệt tới một số điện thoại."
 section: "Messages"
@@ -69,9 +69,11 @@ Template ZBS là một tin nhắn cố định có các tham số: những chỗ
 Trong các ví dụ ở trang này, `customer_name` và `order_code` là tham số của một template mẫu "Order confirmation":
 
 ```json
-"zns_template_data": {
-  "customer_name": "Jane Doe",
-  "order_code": "ORD-1001"
+{
+  "zns_template_data": {
+    "customer_name": "Jane Doe",
+    "order_code": "ORD-1001"
+  }
 }
 ```
 
@@ -92,10 +94,12 @@ Kiểu do template quy định, không phụ thuộc vào tên tham số: tham s
 Mọi giá trị đều là chuỗi JSON, kể cả số và ngày. Số JSON như `1000000` sẽ bị từ chối.
 
 ```json
-"zns_template_data": {
-  "customer_name": "Jane Doe",
-  "price": "1000000",
-  "order_date": "14:30 20/11/2026"
+{
+  "zns_template_data": {
+    "customer_name": "Jane Doe",
+    "price": "1000000",
+    "order_date": "14:30 20/11/2026"
+  }
 }
 ```
 
